@@ -1,0 +1,8 @@
+{
+  "name": "eduquest",
+  "private": true,
+  "description": "EduQuest — offline-first learning adventure (static PWA; no build step)",
+  "scripts": {
+    "test": "node test/rest.js"
+  }
+}
