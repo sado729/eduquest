@@ -4,10 +4,11 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all three suites
+npm test              # all four suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
+npm run test:profiles
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -79,3 +80,29 @@ at every stage position in az/en/ru and fails on any `undefined` / `[object Obje
 
 Since the chapter text is ~150 new inline `{az,en,ru}` objects, `i18n.js` covers their
 completeness; this suite covers whether the right one is chosen.
+
+## profiles.js — several children on one phone
+
+Guards the failure that cannot be undone. Each child owns a full copy of the game state
+under their own `localStorage` key (`js/profiles.js`); the index only remembers who
+exists and who is playing. If the per-child key is ever lost, two children share one
+key and the second child's first save silently overwrites the first child's entire
+adventure — no error, nothing on screen, and no way back.
+
+The "Children" list and the switcher are design-project screens; the store beneath them
+is hand-written, so a re-sync can restore the screens while dropping the keys. If this
+suite goes red after a re-sync, that is what happened — see `EQP.key()` in
+[js/profiles.js](../js/profiles.js).
+
+It loads the real `js/profiles.js` on top of the real `js/app.js` and asserts the
+promises the screen makes to the grown-up: a second child never writes over the first,
+switching parks the current child's unsaved progress before loading the next (and
+restores that child's language), removing erases only that child's storage, the last
+child can never be removed, and removing whoever is playing hands the phone to someone
+else without overwriting them on the way out.
+
+Two details are load-bearing and pinned here. The first child keeps the *pre-profiles*
+storage key, so an adventure that started before this feature existed simply becomes
+child 1 — never migrated, never copied, never lost. And a damaged or unreadable index
+falls back to that same single child rather than to a blank state, so a corrupt index
+costs a grown-up nothing.
