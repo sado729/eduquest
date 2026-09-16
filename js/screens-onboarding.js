@@ -212,3 +212,95 @@ EQS.screens.welcomeback = function (s) {
     <div class="press" onclick="EQ.go('map')" style="position:absolute;bottom:52px;left:16px;right:16px;height:72px;border-radius:24px;background:#3DBE6E;box-shadow:0 6px 0 #2A9455, 0 16px 26px -12px rgba(42,148,85,0.5);display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Macəraya davam et', en: 'Continue my adventure', ru: 'Продолжить приключение' })}</div>
   </div>`;
 };
+
+/* 29 · Rest day — the soft stop when the daily limit is full or bedtime has come.
+   No hard lock: Questy simply gets sleepy, the day's work is celebrated, and the
+   only way on is the grown-up area (where a parent can grant a few more minutes). */
+EQS.meta.restday = { light: false };
+EQS.screens.restday = function (s) {
+  const bed = EQ.restState() === 'bed';
+  const waved = !!EQ.session.restWaved;
+  const d = (s.track && s.track.days && s.track.days[EQ.dayKey()]) || null;
+  const mins = EQT.minutes(d);
+  const done = (d && d.done) || 0;
+
+  const zzz = `<svg width="66" height="62" viewBox="0 0 66 62" style="position:absolute;top:-6px;right:-22px">
+    <text x="30" y="26" font-family="'Baloo 2', system-ui" font-size="22" font-weight="800" fill="#FFF7EA" opacity="0.9">z</text>
+    <text x="44" y="16" font-family="'Baloo 2', system-ui" font-size="16" font-weight="800" fill="#A896E0" opacity="0.8">z</text>
+    <text x="14" y="40" font-family="'Baloo 2', system-ui" font-size="28" font-weight="800" fill="#FFF7EA" opacity="0.6">z</text>
+  </svg>`;
+
+  const stat = (val, label) => `<div style="flex:1;text-align:center">
+    <div style="font:800 24px 'Baloo 2', system-ui;color:#FFF7EA">${val}</div>
+    <div style="font:700 10.5px Nunito;color:#A896E0;margin-top:2px">${label}</div>
+  </div>`;
+
+  const line = bed
+    ? TX({ az: 'Questy də əsnəyir. Yaxşı yuxu — macəra sabah davam edir.', en: 'Questy is yawning too. Sleep well — the adventure continues tomorrow.', ru: 'Квести тоже зевает. Спокойной ночи — приключение продолжится завтра.' })
+    : TX({ az: 'Bugünkü macəra vaxtın doldu. Sabah yenidən başlayırıq — meşə səni gözləyir.', en: 'Today’s adventure time is full. We start again tomorrow — the forest will wait for you.', ru: 'Время приключений на сегодня закончилось. Завтра начнём снова — лес тебя дождётся.' });
+
+  const say = bed
+    ? TX({ az: 'Mən yuvama gedirəm… Sən də yat, yaxşı? Sabah səni burada gözləyəcəm! 🦊', en: 'I’m off to my burrow… you sleep too, okay? I’ll be right here tomorrow! 🦊', ru: 'Я иду в свою норку… ты тоже ложись, хорошо? Завтра буду ждать тебя здесь! 🦊' })
+    : TX({ az: 'Bu gün çox gözəl işlədik! İndi bir az dincələk, sabah davam edərik. 🦊', en: 'We did so well today! Let’s rest a little now and carry on tomorrow. 🦊', ru: 'Мы сегодня отлично поработали! Отдохнём немного и продолжим завтра. 🦊' });
+
+  const parentLine = bed
+    ? TX({ az: `Valideyn tənzimləməsi · yuxu fasiləsi ${EQ.fmtTime(EQ.bedStart())}`, en: `Parent setting · bedtime pause at ${EQ.fmtTime(EQ.bedStart())}`, ru: `Настройка родителя · пауза перед сном в ${EQ.fmtTime(EQ.bedStart())}` })
+    : TX({ az: `Valideyn tənzimləməsi · günlük limit ${s.settings.limit + EQ.bonusMins()} dəq`, en: `Parent setting · daily limit ${s.settings.limit + EQ.bonusMins()} min`, ru: `Настройка родителя · дневной лимит ${s.settings.limit + EQ.bonusMins()} мин` });
+
+  const cta = waved
+    ? `<div style="height:66px;border-radius:24px;background:rgba(255,247,234,0.12);display:flex;align-items:center;justify-content:center;gap:9px;font:800 18px 'Baloo 2', system-ui;color:#FFF7EA">
+        ${TX({ az: 'Questy yuxuya getdi 💤', en: 'Questy fell asleep 💤', ru: 'Квести уснул 💤' })}
+      </div>`
+    : `<div class="press" onclick="EQ.restWave()" style="height:66px;border-radius:24px;background:#7B5CFF;box-shadow:0 6px 0 #5B3FD6, 0 16px 26px -12px rgba(91,63,214,0.6);display:flex;align-items:center;justify-content:center;font:800 20px 'Baloo 2', system-ui;color:#fff">
+        ${bed ? TX({ az: 'Gecən xeyrə, Questy!', en: 'Goodnight, Questy!', ru: 'Спокойной ночи, Квести!' }) : TX({ az: 'Sabah görüşərik!', en: 'See you tomorrow!', ru: 'До завтра!' })}
+      </div>`;
+
+  return `<div class="scr" style="background:#241A3F">
+    <div style="position:absolute;inset:0;background:linear-gradient(#1C1436 0%, #33255C 52%, #4A3A7A 100%)"></div>
+    <div style="position:absolute;top:88px;right:-26px;width:150px;height:150px;border-radius:50%;background:#FFE9A8;opacity:0.22"></div>
+    <div style="position:absolute;top:104px;right:-6px;width:112px;height:112px;border-radius:50%;background:#FFF3D6;opacity:0.9"></div>
+    <div style="position:absolute;top:118px;right:18px;width:96px;height:96px;border-radius:50%;background:#33255C"></div>
+    <div class="spark" style="width:6px;height:6px;border-radius:50%;background:#FFF7EA;top:132px;left:56px"></div>
+    <div class="spark" style="width:4px;height:4px;border-radius:50%;background:#9BE8C0;top:196px;left:150px;animation-delay:.5s"></div>
+    <div class="spark" style="width:5px;height:5px;border-radius:50%;background:#45C6F0;top:96px;left:236px;animation-delay:.9s"></div>
+    <div class="spark" style="width:5px;height:5px;border-radius:50%;background:#FFC24B;top:268px;left:36px;animation-delay:.3s"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(rgba(36,26,63,0) 0%, rgba(20,13,40,0.55) 100%)"></div>
+
+    <div style="position:absolute;top:70px;left:26px;right:26px;text-align:center">
+      <div style="font:800 32px 'Baloo 2', system-ui;color:#FFF7EA;line-height:1.15">${bed
+        ? TX({ az: 'Yatmaq vaxtıdır 🌙', en: 'Time for bed 🌙', ru: 'Пора спать 🌙' })
+        : TX({ az: 'Bu günlük bəsdir! 🌙', en: 'That’s enough for today! 🌙', ru: 'На сегодня хватит! 🌙' })}</div>
+      <div style="font:700 14px Nunito;color:#A896E0;margin-top:10px;line-height:1.5">${line}</div>
+    </div>
+
+    <div class="bob" style="position:absolute;top:196px;left:0;right:0;display:flex;justify-content:center">
+      <div style="position:relative">
+        ${EQC.questy(waved ? 'excited' : 'happy', 'width:168px', s.questyFur, s.questyFurDark)}
+        ${zzz}
+      </div>
+    </div>
+
+    ${EQC.bubble(waved ? 'excited' : 'happy', say, { w: 62, dark: true, style: 'position:absolute;top:396px;left:20px;right:20px' })}
+
+    <div style="position:absolute;top:500px;left:20px;right:20px;border-radius:26px;background:rgba(255,247,234,0.10);padding:15px 12px">
+      <div style="font:700 10.5px Nunito;color:#A896E0;letter-spacing:1.2px;text-align:center">${TX({ az: 'BU GÜN ETDİKLƏRİN', en: 'WHAT YOU DID TODAY', ru: 'ЧТО ТЫ СДЕЛАЛ СЕГОДНЯ' })}</div>
+      <div style="display:flex;margin-top:12px">
+        ${stat(EQT.fmtMin(mins), TX({ az: 'macəra vaxtı', en: 'adventure time', ru: 'время приключений' }))}
+        ${stat(done, TX({ az: 'sınaq həll edildi', en: 'challenges solved', ru: 'решено испытаний' }))}
+        ${stat('+' + (s.xpToday || 0), TX({ az: 'təcrübə xalı', en: 'experience', ru: 'опыта' }))}
+      </div>
+    </div>
+
+    <div style="position:absolute;top:628px;left:20px;right:20px;height:46px;border-radius:23px;background:rgba(255,138,76,0.18);display:flex;align-items:center;justify-content:center;gap:8px;padding:0 14px">
+      ${EQC.flame(20)}
+      <span style="font:800 12.5px Nunito;color:#FFC9A0;text-align:center">${TX({ az: `${s.streak} günlük seriyan qorunur — indi dayanmaq onu pozmur`, en: `Your ${s.streak} day streak is safe — stopping now won’t break it`, ru: `Твоя серия из ${s.streak} ${RUP(s.streak, 'дня', 'дней', 'дней')} цела — остановка её не прервёт` })}</span>
+    </div>
+
+    <div style="position:absolute;bottom:126px;left:20px;right:20px">${cta}</div>
+
+    <div class="press" onclick="EQ.go('parent_gate')" style="position:absolute;bottom:58px;left:20px;right:20px;display:flex;align-items:center;justify-content:center;gap:7px">
+      <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 3 l8 4 v6 c0 5-3.6 7.4-8 8.6 -4.4-1.2 -8-3.6 -8-8.6 V7 Z" fill="none" stroke="#8878A8" stroke-width="2"></path></svg>
+      <span style="font:700 11.5px Nunito;color:#8878A8">${parentLine}</span>
+    </div>
+  </div>`;
+};

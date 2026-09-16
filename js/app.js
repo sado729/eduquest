@@ -1,6 +1,15 @@
 /* EduQuest — app core: state, router, game logic */
 
-const EQ_STORE_KEY = 'eduquest_state_v2';
+/* one state blob per child — the key belongs to the active profile (js/profiles.js) */
+
+/* ── rest screen (daily limit + bedtime pause) ──
+   Screens the pause never takes over: the grown-up area, the first-run flow, and the
+   reward beats a child has already earned — they finish the moment, then Questy rests. */
+const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest'];
+/* calm screens where the heartbeat may bring the rest screen up on its own
+   (never mid-question: a challenge already started is always allowed to finish) */
+const EQ_REST_NUDGE = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcomeback'];
+const EQ_REST_MORNING = 5 * 60; /* the bedtime window closes at 05:00 */
 
 const EQ_DEFAULTS = {
   onboarded: false,
@@ -17,7 +26,7 @@ const EQ_DEFAULTS = {
   trophyPlaced: false, pendingLevelUp: false,
   lastVisit: null,
   lastDay: null, questDay: 0, playedDays: [], bestStreak: 1,
-  settings: { readAloud: true, bigText: false, calm: false, music: true, bedtime: true, limit: 45, lang: 'az' }
+  settings: { readAloud: true, bigText: false, calm: false, music: true, bedtime: true, bedMin: 1200, limit: 45, bonusDay: null, bonusMins: 0, lang: 'az' }
 };
 
 /* ── tiny synth — every cue has a silent visual twin ── */
@@ -97,7 +106,7 @@ const EQ = {
   checkNewDay(fromResume) {
     const today = this.dayKey();
     if (!this.s || !this.s.lastDay || this.s.lastDay === today) return false;
-    const safe = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash'];
+    const safe = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
     if (!fromResume && safe.indexOf(this.current) === -1) return false;
     this.newDay(today);
     this.session.q = null; this.session.qIdx = -1;
@@ -106,19 +115,63 @@ const EQ = {
     return true;
   },
 
+  /* ── daily limit + bedtime pause ──
+     EQT already measures real play time; this turns it into Questy's soft rest screen.
+     restState() → 'limit' | 'bed' | null. Bonus minutes a parent grants today push both back. */
+  bonusMins() {
+    const st = this.s.settings;
+    return st.bonusDay === this.dayKey() ? (st.bonusMins || 0) : 0;
+  },
+  bedStart() { return Math.min((this.s.settings.bedMin || 1200) + this.bonusMins(), 1439); },
+  fmtTime(mins) { return Math.floor(mins / 60) + ':' + String(mins % 60).padStart(2, '0'); },
+  /* today's play minutes, read straight from the tracker (never creates a day bucket) */
+  playedToday() {
+    const d = (this.s.track && this.s.track.days && this.s.track.days[this.dayKey()]) || null;
+    return d ? (d.secs || 0) / 60 : 0;
+  },
+  restState() {
+    if (!this.s || !this.s.onboarded) return null;
+    const st = this.s.settings;
+    if (st.limit > 0 && this.playedToday() >= st.limit + this.bonusMins()) return 'limit';
+    if (st.bedtime) {
+      const now = new Date();
+      const mins = now.getHours() * 60 + now.getMinutes();
+      if (mins >= this.bedStart() || mins < EQ_REST_MORNING) return 'bed';
+    }
+    return null;
+  },
+  /* may this screen open right now? (called by the router for every navigation) */
+  restGuard(name) {
+    if (!this.s || !this.s.onboarded) return false;
+    if (name.indexOf('parent') === 0 || EQ_REST_FREE.indexOf(name) >= 0) return false;
+    return !!this.restState();
+  },
+  /* heartbeat / resume: bring the rest screen up while the child is just browsing */
+  restNudge() {
+    if (EQ_REST_NUDGE.indexOf(this.current) === -1 || !this.restState()) return false;
+    this.go('restday');
+    return true;
+  },
+  restWave() {
+    SFX.tap();
+    this.session.restWaved = true;
+    this.render();
+  },
+
   load() {
     let s = null;
-    try { s = JSON.parse(localStorage.getItem(EQ_STORE_KEY)); } catch (e) { /* fresh start */ }
+    try { s = JSON.parse(localStorage.getItem(EQP.key())); } catch (e) { /* fresh start */ }
     this.s = Object.assign({}, EQ_DEFAULTS, s || {});
     this.s.hero = Object.assign({}, EQ_DEFAULTS.hero, (s && s.hero) || {});
     this.s.settings = Object.assign({}, EQ_DEFAULTS.settings, (s && s.settings) || {});
     EQT.init(this.s);
   },
-  save() { try { localStorage.setItem(EQ_STORE_KEY, JSON.stringify(this.s)); } catch (e) { /* private mode */ } },
+  save() { try { localStorage.setItem(EQP.key(), JSON.stringify(this.s)); } catch (e) { /* private mode */ } },
 
   /* ── router ── */
   go(name) {
     EQT.tick(); /* attribute elapsed time to the screen being left */
+    if (this.restGuard(name)) name = 'restday'; /* limit reached / bedtime — Questy takes over */
     if (name === 'challenge' && this.s.challengesDone >= 5) name = 'boss';
     if (name === 'challenge') {
       this.session.ctx = 'daily';
@@ -424,6 +477,25 @@ const EQ = {
     this.s.settings.limit = steps[(idx + 1) % steps.length];
     this.save(); this.render();
   },
+  cycleBedtime() {
+    SFX.tap();
+    const steps = [1140, 1170, 1200, 1230, 1260]; /* 19:00 → 21:00 */
+    const idx = steps.indexOf(this.s.settings.bedMin);
+    this.s.settings.bedMin = steps[(idx + 1) % steps.length];
+    this.save(); this.render();
+  },
+  /* one tap = +15 min for today only (pushes both the limit and bedtime back) */
+  grantBonus() {
+    SFX.tap();
+    const st = this.s.settings;
+    const today = this.dayKey();
+    if (st.bonusDay !== today) { st.bonusDay = today; st.bonusMins = 0; }
+    st.bonusMins = (st.bonusMins || 0) >= 45 ? 0 : (st.bonusMins || 0) + 15;
+    this.save(); this.render();
+    this.toast(st.bonusMins > 0
+      ? TX({ az: `Bu gün üçün +${st.bonusMins} dəqiqə`, en: `+${st.bonusMins} minutes for today`, ru: `+${st.bonusMins} минут на сегодня` })
+      : TX({ az: 'Əlavə vaxt ləğv edildi', en: 'Extra time cleared', ru: 'Дополнительное время снято' }));
+  },
   addMission(topic) {
     if (!EQT.MISSIONS[topic]) return;
     const today = this.dayKey();
@@ -443,10 +515,44 @@ const EQ = {
   },
   applyCalm() { document.body.classList.toggle('calm', !!this.s.settings.calm); },
   resetDemo() {
-    if (confirm(TX({ az: 'Bütün macəra sıfırlansın? Bütün irəliləyiş itəcək.', en: 'Reset the whole adventure? All progress will be lost.', ru: 'Сбросить всё приключение? Весь прогресс будет потерян.' }))) {
-      localStorage.removeItem(EQ_STORE_KEY);
+    const many = EQP.ids.length > 1;
+    const ask = many
+      ? TX({ az: `${this.s.heroName} üçün macəra sıfırlansın? Yalnız bu uşağın irəliləyişi itəcək.`, en: `Reset the adventure for ${this.s.heroName}? Only this child's progress will be lost.`, ru: `Сбросить приключение для ${this.s.heroName}? Будет потерян прогресс только этого ребёнка.` })
+      : TX({ az: 'Bütün macəra sıfırlansın? Bütün irəliləyiş itəcək.', en: 'Reset the whole adventure? All progress will be lost.', ru: 'Сбросить всё приключение? Весь прогресс будет потерян.' });
+    if (confirm(ask)) {
+      localStorage.removeItem(EQP.key());
       location.reload();
     }
+  },
+
+  /* ── child profiles (grown-up area only — the child can never switch alone) ── */
+  switchChild(id) {
+    if (id === EQP.active || EQP.ids.indexOf(id) === -1) return;
+    SFX.tap();
+    EQP.swap(id);
+    this.go(this.s.onboarded ? 'parent_profiles' : 'create');
+    this.toast(TX({ az: `İndi ${this.s.heroName} oynayır`, en: `${this.s.heroName} is playing now`, ru: `Сейчас играет ${this.s.heroName}` }));
+  },
+  addChild() {
+    if (EQP.full()) {
+      this.toast(TX({ az: `Bu cihazda ən çoxu ${EQP_MAX} uşaq ola bilər`, en: `Up to ${EQP_MAX} children fit on one device`, ru: `На одном устройстве помещается до ${EQP_MAX} детей` }));
+      return;
+    }
+    SFX.correct();
+    EQP.add(EQI.lang);
+    this.go('create');
+    this.toast(TX({ az: 'Yeni qəhrəman — birlikdə yaradın! 👧👦', en: 'A new hero — make it together! 👧👦', ru: 'Новый герой — создайте его вместе! 👧👦' }));
+  },
+  removeChild(id) {
+    const name = EQP.label(EQP.peek(id));
+    if (!confirm(TX({
+      az: `${name} silinsin? Bu uşağın bütün irəliləyişi itəcək.`,
+      en: `Remove ${name}? All of this child's progress will be lost.`,
+      ru: `Удалить ${name}? Весь прогресс этого ребёнка будет потерян.`
+    }))) return;
+    if (!EQP.remove(id)) return;
+    this.go('parent_profiles');
+    this.toast(TX({ az: `${name} silindi`, en: `${name} removed`, ru: `${name} удалён` }));
   },
 
   /* ── stage scaling ── */
@@ -460,6 +566,7 @@ const EQ = {
   },
 
   boot() {
+    EQP.load();
     this.load();
     EQI.set(this.s.settings.lang || 'az');
     this.applyCalm();
@@ -469,6 +576,7 @@ const EQ = {
     setInterval(() => {
       EQT.tick(); this.save(); /* heartbeat: accumulate play time and persist it */
       if (this.checkNewDay(false)) return;
+      if (this.restNudge()) return;
       const m = EQS.meta[this.current] || { light: true };
       this.paintChrome(m.light);
     }, 30000);
@@ -476,9 +584,9 @@ const EQ = {
     document.addEventListener('visibilitychange', () => {
       EQT.tick();
       if (document.hidden) this.save();
-      else this.checkNewDay(true);
+      else if (!this.checkNewDay(true)) this.restNudge();
     });
-    window.addEventListener('focus', () => this.checkNewDay(true));
+    window.addEventListener('focus', () => { if (!this.checkNewDay(true)) this.restNudge(); });
     window.addEventListener('pagehide', () => { EQT.tick(); this.save(); });
 
     const params = new URLSearchParams(location.search);

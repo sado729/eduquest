@@ -94,11 +94,19 @@ EQS.screens.parent_dashboard = function (s) {
     : TX({ az: 'hələ sınaq yoxdur', en: 'no challenges yet', ru: 'испытаний пока нет' });
   const chColor = a7 > 0 ? '#2A9455' : '#8878A8';
 
-  /* daily-limit card */
+  /* daily-limit card — today's state first, the week behind it */
+  const bonusNow = EQ.bonusMins();
+  const limitToday = s.settings.limit + bonusNow;
+  const minsToday = Math.round(EQ.playedToday());
   const limitHit = days7.filter(x => EQT.minutes(x.d) >= s.settings.limit).length;
-  const limitLine = limitHit > 0
-    ? TX({ az: `bu həftə ${limitHit} gündə dolub`, en: `Reached ${limitHit} of 7 days`, ru: `Достигнут в ${limitHit} из 7 дней` })
-    : TX({ az: 'bu həftə dolmayıb', en: 'not reached this week', ru: 'на этой неделе не достигнут' });
+  const limitFull = minsToday >= limitToday;
+  const limitLine = limitFull
+    ? TX({ az: `bu gün dolub${bonusNow ? ` · +${bonusNow} dəq verildi` : ''}`, en: `reached today${bonusNow ? ` · +${bonusNow} min given` : ''}`, ru: `сегодня достигнут${bonusNow ? ` · выдано +${bonusNow} мин` : ''}` })
+    : minsToday > 0
+      ? TX({ az: `bu gün ${minsToday}/${limitToday} dəq`, en: `today ${minsToday}/${limitToday} min`, ru: `сегодня ${minsToday}/${limitToday} мин` })
+      : limitHit > 0
+        ? TX({ az: `bu həftə ${limitHit} gündə dolub`, en: `Reached ${limitHit} of 7 days`, ru: `Достигнут в ${limitHit} из 7 дней` })
+        : TX({ az: 'bu həftə dolmayıb', en: 'not reached this week', ru: 'на этой неделе не достигнут' });
 
   /* minutes-per-day bars (last 7 calendar days, oldest left) */
   const maxM = Math.max(1, ...days7.map(x => EQT.minutes(x.d)));
@@ -138,7 +146,7 @@ EQS.screens.parent_dashboard = function (s) {
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'ÖYRƏNMƏ VAXTI', en: 'LEARNING TIME', ru: 'ВРЕМЯ УЧЁБЫ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${EQT.fmtMin(mins7)}</div><div style="font:700 11px Nunito;color:${deltaColor}">${deltaLine}</div></div>
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'SINAQLAR', en: 'CHALLENGES', ru: 'ИСПЫТАНИЯ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${a7}</div><div style="font:700 11px Nunito;color:${chColor}">${chLine}</div></div>
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'SERİYA', en: 'STREAK', ru: 'СЕРИЯ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${TX({ az: `${s.streak} gün`, en: `${s.streak} days`, ru: `${s.streak} ${RUP(s.streak, 'день', 'дня', 'дней')}` })}</div><div style="font:700 11px Nunito;color:#8878A8">${TX({ az: `Ən uzunu: ${Math.max(s.bestStreak || 1, s.streak)}`, en: `Longest: ${Math.max(s.bestStreak || 1, s.streak)}`, ru: `Рекорд: ${Math.max(s.bestStreak || 1, s.streak)}` })}</div></div>
-      <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'GÜNLÜK LİMİT', en: 'DAILY LIMIT', ru: 'ДНЕВНОЙ ЛИМИТ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${s.settings.limit}${TX({ az: 'd', en: 'm', ru: 'м' })}</div><div style="font:700 11px Nunito;color:${limitHit > 0 ? '#7B5CFF' : '#8878A8'}">${limitLine}</div></div>
+      <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'GÜNLÜK LİMİT', en: 'DAILY LIMIT', ru: 'ДНЕВНОЙ ЛИМИТ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${s.settings.limit}${TX({ az: 'd', en: 'm', ru: 'м' })}</div><div style="font:700 11px Nunito;color:${limitFull || minsToday > 0 || limitHit > 0 ? '#7B5CFF' : '#8878A8'}">${limitLine}</div></div>
     </div>
     <div style="position:absolute;top:368px;left:20px;right:20px;border-radius:26px;background:#fff;padding:16px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Oynanılan dəqiqələr', en: 'Minutes played', ru: 'Сыгранные минуты' })}</div><div style="font:700 11px Nunito;color:#8878A8">${TX({ az: 'son 7 gün', en: 'last 7 days', ru: 'последние 7 дней' })}</div></div>
@@ -418,6 +426,8 @@ EQS.meta.parent_settings = { light: false };
 EQS.screens.parent_settings = function (s) {
   const st = s.settings;
   const pct = Math.round((st.limit - 15) / (90 - 15) * 100);
+  const bedT = EQ.fmtTime(st.bedMin || 1200);
+  const bonus = EQ.bonusMins();
   const langBtn = (l, label) => `<div class="press" onclick="EQ.setLang('${l}')" style="flex:1;height:40px;border-radius:14px;background:${EQI.lang === l ? '#7B5CFF' : '#EFEAF9'};box-shadow:${EQI.lang === l ? '0 3px 0 #5B3FD6' : 'none'};display:flex;align-items:center;justify-content:center;font:800 12.5px Nunito;color:${EQI.lang === l ? '#fff' : '#5C4E7E'}">${label}</div>`;
   return `<div class="scr vscroll" style="background:#F4F1FA">
     <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
@@ -432,20 +442,30 @@ EQS.screens.parent_settings = function (s) {
       <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Günlük oyun limiti', en: 'Daily play limit', ru: 'Дневной лимит игры' })}</span><span style="font:800 15px 'Baloo 2';color:#7B5CFF">${st.limit} ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}</span></div>
       <div class="press" onclick="EQ.cycleLimit()" style="margin-top:16px;height:10px;border-radius:5px;background:#EFEAF9;position:relative"><div style="width:${pct}%;height:100%;border-radius:5px;background:#7B5CFF"></div><div style="position:absolute;left:${pct}%;top:-8px;width:26px;height:26px;border-radius:13px;background:#fff;box-shadow:0 2px 8px rgba(42,31,69,0.3), 0 0 0 3px #7B5CFF;transform:translateX(-13px)"></div></div>
       <div style="display:flex;justify-content:space-between;font:700 10.5px Nunito;color:#A197BC;margin-top:10px"><span>15 ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}</span><span>90 ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}</span></div>
-      <div style="margin-top:16px;padding-top:16px;border-top:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Yuxu fasiləsi', en: 'Bedtime pause', ru: 'Пауза перед сном' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Questy 20:00-da gecəniz xeyrə deyir', en: 'Questy says goodnight at 20:00', ru: 'Квести желает спокойной ночи в 20:00' })}</div></div>${EQS.ptoggle('bedtime', st.bedtime)}</div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1.5px solid #EFEAF9;display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Yuxu fasiləsi', en: 'Bedtime pause', ru: 'Пауза перед сном' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: `Axşam ${bedT} · Questy gecəniz xeyrə deyir`, en: `At ${bedT} Questy says goodnight`, ru: `В ${bedT} Квести желает спокойной ночи` })}</div></div>
+        <div class="press" onclick="EQ.cycleBedtime()" style="height:34px;padding:0 12px;border-radius:13px;background:${st.bedtime ? '#EFE7FF' : '#F4F1FA'};display:flex;align-items:center;font:800 13px 'Baloo 2';color:${st.bedtime ? '#5B3FD6' : '#A197BC'};flex:none">${bedT}</div>
+        ${EQS.ptoggle('bedtime', st.bedtime)}
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1.5px solid #EFEAF9;display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Bu gün üçün əlavə vaxt', en: 'Extra time for today', ru: 'Дополнительное время на сегодня' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${bonus > 0
+          ? TX({ az: `Bu gün: ${st.limit + bonus} dəq · yuxu ${EQ.fmtTime(EQ.bedStart())}`, en: `Today: ${st.limit + bonus} min · bedtime ${EQ.fmtTime(EQ.bedStart())}`, ru: `Сегодня: ${st.limit + bonus} мин · сон в ${EQ.fmtTime(EQ.bedStart())}` })
+          : TX({ az: 'Bir toxunuş = +15 dəqiqə, yalnız bu gün', en: 'One tap = +15 minutes, today only', ru: 'Одно нажатие = +15 минут, только сегодня' })}</div></div>
+        <div class="press" onclick="EQ.grantBonus()" style="height:36px;padding:0 13px;border-radius:14px;background:${bonus > 0 ? '#7B5CFF' : '#EFEAF9'};box-shadow:${bonus > 0 ? '0 3px 0 #5B3FD6' : 'none'};display:flex;align-items:center;font:800 12.5px Nunito;color:${bonus > 0 ? '#fff' : '#5C4E7E'};flex:none">${bonus > 0 ? `+${bonus} ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}` : `+15 ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}`}</div>
+      </div>
     </div>
-    <div style="position:absolute;top:416px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+    <div style="position:absolute;top:490px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
       <div style="padding:13px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Sualları səsli oxu', en: 'Read questions aloud', ru: 'Читать вопросы вслух' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Questy hər sualı səsləndirir', en: 'Questy voices every question', ru: 'Квести озвучивает каждый вопрос' })}</div></div>${EQS.ptoggle('readAloud', st.readAloud)}</div>
       <div style="padding:13px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Daha böyük mətn', en: 'Bigger text', ru: 'Крупный текст' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Daha iri yazılar və cavablar', en: 'Larger labels and answers', ru: 'Более крупные надписи и ответы' })}</div></div>${EQS.ptoggle('bigText', st.bigText)}</div>
       <div style="padding:13px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Sakit rejim', en: 'Calm mode', ru: 'Спокойный режим' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Daha az effekt, daha yumşaq səslər', en: 'Fewer effects, softer sounds', ru: 'Меньше эффектов, мягче звуки' })}</div></div>${EQS.ptoggle('calm', st.calm)}</div>
       <div style="padding:16px 0;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Musiqi', en: 'Music', ru: 'Музыка' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Meşə mövzusu · 40%', en: 'Forest theme · 40%', ru: 'Лесная тема · 40%' })}</div></div>${EQS.ptoggle('music', st.music)}</div>
     </div>
-    <div style="position:absolute;top:700px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+    <div style="position:absolute;top:774px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
       <div class="press" onclick="EQ.toast(TX({az:'Bütün məlumatlar bu cihazda qalır — heç nə paylaşılmır',en:'All data stays on this device — nothing is shared',ru:'Все данные остаются на этом устройстве — ничего не передаётся'}))" style="padding:14px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 3 l8 4 v6 c0 5-3.6 7.4-8 8.6 -4.4-1.2 -8-3.6 -8-8.6 V7 Z" fill="none" stroke="#7B5CFF" stroke-width="2"></path></svg><div style="flex:1;font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Məxfilik və məlumatlar', en: 'Privacy &amp; data', ru: 'Приватность и данные' })}</div>${EQC.chevR('#A197BC', 16)}</div>
       <div class="press" onclick="EQ.toast(TX({az:'Yalnız kosmetika · uşağa heç vaxt göstərilmir',en:'Cosmetics only · never shown to the child',ru:'Только косметика · ребёнку никогда не показывается'}))" style="padding:14px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3" fill="none" stroke="#7B5CFF" stroke-width="2"></rect><path d="M3 10 h18" stroke="#7B5CFF" stroke-width="2"></path></svg><div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Alışlar', en: 'Purchases', ru: 'Покупки' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: `Yalnız kosmetika · ${s.heroName} heç vaxt görmür`, en: `Cosmetics only · never shown to ${s.heroName}`, ru: `Только косметика · ${s.heroName} их не видит` })}</div></div>${EQC.chevR('#A197BC', 16)}</div>
       <div class="press" onclick="EQ.toast(TX({az:'Bir neçə qəhrəman tezliklə gəlir 👧👦',en:'Multiple heroes are coming soon 👧👦',ru:'Несколько героев появятся скоро 👧👦'}))" style="padding:16px 0;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="none" stroke="#7B5CFF" stroke-width="2"></circle><path d="M5 20 q1.6-6 7-6 q5.4 0 7 6" fill="none" stroke="#7B5CFF" stroke-width="2" stroke-linecap="round"></path></svg><div style="flex:1;font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Başqa uşaq əlavə et', en: 'Add another child', ru: 'Добавить ещё ребёнка' })}</div>${EQC.chevR('#A197BC', 16)}</div>
     </div>
-    <div style="position:absolute;top:876px;left:20px;right:20px;display:flex;gap:10px;padding-bottom:120px">
+    <div style="position:absolute;top:950px;left:20px;right:20px;display:flex;gap:10px;padding-bottom:120px">
       <div class="press" onclick="EQ.exitParent()" style="flex:1;height:52px;border-radius:18px;background:#7B5CFF;box-shadow:0 3px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 14px 'Baloo 2';color:#fff">${TX({ az: 'Macəraya qayıt', en: 'Back to the adventure', ru: 'Вернуться к приключению' })}</div>
       <div class="press" onclick="EQ.resetDemo()" style="flex:1;height:52px;border-radius:18px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;font:800 14px 'Baloo 2';color:#8878A8">${TX({ az: 'Macəranı sıfırla', en: 'Reset adventure', ru: 'Сбросить приключение' })}</div>
     </div>
