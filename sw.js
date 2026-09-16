@@ -11,6 +11,8 @@ const ASSETS = [
   './js/data.js',
   './js/tracking.js',
   './js/profiles.js',
+  './js/qr.js',
+  './js/transfer.js',
   './js/screens-onboarding.js',
   './js/screens-world.js',
   './js/screens-play.js',

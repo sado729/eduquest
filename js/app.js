@@ -57,6 +57,7 @@ const SFX = {
 const EQ = {
   s: null,
   current: null,
+  frozen: false, /* set while an import is being written: nothing may save over it */
   session: { createCat: 'skin', wardrobeCat: 'hats', gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [] },
 
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
@@ -166,7 +167,10 @@ const EQ = {
     this.s.settings = Object.assign({}, EQ_DEFAULTS.settings, (s && s.settings) || {});
     EQT.init(this.s);
   },
-  save() { try { localStorage.setItem(EQP.key(), JSON.stringify(this.s)); } catch (e) { /* private mode */ } },
+  save() {
+    if (this.frozen) return; /* an import has just replaced storage; the page is reloading */
+    try { localStorage.setItem(EQP.key(), JSON.stringify(this.s)); } catch (e) { /* private mode */ }
+  },
 
   /* ── router ── */
   go(name) {
@@ -447,7 +451,9 @@ const EQ = {
     if (parseInt(this.session.gateInput, 10) === 48) {
       this.session.gateInput = '';
       SFX.correct();
-      this.go('parent_dashboard');
+      const next = this.session.gateNext; /* a transfer link waits behind the gate */
+      this.session.gateNext = null;
+      this.go(next && EQS.screens[next] ? next : 'parent_dashboard');
     } else {
       this.session.gateInput = '';
       SFX.wrong();
@@ -459,6 +465,8 @@ const EQ = {
   },
   exitParent() {
     this.session.gateInput = '';
+    this.session.gateNext = null;
+    this.session.code = null; this.session.inbox = null; /* nothing half-transferred is left behind */
     this.go(this.s.onboarded ? 'map' : 'welcome');
   },
 
@@ -520,6 +528,7 @@ const EQ = {
       ? TX({ az: `${this.s.heroName} üçün macəra sıfırlansın? Yalnız bu uşağın irəliləyişi itəcək.`, en: `Reset the adventure for ${this.s.heroName}? Only this child's progress will be lost.`, ru: `Сбросить приключение для ${this.s.heroName}? Будет потерян прогресс только этого ребёнка.` })
       : TX({ az: 'Bütün macəra sıfırlansın? Bütün irəliləyiş itəcək.', en: 'Reset the whole adventure? All progress will be lost.', ru: 'Сбросить всё приключение? Весь прогресс будет потерян.' });
     if (confirm(ask)) {
+      this.frozen = true; /* the unload save would otherwise put it all straight back */
       localStorage.removeItem(EQP.key());
       location.reload();
     }
@@ -553,6 +562,99 @@ const EQ = {
     if (!EQP.remove(id)) return;
     this.go('parent_profiles');
     this.toast(TX({ az: `${name} silindi`, en: `${name} removed`, ru: `${name} удалён` }));
+  },
+
+  /* ── moving to another phone (js/transfer.js) ──
+     Export is always the grown-up's own action: a code drawn on this screen, or a file
+     handed to the share sheet. Import never writes anything until it has been confirmed
+     on screen 32, and everything arriving is rebuilt field by field before it is trusted. */
+  async showCode(id) {
+    SFX.tap();
+    id = EQP.ids.indexOf(id) >= 0 ? id : EQP.active;
+    try {
+      const code = await EQX.link(EQX.clean(EQP.peek(id)));
+      this.session.code = { id: id, url: code.url, days: code.days, all: code.all };
+      this.go('parent_code');
+    } catch (e) {
+      this.toast(TX({ az: 'Kod yaradıla bilmədi — faylla cəhd edin', en: 'The code could not be made — try the file instead', ru: 'Код не удалось создать — попробуйте файл' }));
+    }
+  },
+  copyCode() {
+    const c = this.session.code;
+    if (!c) return;
+    const failed = () => this.toast(TX({ az: 'Kopyalamaq alınmadı — QR kodu oxudun', en: 'Copying failed — scan the QR code instead', ru: 'Скопировать не удалось — отсканируйте QR-код' }));
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(c.url).then(
+        () => this.toast(TX({ az: 'Link kopyalandı', en: 'Link copied', ru: 'Ссылка скопирована' })),
+        failed);
+    } else failed();
+  },
+  saveFile() {
+    SFX.tap();
+    let text;
+    try { text = JSON.stringify(EQX.bundle(), null, 1); } catch (e) { text = null; }
+    if (!text) { this.toast(TX({ az: 'Fayl hazırlana bilmədi', en: 'The file could not be made', ru: 'Файл не удалось создать' })); return; }
+    const name = EQX.fileName();
+    const blob = new Blob([text], { type: 'application/json' });
+    /* the share sheet is how a phone sends a file anywhere; a download is the fallback */
+    try {
+      const file = new File([blob], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'EduQuest' }).catch(() => { /* the parent closed the sheet */ });
+        return;
+      }
+    } catch (e) { /* no file sharing here — save it instead */ }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    this.toast(TX({ az: 'Fayl saxlanıldı', en: 'File saved', ru: 'Файл сохранён' }));
+  },
+  pickFile() {
+    SFX.tap();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.style.display = 'none';
+    input.onchange = () => {
+      const f = input.files && input.files[0];
+      input.remove();
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => this.takeFile(String(r.result));
+      r.onerror = () => this.toast(TX({ az: 'Fayl oxunmadı', en: 'The file could not be read', ru: 'Файл не удалось прочитать' }));
+      r.readAsText(f);
+    };
+    document.body.appendChild(input);
+    input.click();
+  },
+  badTransfer() {
+    SFX.wrong();
+    this.toast(TX({ az: 'Bu EduQuest köçürməsi deyil', en: 'That is not an EduQuest transfer', ru: 'Это не перенос EduQuest' }));
+  },
+  takeFile(text) {
+    const b = EQX.readBundle(text);
+    if (!b) return this.badTransfer();
+    this.session.inbox = { kind: 'file', made: b.made, states: b.states, list: b.states.map(x => EQX.stats(x)) };
+    this.go('parent_import');
+  },
+  takeCode(state) {
+    this.session.inbox = { kind: 'code', made: null, states: [state], list: [EQX.stats(state)], plan: EQX.plan(state) };
+  },
+  applyImport() {
+    const inc = this.session.inbox;
+    if (!inc) return;
+    const ok = inc.kind === 'file' ? EQX.applyBundle(inc.states) : EQX.applyOne(inc.states[0], inc.plan);
+    if (!ok) { SFX.wrong(); this.toast(TX({ az: 'Yazmaq alınmadı — yaddaş dolu ola bilər', en: 'Could not write it — storage may be full', ru: 'Не удалось записать — возможно, нет места' })); return; }
+    SFX.fanfare();
+    this.session.inbox = null;
+    location.reload(); /* the cleanest way back in: boot reads the child we just wrote */
+  },
+  dropImport() {
+    SFX.tap();
+    this.session.inbox = null;
+    this.go(this.s.onboarded ? 'parent_transfer' : 'welcome');
   },
 
   /* ── stage scaling ── */
@@ -617,6 +719,20 @@ const EQ = {
     this.s.lastVisit = Date.now();
     this.save();
     this.go(start);
+
+    /* a transfer link (#eq=…): the fragment stays on the device — browsers never send it
+       to the host — so opening it tells our web host nothing about the child */
+    const code = /[#&]eq=([^&]+)/.exec(location.hash || '');
+    if (code) {
+      history.replaceState(null, '', location.pathname + location.search);
+      EQX.read(code[1]).then(state => {
+        if (!state) return this.badTransfer();
+        this.takeCode(state);
+        this.session.gateNext = 'parent_import';
+        this.go('parent_gate');
+      });
+    }
+
     if (params.get('autotest')) this.autotest();
   },
 
