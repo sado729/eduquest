@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Play Games Services identifiers. SOURCE OF TRUTH — apply-pgs-patch.sh copies this
+    file to app/src/main/res/values/game-ids.xml.
+
+    It is kept OUTSIDE app/ on purpose: `bubblewrap update` deletes and regenerates the
+    whole app/src/main/res/values/ directory, so a copy that lives only in there is lost
+    on every update (verified with bubblewrap 1.25.0).
+
+    game_services_project_id is the numeric "Project ID" shown in
+    Play Console > Grow > Play Games Services > Setup and management >
+    Configuration. It must stay a <string>, not an <integer>.
+-->
+<resources>
+    <string name="game_services_project_id" translatable="false">660833954337</string>
+</resources>
