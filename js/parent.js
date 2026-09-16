@@ -14,7 +14,9 @@ EQS.ptabs = function (active) {
     ? `<svg width="21" height="21" viewBox="0 0 24 24"><path d="M12 3 l2.6 6.4 6.8 0.6 -5.2 4.6 1.6 6.8 -5.8-3.6 -5.8 3.6 1.6-6.8 -5.2-4.6 6.8-0.6 Z" fill="#7B5CFF"></path></svg>`
     : `<svg width="21" height="21" viewBox="0 0 24 24"><path d="M12 3 l2.6 6.4 6.8 0.6 -5.2 4.6 1.6 6.8 -5.8-3.6 -5.8 3.6 1.6-6.8 -5.2-4.6 6.8-0.6 Z" fill="none" stroke="${c}" stroke-width="2"></path></svg>`;
   const gear = c => `<svg width="21" height="21" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4" fill="none" stroke="${c}" stroke-width="2"></circle><path d="M12 3.6 v3 M12 17.4 v3 M3.6 12 h3 M17.4 12 h3" stroke="${c}" stroke-width="2" stroke-linecap="round"></path></svg>`;
-  return `<div style="position:absolute;bottom:0;left:0;right:0;height:82px;background:#fff;box-shadow:0 -1px 0 #E4DDF4;display:flex;padding:0 8px 14px;z-index:40">
+  /* fixed, not absolute: inside a scrolling screen an absolute bar scrolls with the
+     content and parks itself on top of whatever sits 82px above the fold */
+  return `<div style="position:fixed;bottom:0;left:0;right:0;height:82px;background:#fff;box-shadow:0 -1px 0 #E4DDF4;display:flex;padding:0 8px 14px;z-index:40">
     ${item('overview', 'parent_dashboard', TX({ az: 'İcmal', en: 'Overview', ru: 'Обзор' }), grid)}
     ${item('progress', 'parent_progress', TX({ az: 'İnkişaf', en: 'Progress', ru: 'Прогресс' }), bars)}
     ${item('quests', 'parent_quests', TX({ az: 'Tapşırıqlar', en: 'Quests', ru: 'Задания' }), star)}
@@ -94,11 +96,19 @@ EQS.screens.parent_dashboard = function (s) {
     : TX({ az: 'hələ sınaq yoxdur', en: 'no challenges yet', ru: 'испытаний пока нет' });
   const chColor = a7 > 0 ? '#2A9455' : '#8878A8';
 
-  /* daily-limit card */
+  /* daily-limit card — today's state first, the week behind it */
+  const bonusNow = EQ.bonusMins();
+  const limitToday = s.settings.limit + bonusNow;
+  const minsToday = Math.round(EQ.playedToday());
   const limitHit = days7.filter(x => EQT.minutes(x.d) >= s.settings.limit).length;
-  const limitLine = limitHit > 0
-    ? TX({ az: `bu həftə ${limitHit} gündə dolub`, en: `Reached ${limitHit} of 7 days`, ru: `Достигнут в ${limitHit} из 7 дней` })
-    : TX({ az: 'bu həftə dolmayıb', en: 'not reached this week', ru: 'на этой неделе не достигнут' });
+  const limitFull = minsToday >= limitToday;
+  const limitLine = limitFull
+    ? TX({ az: `bu gün dolub${bonusNow ? ` · +${bonusNow} dəq verildi` : ''}`, en: `reached today${bonusNow ? ` · +${bonusNow} min given` : ''}`, ru: `сегодня достигнут${bonusNow ? ` · выдано +${bonusNow} мин` : ''}` })
+    : minsToday > 0
+      ? TX({ az: `bu gün ${minsToday}/${limitToday} dəq`, en: `today ${minsToday}/${limitToday} min`, ru: `сегодня ${minsToday}/${limitToday} мин` })
+      : limitHit > 0
+        ? TX({ az: `bu həftə ${limitHit} gündə dolub`, en: `Reached ${limitHit} of 7 days`, ru: `Достигнут в ${limitHit} из 7 дней` })
+        : TX({ az: 'bu həftə dolmayıb', en: 'not reached this week', ru: 'на этой неделе не достигнут' });
 
   /* minutes-per-day bars (last 7 calendar days, oldest left) */
   const maxM = Math.max(1, ...days7.map(x => EQT.minutes(x.d)));
@@ -138,7 +148,7 @@ EQS.screens.parent_dashboard = function (s) {
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'ÖYRƏNMƏ VAXTI', en: 'LEARNING TIME', ru: 'ВРЕМЯ УЧЁБЫ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${EQT.fmtMin(mins7)}</div><div style="font:700 11px Nunito;color:${deltaColor}">${deltaLine}</div></div>
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'SINAQLAR', en: 'CHALLENGES', ru: 'ИСПЫТАНИЯ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${a7}</div><div style="font:700 11px Nunito;color:${chColor}">${chLine}</div></div>
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'SERİYA', en: 'STREAK', ru: 'СЕРИЯ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${TX({ az: `${s.streak} gün`, en: `${s.streak} days`, ru: `${s.streak} ${RUP(s.streak, 'день', 'дня', 'дней')}` })}</div><div style="font:700 11px Nunito;color:#8878A8">${TX({ az: `Ən uzunu: ${Math.max(s.bestStreak || 1, s.streak)}`, en: `Longest: ${Math.max(s.bestStreak || 1, s.streak)}`, ru: `Рекорд: ${Math.max(s.bestStreak || 1, s.streak)}` })}</div></div>
-      <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'GÜNLÜK LİMİT', en: 'DAILY LIMIT', ru: 'ДНЕВНОЙ ЛИМИТ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${s.settings.limit}${TX({ az: 'd', en: 'm', ru: 'м' })}</div><div style="font:700 11px Nunito;color:${limitHit > 0 ? '#7B5CFF' : '#8878A8'}">${limitLine}</div></div>
+      <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'GÜNLÜK LİMİT', en: 'DAILY LIMIT', ru: 'ДНЕВНОЙ ЛИМИТ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${s.settings.limit}${TX({ az: 'd', en: 'm', ru: 'м' })}</div><div style="font:700 11px Nunito;color:${limitFull || minsToday > 0 || limitHit > 0 ? '#7B5CFF' : '#8878A8'}">${limitLine}</div></div>
     </div>
     <div style="position:absolute;top:368px;left:20px;right:20px;border-radius:26px;background:#fff;padding:16px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Oynanılan dəqiqələr', en: 'Minutes played', ru: 'Сыгранные минуты' })}</div><div style="font:700 11px Nunito;color:#8878A8">${TX({ az: 'son 7 gün', en: 'last 7 days', ru: 'последние 7 дней' })}</div></div>
@@ -418,6 +428,8 @@ EQS.meta.parent_settings = { light: false };
 EQS.screens.parent_settings = function (s) {
   const st = s.settings;
   const pct = Math.round((st.limit - 15) / (90 - 15) * 100);
+  const bedT = EQ.fmtTime(st.bedMin || 1200);
+  const bonus = EQ.bonusMins();
   const langBtn = (l, label) => `<div class="press" onclick="EQ.setLang('${l}')" style="flex:1;height:40px;border-radius:14px;background:${EQI.lang === l ? '#7B5CFF' : '#EFEAF9'};box-shadow:${EQI.lang === l ? '0 3px 0 #5B3FD6' : 'none'};display:flex;align-items:center;justify-content:center;font:800 12.5px Nunito;color:${EQI.lang === l ? '#fff' : '#5C4E7E'}">${label}</div>`;
   return `<div class="scr vscroll" style="background:#F4F1FA">
     <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
@@ -432,23 +444,307 @@ EQS.screens.parent_settings = function (s) {
       <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Günlük oyun limiti', en: 'Daily play limit', ru: 'Дневной лимит игры' })}</span><span style="font:800 15px 'Baloo 2';color:#7B5CFF">${st.limit} ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}</span></div>
       <div class="press" onclick="EQ.cycleLimit()" style="margin-top:16px;height:10px;border-radius:5px;background:#EFEAF9;position:relative"><div style="width:${pct}%;height:100%;border-radius:5px;background:#7B5CFF"></div><div style="position:absolute;left:${pct}%;top:-8px;width:26px;height:26px;border-radius:13px;background:#fff;box-shadow:0 2px 8px rgba(42,31,69,0.3), 0 0 0 3px #7B5CFF;transform:translateX(-13px)"></div></div>
       <div style="display:flex;justify-content:space-between;font:700 10.5px Nunito;color:#A197BC;margin-top:10px"><span>15 ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}</span><span>90 ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}</span></div>
-      <div style="margin-top:16px;padding-top:16px;border-top:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Yuxu fasiləsi', en: 'Bedtime pause', ru: 'Пауза перед сном' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Questy 20:00-da gecəniz xeyrə deyir', en: 'Questy says goodnight at 20:00', ru: 'Квести желает спокойной ночи в 20:00' })}</div></div>${EQS.ptoggle('bedtime', st.bedtime)}</div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1.5px solid #EFEAF9;display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Yuxu fasiləsi', en: 'Bedtime pause', ru: 'Пауза перед сном' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: `Axşam ${bedT} · Questy gecəniz xeyrə deyir`, en: `At ${bedT} Questy says goodnight`, ru: `В ${bedT} Квести желает спокойной ночи` })}</div></div>
+        <div class="press" onclick="EQ.cycleBedtime()" style="height:34px;padding:0 12px;border-radius:13px;background:${st.bedtime ? '#EFE7FF' : '#F4F1FA'};display:flex;align-items:center;font:800 13px 'Baloo 2';color:${st.bedtime ? '#5B3FD6' : '#A197BC'};flex:none">${bedT}</div>
+        ${EQS.ptoggle('bedtime', st.bedtime)}
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1.5px solid #EFEAF9;display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Bu gün üçün əlavə vaxt', en: 'Extra time for today', ru: 'Дополнительное время на сегодня' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${bonus > 0
+          ? TX({ az: `Bu gün: ${st.limit + bonus} dəq · yuxu ${EQ.fmtTime(EQ.bedStart())}`, en: `Today: ${st.limit + bonus} min · bedtime ${EQ.fmtTime(EQ.bedStart())}`, ru: `Сегодня: ${st.limit + bonus} мин · сон в ${EQ.fmtTime(EQ.bedStart())}` })
+          : TX({ az: 'Bir toxunuş = +15 dəqiqə, yalnız bu gün', en: 'One tap = +15 minutes, today only', ru: 'Одно нажатие = +15 минут, только сегодня' })}</div></div>
+        <div class="press" onclick="EQ.grantBonus()" style="height:36px;padding:0 13px;border-radius:14px;background:${bonus > 0 ? '#7B5CFF' : '#EFEAF9'};box-shadow:${bonus > 0 ? '0 3px 0 #5B3FD6' : 'none'};display:flex;align-items:center;font:800 12.5px Nunito;color:${bonus > 0 ? '#fff' : '#5C4E7E'};flex:none">${bonus > 0 ? `+${bonus} ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}` : `+15 ${TX({ az: 'dəq', en: 'min', ru: 'мин' })}`}</div>
+      </div>
     </div>
-    <div style="position:absolute;top:416px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+    <div style="position:absolute;top:490px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
       <div style="padding:13px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Sualları səsli oxu', en: 'Read questions aloud', ru: 'Читать вопросы вслух' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Questy hər sualı səsləndirir', en: 'Questy voices every question', ru: 'Квести озвучивает каждый вопрос' })}</div></div>${EQS.ptoggle('readAloud', st.readAloud)}</div>
       <div style="padding:13px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Daha böyük mətn', en: 'Bigger text', ru: 'Крупный текст' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Daha iri yazılar və cavablar', en: 'Larger labels and answers', ru: 'Более крупные надписи и ответы' })}</div></div>${EQS.ptoggle('bigText', st.bigText)}</div>
       <div style="padding:13px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Sakit rejim', en: 'Calm mode', ru: 'Спокойный режим' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Daha az effekt, daha yumşaq səslər', en: 'Fewer effects, softer sounds', ru: 'Меньше эффектов, мягче звуки' })}</div></div>${EQS.ptoggle('calm', st.calm)}</div>
       <div style="padding:16px 0;display:flex;align-items:center;justify-content:space-between"><div><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Musiqi', en: 'Music', ru: 'Музыка' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'Meşə mövzusu · 40%', en: 'Forest theme · 40%', ru: 'Лесная тема · 40%' })}</div></div>${EQS.ptoggle('music', st.music)}</div>
     </div>
-    <div style="position:absolute;top:700px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+    <div style="position:absolute;top:774px;left:20px;right:20px;border-radius:26px;background:#fff;padding:2px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
       <div class="press" onclick="EQ.toast(TX({az:'Bütün məlumatlar bu cihazda qalır — heç nə paylaşılmır',en:'All data stays on this device — nothing is shared',ru:'Все данные остаются на этом устройстве — ничего не передаётся'}))" style="padding:14px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 3 l8 4 v6 c0 5-3.6 7.4-8 8.6 -4.4-1.2 -8-3.6 -8-8.6 V7 Z" fill="none" stroke="#7B5CFF" stroke-width="2"></path></svg><div style="flex:1;font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Məxfilik və məlumatlar', en: 'Privacy &amp; data', ru: 'Приватность и данные' })}</div>${EQC.chevR('#A197BC', 16)}</div>
+      <div class="press" onclick="EQ.go('parent_transfer')" style="padding:14px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><rect x="4" y="2.5" width="11" height="19" rx="2.6" fill="none" stroke="#7B5CFF" stroke-width="2"></rect><path d="M17 8 h5 M19.5 5.5 L22 8 l-2.5 2.5" fill="none" stroke="#7B5CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Yeni telefona keçid', en: 'Moving to a new phone', ru: 'Переход на новый телефон' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: 'QR kod və ya fayl · server olmadan', en: 'QR code or file · no server involved', ru: 'QR-код или файл · без сервера' })}</div></div>${EQC.chevR('#A197BC', 16)}</div>
       <div class="press" onclick="EQ.toast(TX({az:'Yalnız kosmetika · uşağa heç vaxt göstərilmir',en:'Cosmetics only · never shown to the child',ru:'Только косметика · ребёнку никогда не показывается'}))" style="padding:14px 0;border-bottom:1.5px solid #EFEAF9;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3" fill="none" stroke="#7B5CFF" stroke-width="2"></rect><path d="M3 10 h18" stroke="#7B5CFF" stroke-width="2"></path></svg><div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Alışlar', en: 'Purchases', ru: 'Покупки' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: `Yalnız kosmetika · ${s.heroName} heç vaxt görmür`, en: `Cosmetics only · never shown to ${s.heroName}`, ru: `Только косметика · ${s.heroName} их не видит` })}</div></div>${EQC.chevR('#A197BC', 16)}</div>
-      <div class="press" onclick="EQ.toast(TX({az:'Bir neçə qəhrəman tezliklə gəlir 👧👦',en:'Multiple heroes are coming soon 👧👦',ru:'Несколько героев появятся скоро 👧👦'}))" style="padding:16px 0;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="none" stroke="#7B5CFF" stroke-width="2"></circle><path d="M5 20 q1.6-6 7-6 q5.4 0 7 6" fill="none" stroke="#7B5CFF" stroke-width="2" stroke-linecap="round"></path></svg><div style="flex:1;font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Başqa uşaq əlavə et', en: 'Add another child', ru: 'Добавить ещё ребёнка' })}</div>${EQC.chevR('#A197BC', 16)}</div>
+      <div class="press" onclick="EQ.go('parent_profiles')" style="padding:16px 0;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="none" stroke="#7B5CFF" stroke-width="2"></circle><path d="M5 20 q1.6-6 7-6 q5.4 0 7 6" fill="none" stroke="#7B5CFF" stroke-width="2" stroke-linecap="round"></path></svg><div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${TX({ az: 'Uşaqlar', en: 'Children', ru: 'Дети' })}</div><div style="font:700 11.5px Nunito;color:#8878A8">${EQP.ids.length > 1
+        ? TX({ az: `${EQP.ids.length} uşaq · indi ${s.heroName} oynayır`, en: `${EQP.ids.length} children · ${s.heroName} is playing now`, ru: `${EQP.ids.length} ребёнка · сейчас играет ${s.heroName}` })
+        : TX({ az: 'Başqa uşaq əlavə et — hərənin öz macərası', en: 'Add another child — each with their own adventure', ru: 'Добавить ещё ребёнка — у каждого своё приключение' })}</div></div>${EQC.chevR('#A197BC', 16)}</div>
     </div>
-    <div style="position:absolute;top:876px;left:20px;right:20px;display:flex;gap:10px;padding-bottom:120px">
+    <div style="position:absolute;top:1034px;left:20px;right:20px;display:flex;gap:10px;padding-bottom:120px">
       <div class="press" onclick="EQ.exitParent()" style="flex:1;height:52px;border-radius:18px;background:#7B5CFF;box-shadow:0 3px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 14px 'Baloo 2';color:#fff">${TX({ az: 'Macəraya qayıt', en: 'Back to the adventure', ru: 'Вернуться к приключению' })}</div>
       <div class="press" onclick="EQ.resetDemo()" style="flex:1;height:52px;border-radius:18px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;font:800 14px 'Baloo 2';color:#8878A8">${TX({ az: 'Macəranı sıfırla', en: 'Reset adventure', ru: 'Сбросить приключение' })}</div>
     </div>
     ${EQS.ptabs('settings')}
+  </div>`;
+};
+
+/* ── 29 · The children on this phone ──
+   One device, several children: each owns a full copy of the game state, so progress,
+   streaks, settings and the parent statistics never mix (js/profiles.js). Switching is
+   a grown-up action — the child never reaches this screen on their own. */
+EQS.meta.parent_profiles = { light: false };
+EQS.screens.parent_profiles = function () {
+  const kids = EQP.list();
+  const trash = `<svg width="17" height="17" viewBox="0 0 24 24"><path d="M5 7 h14 M10 7 V5 h4 v2 M7 7 l1 13 h8 l1-13" fill="none" stroke="#B49FD6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+
+  const row = (p) => {
+    const st = p.s || {};
+    const ready = !!st.onboarded;
+    const mins = EQP.weekMins(st);
+    const line = ready
+      ? TX({
+        az: `Səviyyə ${st.level || 1} · ${st.streak || 1} günlük seriya`,
+        en: `Level ${st.level || 1} · ${st.streak || 1} day streak`,
+        ru: `Уровень ${st.level || 1} · ${st.streak || 1} ${RUP(st.streak || 1, 'день', 'дня', 'дней')} подряд`
+      })
+      : TX({ az: 'Qəhrəman hələ yaradılmayıb', en: 'No hero made yet', ru: 'Герой ещё не создан' });
+    const week = ready
+      ? (mins > 0
+        ? TX({ az: `bu həftə ${EQT.fmtMin(mins)}`, en: `${EQT.fmtMin(mins)} this week`, ru: `${EQT.fmtMin(mins)} на этой неделе` })
+        : TX({ az: 'bu həftə oynamayıb', en: 'has not played this week', ru: 'на этой неделе не играл' }))
+      : TX({ az: 'toxunun və birlikdə yaradın', en: 'tap to make one together', ru: 'нажмите и создайте вместе' });
+    return `<div class="press" onclick="EQ.switchChild('${p.id}')" style="border-radius:24px;background:#fff;padding:14px;box-shadow:${p.active ? '0 0 0 2.5px #7B5CFF, 0 6px 18px -12px rgba(42,31,69,0.3)' : '0 6px 18px -12px rgba(42,31,69,0.3)'};display:flex;align-items:center;gap:13px">
+      <div style="position:relative;width:52px;height:52px;flex:none">
+        <div style="position:absolute;inset:0;border-radius:50%;background:${ready ? '#FFC24B' : '#E0D8F2'}"></div>
+        <div style="position:absolute;inset:3px;border-radius:50%;background:#FFF3DF;overflow:hidden">${EQC.hero(st.hero, 'position:absolute;left:-19px;top:-8px;width:88px')}</div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="font:800 16px 'Baloo 2';color:#2A1F45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${EQP.label(st)}</div>
+          ${p.active ? `<div style="height:20px;padding:0 8px;border-radius:8px;background:#EFE7FF;display:flex;align-items:center;font:800 9.5px Nunito;color:#5B3FD6;letter-spacing:0.4px;flex:none">${TX({ az: 'İNDİ OYNAYIR', en: 'PLAYING NOW', ru: 'ИГРАЕТ СЕЙЧАС' })}</div>` : ''}
+        </div>
+        <div style="font:700 11.5px Nunito;color:#5C4E7E;margin-top:2px">${line}</div>
+        <div style="font:700 11px Nunito;color:#A197BC;margin-top:1px">${week}</div>
+      </div>
+      ${kids.length > 1
+        ? `<div class="press" onclick="event.stopPropagation();EQ.removeChild('${p.id}')" style="width:36px;height:36px;border-radius:13px;background:#F4F1FA;display:flex;align-items:center;justify-content:center;flex:none">${trash}</div>`
+        : EQC.chevR('#C4BBD8', 16)}
+    </div>`;
+  };
+
+  const full = EQP.full();
+  return `<div class="scr vscroll" style="background:#F4F1FA">
+    <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
+      <div class="press" onclick="EQ.go('parent_settings')" style="width:42px;height:42px;border-radius:15px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 18)}</div>
+      <div style="flex:1;font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${TX({ az: 'Uşaqlar', en: 'Children', ru: 'Дети' })}</div>
+    </div>
+
+    <div style="position:absolute;top:114px;left:20px;right:20px;padding-bottom:130px">
+      <div style="border-radius:20px;background:#EFEAF9;padding:14px 16px">
+        <div style="font:700 12px Nunito;color:#5C4E7E;line-height:1.55">${TX({
+          az: 'Hər uşağın öz macərası, seriyası və statistikası var — heç biri qarışmır. Bir toxunuş oynayanı dəyişir; valideyn səhifələri də həmin uşağı göstərir.',
+          en: 'Every child has their own adventure, streak and statistics — nothing is mixed. One tap changes who is playing, and the parent pages follow that child.',
+          ru: 'У каждого ребёнка своё приключение, своя серия и своя статистика — ничего не смешивается. Одно нажатие меняет играющего, и родительские страницы показывают именно его.'
+        })}</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">${kids.map(row).join('')}</div>
+
+      <div class="press" onclick="EQ.addChild()" style="margin-top:14px;height:56px;border-radius:20px;background:${full ? '#EFEAF9' : '#fff'};box-shadow:${full ? 'none' : '0 3px 0 #E0D8F2'};display:flex;align-items:center;justify-content:center;gap:9px;font:800 14.5px 'Baloo 2';color:${full ? '#A197BC' : '#5B3FD6'}">
+        ${full ? '' : `<svg width="19" height="19" viewBox="0 0 24 24"><path d="M12 5 v14 M5 12 h14" stroke="#5B3FD6" stroke-width="2.6" stroke-linecap="round"></path></svg>`}
+        ${full
+          ? TX({ az: `Bu cihazda ən çoxu ${EQP_MAX} uşaq`, en: `Up to ${EQP_MAX} children on one device`, ru: `До ${EQP_MAX} детей на одном устройстве` })
+          : TX({ az: 'Başqa uşaq əlavə et', en: 'Add another child', ru: 'Добавить ещё ребёнка' })}
+      </div>
+
+      <div style="margin-top:12px;font:700 11.5px Nunito;color:#A197BC;line-height:1.5;text-align:center">${TX({
+        az: 'Uşağı silmək onun bütün irəliləyişini bu cihazdan silir. Əvvəlcə “Yeni telefona keçid” ilə nüsxə saxlaya bilərsiniz.',
+        en: 'Removing a child erases all of their progress from this device. You can keep a copy first with “Moving to a new phone”.',
+        ru: 'Удаление ребёнка стирает весь его прогресс с этого устройства. Сначала можно сохранить копию через «Переход на новый телефон».'
+      })}</div>
+    </div>
+    ${EQS.ptabs('settings')}
+  </div>`;
+};
+
+/* ── 30–32 · Moving to another phone ──
+   The whole app keeps its promise here: no account, no server, no upload. The grown-up
+   is the transport — a QR code the new phone's camera opens, or a file they save and
+   send themselves. Both are made on the device and go only where the parent sends them. */
+
+/* one row in the transfer lists */
+EQS.xrow = function (opts) {
+  const last = opts.last ? '' : 'border-bottom:1.5px solid #EFEAF9;';
+  return `<div class="press" onclick="${opts.tap}" style="padding:15px 0;${last}display:flex;align-items:center;gap:12px">
+    <div style="width:38px;height:38px;border-radius:14px;background:${opts.tint || '#EFE7FF'};display:flex;align-items:center;justify-content:center;flex:none">${opts.icon}</div>
+    <div style="flex:1"><div style="font:800 13.5px Nunito;color:#2A1F45">${opts.title}</div><div style="font:700 11.5px Nunito;color:#8878A8;line-height:1.45">${opts.sub}</div></div>
+    ${EQC.chevR('#A197BC', 16)}
+  </div>`;
+};
+
+EQS.meta.parent_transfer = { light: false };
+EQS.screens.parent_transfer = function (s) {
+  const kids = EQP.ids.length;
+  const qrIcon = `<svg width="20" height="20" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6" fill="none" stroke="#7B5CFF" stroke-width="2"></rect><rect x="14" y="3" width="7" height="7" rx="1.6" fill="none" stroke="#7B5CFF" stroke-width="2"></rect><rect x="3" y="14" width="7" height="7" rx="1.6" fill="none" stroke="#7B5CFF" stroke-width="2"></rect><rect x="14.5" y="14.5" width="3" height="3" fill="#7B5CFF"></rect><rect x="19" y="19" width="3" height="3" fill="#7B5CFF"></rect></svg>`;
+  const fileIcon = `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 3 h8 l4 4 v14 H6 Z" fill="none" stroke="#2A9455" stroke-width="2" stroke-linejoin="round"></path><path d="M12 10 v7 M9 14 l3 3 3-3" fill="none" stroke="#2A9455" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+  const inIcon = `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 3 h8 l4 4 v14 H6 Z" fill="none" stroke="#C9762F" stroke-width="2" stroke-linejoin="round"></path><path d="M12 17 v-7 M9 13 l3-3 3 3" fill="none" stroke="#C9762F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+  return `<div class="scr vscroll" style="background:#F4F1FA">
+    <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
+      <div class="press" onclick="EQ.go('parent_settings')" style="width:42px;height:42px;border-radius:15px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 18)}</div>
+      <div style="flex:1;font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${TX({ az: 'Yeni telefona keçid', en: 'Moving to a new phone', ru: 'Переход на новый телефон' })}</div>
+    </div>
+
+    <div style="position:absolute;top:114px;left:20px;right:20px;border-radius:26px;background:#2C1F52;padding:18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.5)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" style="flex:none"><path d="M12 3 l8 4 v6 c0 5-3.6 7.4-8 8.6 -4.4-1.2 -8-3.6 -8-8.6 V7 Z" fill="none" stroke="#C8B4FF" stroke-width="2"></path></svg>
+        <div style="font:800 15px 'Baloo 2';color:#fff">${TX({ az: 'Serverimiz yoxdur', en: 'We have no server', ru: 'У нас нет сервера' })}</div>
+      </div>
+      <div style="font:700 12.5px Nunito;color:#A896E0;line-height:1.55;margin-top:9px">${TX({
+        az: 'Macəra yalnız bu telefonda saxlanılır — buludda nüsxəsi yoxdur. Ona görə köçürməni özünüz edirsiniz: kod və ya fayl yalnız sizin göndərdiyiniz yerə gedir.',
+        en: 'The adventure lives on this phone only — there is no copy in a cloud. So you move it yourself: the code or the file goes nowhere except where you send it.',
+        ru: 'Приключение хранится только на этом телефоне — копии в облаке нет. Поэтому перенос делаете вы сами: код или файл попадёт только туда, куда вы его отправите.'
+      })}</div>
+    </div>
+
+    <div style="position:absolute;top:288px;left:20px;right:20px;border-radius:26px;background:#fff;padding:4px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+      <div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.4px;padding:14px 0 2px">${TX({ az: 'BU TELEFONDAN GÖNDƏR', en: 'SEND FROM THIS PHONE', ru: 'ОТПРАВИТЬ С ЭТОГО ТЕЛЕФОНА' })}</div>
+      ${EQS.xrow({
+        tap: 'EQ.showCode()', icon: qrIcon,
+        title: TX({ az: 'QR kod göstər', en: 'Show a QR code', ru: 'Показать QR-код' }),
+        sub: TX({ az: 'Bir uşaq · yeni telefonun kamerası ilə oxunur', en: 'One child · read with the new phone’s camera', ru: 'Один ребёнок · читается камерой нового телефона' })
+      })}
+      ${EQS.xrow({
+        tap: 'EQ.saveFile()', icon: fileIcon, tint: '#E8FBF1', last: true,
+        title: TX({ az: 'Fayl olaraq saxla', en: 'Save as a file', ru: 'Сохранить файлом' }),
+        sub: TX({
+          az: `${kids > 1 ? `Bütün ${kids} uşaq` : 'Bütün məlumat'} · tam tarixçə ilə`,
+          en: `${kids > 1 ? `All ${kids} children` : 'Everything'} · with the full history`,
+          ru: `${kids > 1 ? `Все ${kids} ребёнка` : 'Все данные'} · с полной историей`
+        })
+      })}
+    </div>
+
+    <div style="position:absolute;top:472px;left:20px;right:20px;border-radius:26px;background:#fff;padding:4px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+      <div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.4px;padding:14px 0 2px">${TX({ az: 'BU TELEFONA GƏTİR', en: 'BRING ONTO THIS PHONE', ru: 'ПЕРЕНЕСТИ НА ЭТОТ ТЕЛЕФОН' })}</div>
+      ${EQS.xrow({
+        tap: 'EQ.pickFile()', icon: inIcon, tint: '#FFF3D6', last: true,
+        title: TX({ az: 'Fayldan bərpa et', en: 'Restore from a file', ru: 'Восстановить из файла' }),
+        sub: TX({ az: 'Köhnə telefonda saxladığınız faylı seçin', en: 'Pick the file you saved on the old phone', ru: 'Выберите файл, сохранённый на старом телефоне' })
+      })}
+    </div>
+
+    <div style="position:absolute;top:610px;left:20px;right:20px;border-radius:20px;background:#EFEAF9;padding:14px 16px">
+      <div style="font:700 12px Nunito;color:#5C4E7E;line-height:1.55">${TX({
+        az: 'QR kodu köhnə telefonun ekranında qalır, fayl isə sizin seçdiyiniz yerdə. Köçürmədən sonra köhnə telefonda “Macəranı sıfırla” ilə məlumatı silə bilərsiniz.',
+        en: 'The QR code stays on the old phone’s screen and the file stays wherever you put it. Once the move is done you can wipe the old phone with “Reset adventure”.',
+        ru: 'QR-код остаётся на экране старого телефона, а файл — там, куда вы его сохранили. После переноса старый телефон можно очистить через «Сбросить приключение».'
+      })}</div>
+    </div>
+    ${EQS.ptabs('settings')}
+  </div>`;
+};
+
+/* 31 · The code itself — drawn here, scanned by the other phone's own camera app */
+EQS.meta.parent_code = { light: false };
+EQS.screens.parent_code = function (s) {
+  const code = EQ.session.code;
+  if (!code) return EQS.screens.parent_transfer(s);
+  const kid = EQP.peek(code.id);
+  const name = EQP.label(kid);
+  const qr = EQQR.svg(code.url, { px: 302, quiet: 2, fg: '#241A3F', bg: '#fff', style: 'display:block' })
+    || `<div style="width:302px;padding:40px 16px;font:700 12.5px Nunito;color:#8878A8;line-height:1.55">${TX({ az: 'Bu macəra kod üçün çox böyükdür — fayl ilə köçürün.', en: 'This adventure is too big for a code — move it with the file instead.', ru: 'Это приключение слишком велико для кода — перенесите его файлом.' })}</div>`;
+  const chip = p => `<div class="press" onclick="EQ.showCode('${p.id}')" style="height:34px;padding:0 14px;border-radius:13px;background:${p.id === code.id ? '#7B5CFF' : '#fff'};box-shadow:${p.id === code.id ? '0 3px 0 #5B3FD6' : '0 2px 0 #E0D8F2'};display:flex;align-items:center;font:800 12.5px Nunito;color:${p.id === code.id ? '#fff' : '#5C4E7E'};flex:none">${EQP.label(p.s)}</div>`;
+  const picker = EQP.ids.length > 1
+    ? `<div style="position:absolute;top:110px;left:20px;right:20px;display:flex;gap:8px;overflow-x:auto">${EQP.list().map(chip).join('')}</div>`
+    : '';
+  const top = EQP.ids.length > 1 ? 158 : 118;
+  const carries = code.all
+    ? TX({ az: 'Bütün irəliləyiş və tam tarixçə', en: 'All progress and the full history', ru: 'Весь прогресс и вся история' })
+    : TX({
+      az: `Bütün irəliləyiş · statistikanın son ${code.days} günü`,
+      en: `All progress · the last ${code.days} days of statistics`,
+      ru: `Весь прогресс · последние ${code.days} ${RUP(code.days, 'день', 'дня', 'дней')} статистики`
+    });
+  return `<div class="scr vscroll" style="background:#F4F1FA">
+    <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
+      <div class="press" onclick="EQ.go('parent_transfer')" style="width:42px;height:42px;border-radius:15px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 18)}</div>
+      <div style="flex:1;font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${TX({ az: 'Köçürmə kodu', en: 'Transfer code', ru: 'Код переноса' })}</div>
+    </div>
+    ${picker}
+    <div style="position:absolute;top:${top}px;left:20px;right:20px;border-radius:28px;background:#fff;padding:16px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3);text-align:center">
+      <div style="font:800 16px 'Baloo 2';color:#2A1F45">${name}</div>
+      <div style="font:700 11.5px Nunito;color:#8878A8;margin-top:3px">${carries}</div>
+      <div style="display:flex;justify-content:center;margin-top:12px">${qr}</div>
+    </div>
+    <div style="position:absolute;top:${top + 400}px;left:20px;right:20px;border-radius:24px;background:#fff;padding:16px 18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+      <div style="font:800 14px 'Baloo 2';color:#2A1F45">${TX({ az: 'Yeni telefonda', en: 'On the new phone', ru: 'На новом телефоне' })}</div>
+      <div style="font:700 12.5px Nunito;color:#5C4E7E;line-height:1.65;margin-top:8px">${TX({
+        az: '1. Kamera tətbiqini açın və bu koda tutun.<br>2. Çıxan linkə toxunun — EduQuest açılacaq.<br>3. Böyüklər yoxlamasından keçin və “Gətir”ə basın.',
+        en: '1. Open the camera app and point it at this code.<br>2. Tap the link that appears — EduQuest opens.<br>3. Pass the grown-up check and tap “Bring it in”.',
+        ru: '1. Откройте камеру и наведите её на этот код.<br>2. Нажмите появившуюся ссылку — откроется EduQuest.<br>3. Пройдите проверку для взрослых и нажмите «Перенести».'
+      })}</div>
+    </div>
+    <div style="position:absolute;top:${top + 540}px;left:20px;right:20px;display:flex;gap:10px;padding-bottom:130px">
+      <div class="press" onclick="EQ.copyCode()" style="flex:1;height:50px;border-radius:18px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;font:800 13.5px 'Baloo 2';color:#5C4E7E">${TX({ az: 'Linki kopyala', en: 'Copy the link', ru: 'Скопировать ссылку' })}</div>
+      <div class="press" onclick="EQ.go('parent_transfer')" style="flex:1;height:50px;border-radius:18px;background:#7B5CFF;box-shadow:0 3px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 13.5px 'Baloo 2';color:#fff">${TX({ az: 'Hazırdır', en: 'Done', ru: 'Готово' })}</div>
+    </div>
+  </div>`;
+};
+
+/* 32 · What arrived, and what it will do to this phone — nothing is written before this */
+/* a date that reads the same in all three languages */
+EQS.xdate = function (d) {
+  return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+};
+
+EQS.meta.parent_import = { light: false };
+EQS.screens.parent_import = function (s) {
+  const inc = EQ.session.inbox;
+  if (!inc) return EQS.screens.parent_transfer(s);
+  const stat = (v, l) => `<div style="flex:1;text-align:center"><div style="font:800 21px 'Baloo 2';color:#2A1F45">${v}</div><div style="font:700 10px Nunito;color:#8878A8;margin-top:2px">${l}</div></div>`;
+  const heads = inc.list.map(x => x.name).join(', ');
+  const first = inc.list[0];
+  const what = inc.kind === 'file'
+    ? TX({
+      az: `Bu telefondakı bütün macəralar əvəz olunacaq və ${inc.list.length > 1 ? `${inc.list.length} uşaq` : heads} bərpa ediləcək.`,
+      en: `Everything on this phone will be replaced by ${inc.list.length > 1 ? `these ${inc.list.length} children` : heads}.`,
+      ru: `Все приключения на этом телефоне будут заменены: ${inc.list.length > 1 ? `${inc.list.length} ребёнка` : heads}.`
+    })
+    : {
+      fresh: TX({ az: `${heads} bu telefonda macəraya davam edəcək.`, en: `${heads} will carry on the adventure on this phone.`, ru: `${heads} продолжит приключение на этом телефоне.` }),
+      same: TX({ az: `${heads} bu telefonda artıq var — irəliləyiş gələn nüsxə ilə əvəz olunacaq.`, en: `${heads} is already on this phone — that progress will be replaced by the one arriving.`, ru: `${heads} уже есть на этом телефоне — прогресс будет заменён на переносимый.` }),
+      new: TX({ az: `${heads} bu telefona yeni uşaq kimi əlavə olunacaq. Mövcud macəralara toxunulmur.`, en: `${heads} will be added as another child. The adventures already here are left alone.`, ru: `${heads} будет добавлен как ещё один ребёнок. Уже существующие приключения не изменятся.` }),
+      full: TX({ az: `Bu telefonda artıq ${EQP_MAX} uşaq var. Əvvəlcə birini silin.`, en: `This phone already has ${EQP_MAX} children. Remove one first.`, ru: `На этом телефоне уже ${EQP_MAX} ребёнка. Сначала удалите одного.` })
+    }[inc.plan.mode];
+  const blocked = inc.kind === 'code' && inc.plan.mode === 'full';
+  const made = inc.made ? new Date(inc.made) : null;
+  /* the card grows with each child it lists, so the two blocks below follow it down */
+  const cardEnd = 114 + (inc.list.length > 1 ? 121 + inc.list.length * 27 : 157);
+  return `<div class="scr vscroll" style="background:#F4F1FA">
+    <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
+      <div class="press" onclick="EQ.dropImport()" style="width:42px;height:42px;border-radius:15px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 18)}</div>
+      <div style="flex:1;font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${TX({ az: 'Macəra gəldi', en: 'An adventure arrived', ru: 'Приключение получено' })}</div>
+    </div>
+
+    <div style="position:absolute;top:114px;left:20px;right:20px;border-radius:28px;background:#fff;padding:18px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
+      <div style="display:flex;align-items:center;gap:13px">
+        <div style="width:54px;height:54px;border-radius:20px;background:#EFE7FF;display:flex;align-items:center;justify-content:center;flex:none;font:800 22px 'Baloo 2';color:#5B3FD6">${heads.slice(0, 1).toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font:800 18px 'Baloo 2';color:#2A1F45">${heads}</div>
+          <div style="font:700 11.5px Nunito;color:#8878A8">${inc.kind === 'file'
+            ? TX({ az: 'Fayldan · tam tarixçə', en: 'From a file · full history', ru: 'Из файла · полная история' })
+            : TX({ az: 'QR koddan', en: 'From a QR code', ru: 'Из QR-кода' })}${made ? ' · ' + EQS.xdate(made) : ''}</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:15px;border-top:1.5px solid #EFEAF9">${inc.list.length > 1
+        ? inc.list.map(x => `<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0">
+            <div style="flex:1;font:800 13.5px Nunito;color:#2A1F45">${x.name}</div>
+            <div style="font:700 11.5px Nunito;color:#8878A8">${TX({ az: `${x.level}. səviyyə · ${x.days} gün`, en: `Level ${x.level} · ${x.days} days`, ru: `${x.level} уровень · ${x.days} ${RUP(x.days, 'день', 'дня', 'дней')}` })}</div>
+          </div>`).join('')
+        : `<div style="display:flex">
+            ${stat(TX({ az: `${first.level}. səviyyə`, en: `Level ${first.level}`, ru: `${first.level} уровень` }), TX({ az: 'qəhrəman', en: 'hero', ru: 'герой' }))}
+            ${stat(first.streak, TX({ az: 'günlük seriya', en: 'day streak', ru: 'дней подряд' }))}
+            ${stat(first.days, TX({ az: 'gün statistika', en: 'days of stats', ru: 'дней статистики' }))}
+          </div>`}</div>
+    </div>
+
+    <div style="position:absolute;top:${cardEnd + 16}px;left:20px;right:20px;padding-bottom:60px">
+      <div style="border-radius:24px;background:${blocked ? '#FFEDE6' : '#EFEAF9'};padding:15px 17px">
+        <div style="font:800 13px 'Baloo 2';color:${blocked ? '#B4421F' : '#2A1F45'}">${TX({ az: 'Nə baş verəcək', en: 'What will happen', ru: 'Что произойдёт' })}</div>
+        <div style="font:700 12.5px Nunito;color:${blocked ? '#B4421F' : '#5C4E7E'};line-height:1.55;margin-top:6px">${what}</div>
+      </div>
+      ${blocked ? '' : `<div class="press" onclick="EQ.applyImport()" style="margin-top:22px;height:56px;border-radius:20px;background:#3DBE6E;box-shadow:0 4px 0 #2A9455;display:flex;align-items:center;justify-content:center;font:800 16px 'Baloo 2';color:#fff">${TX({ az: 'Gətir', en: 'Bring it in', ru: 'Перенести' })}</div>`}
+      <div class="press" onclick="EQ.dropImport()" style="margin-top:10px;height:52px;border-radius:20px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;font:800 14px 'Baloo 2';color:#8878A8">${TX({ az: 'İmtina et', en: 'Not now', ru: 'Не сейчас' })}</div>
+    </div>
   </div>`;
 };

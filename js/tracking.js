@@ -133,6 +133,7 @@ const EQT = {
     if (dt <= 0 || dt > 90) return; /* idle / suspended gap — don't count it */
     const scr = EQ.current || '';
     if (scr.indexOf('parent') === 0) return; /* grown-up time is not play time */
+    if (scr === 'restday') return;            /* the pause screen never adds to the limit */
     const d = this.day();
     d.secs += dt;
     if (scr === 'challenge' || scr === 'hint' || scr === 'tutor' || scr === 'success') d.secsQ += dt;

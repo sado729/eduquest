@@ -1,5 +1,5 @@
 /* EduQuest — service worker: full offline app shell */
-const CACHE = 'eduquest-v10';
+const CACHE = 'eduquest-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,9 @@ const ASSETS = [
   './js/components.js',
   './js/data.js',
   './js/tracking.js',
+  './js/profiles.js',
+  './js/qr.js',
+  './js/transfer.js',
   './js/screens-onboarding.js',
   './js/screens-world.js',
   './js/screens-play.js',
