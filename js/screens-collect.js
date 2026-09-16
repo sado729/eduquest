@@ -39,7 +39,7 @@ EQS.screens.wardrobe = function (s) {
         <div style="font:800 12px 'Baloo 2';color:#2A1F45;margin-top:4px">${hh.name}</div>
         <div style="display:inline-flex;align-items:center;gap:4px;margin-top:2px;padding:2px 8px;border-radius:9px;background:#FFF3D6">${EQC.coin(12)}<span style="font:800 10px Nunito;color:#8A5A0A">${hh.price}</span></div>
       </div>`;
-      return `<div class="press" onclick="EQ.toast(TX({az:'Sehrbaz Papağını qazanmaq üçün Riyaziyyat Əjdahasını məğlub et! 🐉',en:'Beat the Math Dragon to earn the Wizard Hat! 🐉',ru:'Победи Дракона Математики, чтобы получить Шляпу Волшебника! 🐉'}))" style="${cardLock}">
+      return `<div class="press" onclick="EQ.toast(TX({az:'Sehrbaz Papağını qazanmaq üçün mərhələnin bossunu məğlub et! 🐉',en:'Beat the stage boss to earn the Wizard Hat! 🐉',ru:'Победи босса этапа, чтобы получить Шляпу Волшебника! 🐉'}))" style="${cardLock}">
         <div style="opacity:0.4">${hatIcon[hh.key]}</div>
         <div style="font:800 12px 'Baloo 2';color:#8878A8;margin-top:4px">${hh.name}</div>
         <div style="font:700 10px Nunito;color:#A197BC">${hh.lockNote}</div>

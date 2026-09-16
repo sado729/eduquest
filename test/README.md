@@ -4,9 +4,10 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test          # both suites
-npm run test:rest # just one
+npm test              # all three suites
+npm run test:rest     # just one
 npm run test:i18n
+npm run test:chapters
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -47,3 +48,34 @@ Two halves:
    (azerbaijani ablative by vowel harmony — 6 → `altıdan`, 7 → `yeddidən`), `UPC`
    (dotted `İ` in az), and `TX`/`EQI.deep` resolution — `deep` must localize leaves while
    leaving answer arrays and visual-builder functions intact.
+
+## chapters.js — the chapter structure (3 stages = 1 chapter)
+
+Guards the story spine. The chapter framing used to be three hardcoded strings — the
+details screen said `FƏSİL 2 / 3` no matter which stage the child was actually on. It is
+now derived from `questDay` by `EQD.chapterAt()`, and every screen (details, story,
+quest, map, boss, victory) reads its names, its beats and its boss out of
+`EQD.CHAPTERS`. Chapters cycle when the list runs out, but the chapter *number* keeps
+climbing, so stage 9 is "chapter 4" rather than a reset to 1.
+
+Two things break silently here:
+
+1. **The shape.** A chapter finale is the longer fight — 6 knowledge hits, not 4 — so
+   the generated boss question pool has to hold at least six. Shorten it back to four
+   and the sixth hit reuses or crashes on a missing question, with nothing in the UI to
+   say so. The suite asserts pool depth ≥ boss hits for every stage of every chapter,
+   including the hand-authored day 0 set.
+2. **The content.** Each chapter needs a guardian *and* a finale, one beat per stage,
+   every trilingual label both bosses use, and the arena colours the boss screen reads.
+   A chapter added without a finale would quietly fall back to its guardian and that
+   chapter would simply never feel like it ended.
+
+The last half drives the real `EQ.answer()` / `EQ.nextStage()` through two whole
+chapters — the state machine itself, not a reimplementation — asserting that stages 1–2
+take four hits, stage 3 takes six, that clearing a finale rolls into the next chapter,
+and that a finale pays the larger purse. It also renders all six chapter-facing screens
+at every stage position in az/en/ru and fails on any `undefined` / `[object Object]` /
+`NaN` reaching the markup.
+
+Since the chapter text is ~150 new inline `{az,en,ru}` objects, `i18n.js` covers their
+completeness; this suite covers whether the right one is chosen.

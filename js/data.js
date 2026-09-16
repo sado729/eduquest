@@ -427,6 +427,164 @@ EQD.THEMES = [
   }
 ];
 
+/* ── chapters ──
+   A chapter is 3 stages. Stages 1–2 close with the chapter's ordinary guardian;
+   stage 3 closes with the chapter finale — a named boss with its own arena, its
+   own colours and a longer fight (6 hits instead of 4). Chapters loop, so a child
+   who plays past the last one starts the cycle again with the numbering carried on. */
+EQD.STAGES_PER_CHAPTER = 3;
+
+EQD.CHAPTERS = [
+  {
+    id: 'forest',
+    region: { az: 'BİLİK MEŞƏSİ', en: 'KNOWLEDGE FOREST', ru: 'ЛЕС ЗНАНИЙ' },
+    name: { az: 'Pıçıldayan Meşəlik', en: 'The Whispering Grove', ru: 'Шепчущая Роща' },
+    title: { az: 'İtmiş Bilik Kristalı', en: 'The Missing Knowledge Crystal', ru: 'Пропавший Кристалл Знаний' },
+    /* Questy's line on the details screen */
+    hook: {
+      az: '«Kristal dünən gecə yoxa çıxdı. Onsuz ağaclar böyüməyi unudur — onu evə qaytarmalıyıq.»',
+      en: '"The crystal vanished last night. Without it the trees forget how to grow — we have to bring it home."',
+      ru: '«Кристалл исчез прошлой ночью. Без него деревья забывают, как расти, — мы должны вернуть его домой.»'
+    },
+    mission: { az: 'Kristalı tap və meşəni oyat', en: 'Find the crystal and wake the forest', ru: 'Найди кристалл и разбуди лес' },
+    /* the ordinary guardian of stages 1–2 */
+    guardian: {
+      name: { az: 'Riyaziyyat Əjdahası', en: 'Math Dragon', ru: 'Дракон Математики' },
+      role: { az: 'KÖRPÜNÜN KEŞİKÇİSİ', en: 'GUARDIAN OF THE BRIDGE', ru: 'ХРАНИТЕЛЬ МОСТА' },
+      awaits: { az: 'Riyaziyyat Əjdahası gözləyir', en: 'The Math Dragon awaits', ru: 'Дракон Математики ждёт' },
+      face: { az: 'Riyaziyyat Əjdahası ilə üzləş', en: 'Face the Math Dragon', ru: 'Сразись с Драконом Математики' },
+      befriended: { az: 'Riyaziyyat Əjdahası artıq sənin dostundur', en: 'The Math Dragon is your friend now', ru: 'Дракон Математики теперь твой друг' },
+      done: { az: 'Riyaziyyat Əjdahası ilə dost olduq', en: 'The Math Dragon befriended', ru: 'Дракон Математики стал другом' },
+      banner: { az: 'KÖRPÜ AÇIQDIR', en: 'BRIDGE OPEN', ru: 'МОСТ ОТКРЫТ' },
+      badge: { az: 'Körpü Keşikçisi', en: 'Bridge Keeper', ru: 'Хранитель Моста' },
+      badgeNote: { az: 'Bilik Meşəsində boss məğlub edildi', en: 'Boss cleared in Knowledge Forest', ru: 'Босс Леса Знаний побеждён' },
+      hits: 4, sky: '#2A1B4A', floor: '#1E1338', glow: 'rgba(255,138,76,0.30)', accent: '#FF8A4C', accentSoft: '#FFB08A'
+    },
+    /* the chapter finale — stage 3 only */
+    finale: {
+      name: { az: 'Kristal Kölgəsi', en: 'The Crystal Shade', ru: 'Кристальная Тень' },
+      role: { az: 'FƏSLİN FİNALI · KRİSTALI OĞURLAYAN', en: 'CHAPTER FINALE · THE CRYSTAL THIEF', ru: 'ФИНАЛ ГЛАВЫ · ПОХИТИТЕЛЬ КРИСТАЛЛА' },
+      awaits: { az: 'Kristal Kölgəsi fəslin sonunda gözləyir', en: 'The Crystal Shade awaits at the chapter’s end', ru: 'Кристальная Тень ждёт в конце главы' },
+      face: { az: 'Kristal Kölgəsi ilə üzləş', en: 'Face the Crystal Shade', ru: 'Сразись с Кристальной Тенью' },
+      befriended: { az: 'Kölgə dağıldı — kristal evinə döndü', en: 'The Shade is undone — the crystal is home', ru: 'Тень рассеялась — кристалл вернулся домой' },
+      done: { az: 'Kristal Kölgəsi məğlub edildi', en: 'The Crystal Shade defeated', ru: 'Кристальная Тень побеждена' },
+      banner: { az: 'FƏSİL TAMAMLANDI', en: 'CHAPTER COMPLETE', ru: 'ГЛАВА ЗАВЕРШЕНА' },
+      badge: { az: 'Kristal Qoruyucusu', en: 'Crystal Keeper', ru: 'Хранитель Кристалла' },
+      badgeNote: { az: 'Pıçıldayan Meşəlik fəsli tamamlandı', en: 'The Whispering Grove chapter complete', ru: 'Глава «Шепчущая Роща» завершена' },
+      hits: 6, sky: '#241033', floor: '#180B24', glow: 'rgba(123,92,255,0.34)', accent: '#9B7CFF', accentSoft: '#C8B4FF'
+    },
+    /* the three stage beats, shown on details as steps 1–3 of the chapter */
+    beats: [
+      { az: 'İşıldaquş izini izlə', en: 'Follow the firefly trail', ru: 'Иди по следу светлячков' },
+      { az: 'Əjdahanın körpüsündən keç', en: 'Cross the dragon’s bridge', ru: 'Перейди мост дракона' },
+      { az: 'Kölgəni postamentdə qarşıla', en: 'Meet the Shade at the pedestal', ru: 'Встреть Тень у пьедестала' }
+    ]
+  },
+  {
+    id: 'river',
+    region: { az: 'BİLİK MEŞƏSİ', en: 'KNOWLEDGE FOREST', ru: 'ЛЕС ЗНАНИЙ' },
+    name: { az: 'Oxuyan Çay', en: 'The Singing River', ru: 'Поющая Река' },
+    title: { az: 'Susmuş Suların Sirri', en: 'The Secret of the Silent Water', ru: 'Тайна Умолкшей Воды' },
+    hook: {
+      az: '«Çay həmişə oxuyurdu. İndi isə səssizdir — kimsə mahnını daşların altında gizlədib.»',
+      en: '"The river always sang. Now it is silent — someone hid the song under the stones."',
+      ru: '«Река всегда пела. Теперь она молчит — кто-то спрятал песню под камнями.»'
+    },
+    mission: { az: 'Daşları aç və çayın mahnısını qaytar', en: 'Free the stones and return the river’s song', ru: 'Освободи камни и верни песню реки' },
+    guardian: {
+      name: { az: 'Daş Kirpisi', en: 'The Stone Urchin', ru: 'Каменный Ёж' },
+      role: { az: 'AYRIMIN KEŞİKÇİSİ', en: 'GUARDIAN OF THE FORD', ru: 'ХРАНИТЕЛЬ БРОДА' },
+      awaits: { az: 'Daş Kirpisi gözləyir', en: 'The Stone Urchin awaits', ru: 'Каменный Ёж ждёт' },
+      face: { az: 'Daş Kirpisi ilə üzləş', en: 'Face the Stone Urchin', ru: 'Сразись с Каменным Ежом' },
+      befriended: { az: 'Daş Kirpisi artıq sənin dostundur', en: 'The Stone Urchin is your friend now', ru: 'Каменный Ёж теперь твой друг' },
+      done: { az: 'Daş Kirpisi ilə dost olduq', en: 'The Stone Urchin befriended', ru: 'Каменный Ёж стал другом' },
+      banner: { az: 'AYRIM AÇIQDIR', en: 'FORD OPEN', ru: 'БРОД ОТКРЫТ' },
+      badge: { az: 'Ayrım Keşikçisi', en: 'Ford Keeper', ru: 'Хранитель Брода' },
+      badgeNote: { az: 'Oxuyan Çayda boss məğlub edildi', en: 'Boss cleared at the Singing River', ru: 'Босс Поющей Реки побеждён' },
+      hits: 4, sky: '#12303A', floor: '#0C222A', glow: 'rgba(69,198,240,0.30)', accent: '#45C6F0', accentSoft: '#8FDCF7'
+    },
+    finale: {
+      name: { az: 'Sükut Burulğanı', en: 'The Hush Whirlpool', ru: 'Водоворот Тишины' },
+      role: { az: 'FƏSLİN FİNALI · MAHNINI UDAN', en: 'CHAPTER FINALE · SWALLOWER OF SONGS', ru: 'ФИНАЛ ГЛАВЫ · ПОГЛОТИТЕЛЬ ПЕСЕН' },
+      awaits: { az: 'Sükut Burulğanı fəslin sonunda gözləyir', en: 'The Hush Whirlpool awaits at the chapter’s end', ru: 'Водоворот Тишины ждёт в конце главы' },
+      face: { az: 'Sükut Burulğanı ilə üzləş', en: 'Face the Hush Whirlpool', ru: 'Сразись с Водоворотом Тишины' },
+      befriended: { az: 'Burulğan sakitləşdi — çay yenidən oxuyur', en: 'The whirlpool is calm — the river sings again', ru: 'Водоворот утих — река снова поёт' },
+      done: { az: 'Sükut Burulğanı məğlub edildi', en: 'The Hush Whirlpool defeated', ru: 'Водоворот Тишины побеждён' },
+      banner: { az: 'FƏSİL TAMAMLANDI', en: 'CHAPTER COMPLETE', ru: 'ГЛАВА ЗАВЕРШЕНА' },
+      badge: { az: 'Mahnı Qoruyucusu', en: 'Song Keeper', ru: 'Хранитель Песни' },
+      badgeNote: { az: 'Oxuyan Çay fəsli tamamlandı', en: 'The Singing River chapter complete', ru: 'Глава «Поющая Река» завершена' },
+      hits: 6, sky: '#0B2A38', floor: '#071C26', glow: 'rgba(92,227,155,0.32)', accent: '#5CE39B', accentSoft: '#8FE0B6'
+    },
+    beats: [
+      { az: 'Sahil boyu daşları say', en: 'Count the stones along the bank', ru: 'Сосчитай камни вдоль берега' },
+      { az: 'Kirpinin ayrımından keç', en: 'Cross the urchin’s ford', ru: 'Перейди брод ежа' },
+      { az: 'Burulğanın mərkəzinə en', en: 'Descend into the whirlpool’s heart', ru: 'Спустись в сердце водоворота' }
+    ]
+  },
+  {
+    id: 'sky',
+    region: { az: 'BİLİK MEŞƏSİ', en: 'KNOWLEDGE FOREST', ru: 'ЛЕС ЗНАНИЙ' },
+    name: { az: 'Göy Qurşağı Zirvəsi', en: 'The Rainbow Ridge', ru: 'Радужный Хребет' },
+    title: { az: 'Düşən Ulduzun İzi', en: 'The Trail of the Fallen Star', ru: 'След Упавшей Звезды' },
+    hook: {
+      az: '«Bir ulduz zirvənin arxasına düşdü. Onu tapmasaq, gecə xəritəsi əskik qalacaq.»',
+      en: '"A star fell behind the ridge. If we do not find it, the night map stays incomplete."',
+      ru: '«За хребтом упала звезда. Если мы её не найдём, ночная карта останется неполной.»'
+    },
+    mission: { az: 'Ulduzu tap və gecə xəritəsini tamamla', en: 'Find the star and complete the night map', ru: 'Найди звезду и заверши ночную карту' },
+    guardian: {
+      name: { az: 'Bulud Keşikçisi', en: 'The Cloud Warden', ru: 'Облачный Страж' },
+      role: { az: 'ZİRVƏNİN KEŞİKÇİSİ', en: 'GUARDIAN OF THE RIDGE', ru: 'ХРАНИТЕЛЬ ХРЕБТА' },
+      awaits: { az: 'Bulud Keşikçisi gözləyir', en: 'The Cloud Warden awaits', ru: 'Облачный Страж ждёт' },
+      face: { az: 'Bulud Keşikçisi ilə üzləş', en: 'Face the Cloud Warden', ru: 'Сразись с Облачным Стражем' },
+      befriended: { az: 'Bulud Keşikçisi artıq sənin dostundur', en: 'The Cloud Warden is your friend now', ru: 'Облачный Страж теперь твой друг' },
+      done: { az: 'Bulud Keşikçisi ilə dost olduq', en: 'The Cloud Warden befriended', ru: 'Облачный Страж стал другом' },
+      banner: { az: 'ZİRVƏ AÇIQDIR', en: 'RIDGE OPEN', ru: 'ХРЕБЕТ ОТКРЫТ' },
+      badge: { az: 'Zirvə Keşikçisi', en: 'Ridge Keeper', ru: 'Хранитель Хребта' },
+      badgeNote: { az: 'Göy Qurşağı Zirvəsində boss məğlub edildi', en: 'Boss cleared on the Rainbow Ridge', ru: 'Босс Радужного Хребта побеждён' },
+      hits: 4, sky: '#2C2350', floor: '#1E1838', glow: 'rgba(255,194,75,0.28)', accent: '#FFC24B', accentSoft: '#FFD98A'
+    },
+    finale: {
+      name: { az: 'Gecə Toxucusu', en: 'The Night Weaver', ru: 'Ночной Ткач' },
+      role: { az: 'FƏSLİN FİNALI · ULDUZLARI GİZLƏDƏN', en: 'CHAPTER FINALE · HIDER OF STARS', ru: 'ФИНАЛ ГЛАВЫ · СКРЫВАЮЩИЙ ЗВЁЗДЫ' },
+      awaits: { az: 'Gecə Toxucusu fəslin sonunda gözləyir', en: 'The Night Weaver awaits at the chapter’s end', ru: 'Ночной Ткач ждёт в конце главы' },
+      face: { az: 'Gecə Toxucusu ilə üzləş', en: 'Face the Night Weaver', ru: 'Сразись с Ночным Ткачом' },
+      befriended: { az: 'Toxuma açıldı — ulduz göyə qayıtdı', en: 'The weave unravels — the star is back in the sky', ru: 'Ткань распустилась — звезда вернулась на небо' },
+      done: { az: 'Gecə Toxucusu məğlub edildi', en: 'The Night Weaver defeated', ru: 'Ночной Ткач побеждён' },
+      banner: { az: 'FƏSİL TAMAMLANDI', en: 'CHAPTER COMPLETE', ru: 'ГЛАВА ЗАВЕРШЕНА' },
+      badge: { az: 'Ulduz Qoruyucusu', en: 'Star Keeper', ru: 'Хранитель Звезды' },
+      badgeNote: { az: 'Göy Qurşağı Zirvəsi fəsli tamamlandı', en: 'The Rainbow Ridge chapter complete', ru: 'Глава «Радужный Хребет» завершена' },
+      hits: 6, sky: '#1A1540', floor: '#100C2C', glow: 'rgba(200,180,255,0.30)', accent: '#C8B4FF', accentSoft: '#E4DAFF'
+    },
+    beats: [
+      { az: 'Buludların pillələrini qaldır', en: 'Raise the steps of cloud', ru: 'Подними ступени из облаков' },
+      { az: 'Keşikçinin zirvəsini aş', en: 'Climb past the warden’s ridge', ru: 'Преодолей хребет стража' },
+      { az: 'Toxumanı gecə səmasında sök', en: 'Unravel the weave in the night sky', ru: 'Распусти ткань в ночном небе' }
+    ]
+  }
+];
+
+/* stage number (0-based questDay) → where it sits in the chapter structure.
+   chapterNo / stageNo are 1-based for display; `final` marks the chapter's last stage. */
+EQD.chapterAt = function (day) {
+  const d = Math.max(0, day || 0);
+  const per = EQD.STAGES_PER_CHAPTER;
+  const idx = Math.floor(d / per);
+  const ch = EQD.CHAPTERS[idx % EQD.CHAPTERS.length];
+  const stageNo = (d % per) + 1;
+  const final = stageNo === per;
+  return {
+    ch: ch,
+    chapterNo: idx + 1,
+    stageNo: stageNo,
+    stages: per,
+    final: final,
+    /* the boss this stage ends on: the finale only on the last stage */
+    boss: final ? ch.finale : ch.guardian,
+    beat: ch.beats[stageNo - 1] || ch.beats[ch.beats.length - 1]
+  };
+};
+
 EQD.mulberry = function (seed) {
   return function () {
     seed |= 0; seed = seed + 0x6D2B79F5 | 0;
@@ -789,7 +947,9 @@ EQD.genDay = function (day) {
     title: theme.title, headline: theme.headline, chestTitle: theme.chestTitle,
     progressLine: theme.progressLine,
     questions: [EQD._qAdd(ri, false), EQD._qPattern(ri), EQD._qGroups(ri, false), EQD._qTakeAway(ri), EQD._qDouble(ri, false)],
-    boss: [EQD._qGroups(ri, true), EQD._qDouble(ri, true), EQD._qTakeAway(ri), EQD._qAdd(ri, true)]
+    /* six, so a chapter finale (6 hits) has its own question for every hit;
+       an ordinary guardian simply stops after the first four */
+    boss: [EQD._qGroups(ri, true), EQD._qDouble(ri, true), EQD._qTakeAway(ri), EQD._qAdd(ri, true), EQD._qPattern(ri), EQD._qGroups(ri, true)]
   };
   EQD._dayCache = set; EQD._dayCacheNo = day;
   return set;
@@ -820,7 +980,7 @@ EQD.questSet = function (day) {
             ru: `${done} ${RUP(done, 'печать снята', 'печати сняты', 'печатей снято')}. Осталось ${5 - done}.`
           }),
         questions: [EQD._qDouble(ri, false), EQD._qGroups(ri, false), EQD._qTakeAway(ri), EQD.QUESTIONS[3], EQD.QUESTIONS[4]],
-        boss: EQD.BOSS
+        boss: EQD.BOSS.concat([EQD._qPattern(ri), EQD._qAdd(ri, true)])
       };
     }
     return EQD._day0;

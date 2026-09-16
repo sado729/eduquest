@@ -63,6 +63,11 @@ const EQ = {
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
   pron() { return 'their'; },
   qset() { return EQD.questSet(this.s.questDay || 0); },
+  /* where the current stage sits in the chapter structure (3 stages = 1 chapter) */
+  chapter() { return EQD.chapterAt(this.s.questDay || 0); },
+  /* the boss closing this stage: the chapter finale on stage 3, the guardian otherwise */
+  boss() { return this.chapter().boss; },
+  bossHitsNeeded() { return this.boss().hits; },
 
   /* ── language (az / en / ru) ── */
   setLang(l) {
@@ -189,7 +194,8 @@ const EQ = {
       if (this.s.bossBeaten) name = 'victory';
       else {
         this.session.ctx = 'boss';
-        const bq = this.qset().boss[Math.min(3, this.s.bossHits)];
+        const pool = this.qset().boss;
+        const bq = pool[Math.min(pool.length - 1, this.s.bossHits)];
         if (this.session.q !== bq) { this.session.q = bq; this.session.attempted = false; this.session.hinted = false; }
       }
     }
@@ -305,7 +311,17 @@ const EQ = {
     this.session.q = null; this.session.qIdx = -1;
     this.save();
     this.go('quest');
-    this.toast(TX({ az: 'Yeni macəra açıldı! 🎉', en: 'A new adventure is open! 🎉', ru: 'Новое приключение открыто! 🎉' }));
+    /* crossing a chapter boundary is a bigger moment than the next stage of the same one */
+    const now = this.chapter();
+    if (now.stageNo === 1) {
+      this.toast(TX({
+        az: `Fəsil ${now.chapterNo} başlayır: ${TX(now.ch.name)}! 📖`,
+        en: `Chapter ${now.chapterNo} begins: ${TX(now.ch.name)}! 📖`,
+        ru: `Начинается глава ${now.chapterNo}: ${TX(now.ch.name)}! 📖`
+      }));
+    } else {
+      this.toast(TX({ az: 'Yeni macəra açıldı! 🎉', en: 'A new adventure is open! 🎉', ru: 'Новое приключение открыто! 🎉' }));
+    }
   },
   continueQuest() {
     if (this.s.challengesDone >= 5 && !this.s.bossBeaten) this.go('boss');
@@ -334,11 +350,13 @@ const EQ = {
           this.s.bossHits++;
           this.s.mathSolved = Math.min(100, this.s.mathSolved + 1);
           EQT.bossHit();
-          if (this.s.bossHits >= 4) {
+          if (this.s.bossHits >= this.bossHitsNeeded()) {
             this.s.bossBeaten = true;
             this.s.chestReady = true;
             this.s.trophiesEarned++;
-            this.grant(250, 100);
+            /* a chapter finale is the longer fight, so it pays the larger purse */
+            const fin = this.chapter().final;
+            this.grant(fin ? 400 : 250, fin ? 160 : 100);
             EQT.bossWin();
             this.save();
             SFX.fanfare();

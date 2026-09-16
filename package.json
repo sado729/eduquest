@@ -1,10 +1,11 @@
 {
   "name": "eduquest",
   "private": true,
-  "description": "EduQuest \u2014 offline-first learning adventure (static PWA; no build step)",
+  "description": "EduQuest — offline-first learning adventure (static PWA; no build step)",
   "scripts": {
-    "test": "node test/rest.js && node test/i18n.js",
+    "test": "node test/rest.js && node test/i18n.js && node test/chapters.js",
     "test:rest": "node test/rest.js",
-    "test:i18n": "node test/i18n.js"
+    "test:i18n": "node test/i18n.js",
+    "test:chapters": "node test/chapters.js"
   }
 }

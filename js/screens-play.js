@@ -79,8 +79,8 @@ EQS.screens.success = function (s) {
     : TX({ az: 'Ağıllı fikirdir!', en: 'Nice thinking!', ru: 'Отлично соображаешь!' });
   const pct = Math.min(100, Math.round(s.xp / 1500 * 100));
   let ctaText = TX({ az: 'Növbəti sınaq', en: 'Next challenge', ru: 'Следующее испытание' }), cta = "EQ.continueAfterSuccess()";
-  if (EQ.session.ctx === 'boss') ctaText = s.bossHits >= 4 ? TX({ az: 'Qələbəni götür', en: 'Claim your victory', ru: 'Забери свою победу' }) : TX({ az: 'Davam et', en: 'Keep going', ru: 'Продолжай' });
-  else if (s.challengesDone >= 5) ctaText = TX({ az: 'Riyaziyyat Əjdahası ilə üzləş', en: 'Face the Math Dragon', ru: 'Сразись с Драконом' });
+  if (EQ.session.ctx === 'boss') ctaText = s.bossHits >= EQ.bossHitsNeeded() ? TX({ az: 'Qələbəni götür', en: 'Claim your victory', ru: 'Забери свою победу' }) : TX({ az: 'Davam et', en: 'Keep going', ru: 'Продолжай' });
+  else if (s.challengesDone >= 5) ctaText = TX(EQ.boss().face);
   return `<div class="scr" style="background:#BFE9FB">
     <div style="position:absolute;inset:0;background:#A9E2FA"></div>
     <div class="rays" style="position:absolute;top:120px;left:-100px;right:-100px;height:600px;background:repeating-conic-gradient(from 0deg, rgba(255,255,255,0.5) 0 4deg, rgba(255,255,255,0) 4deg 22deg);mask-image:radial-gradient(closest-side, rgba(0,0,0,0.9) 24%, transparent 70%);-webkit-mask-image:radial-gradient(closest-side, rgba(0,0,0,0.9) 24%, transparent 70%);opacity:0.9"></div>
@@ -202,11 +202,16 @@ EQS.screens.tutor = function (s) {
   </div>`;
 };
 
-/* 11 · Boss battle — Math Dragon */
+/* 11 · Boss battle — the stage's guardian, or the chapter finale on the last stage */
 EQS.meta.boss = { light: true };
 EQS.screens.boss = function (s) {
   const q = EQ.session.q;
-  const hearts = [0, 1, 2, 3].map(i => EQC.heart(i < s.bossHits, 34)).join('');
+  const cp = EQ.chapter();
+  const B = cp.boss;
+  const need = B.hits;
+  const left = Math.max(0, need - s.bossHits);
+  /* a finale runs to 6 hits, so the hearts wrap onto a second row rather than shrink */
+  const hearts = Array.from({ length: need }, (_, i) => EQC.heart(i < s.bossHits, need > 4 ? 28 : 34)).join('');
   const answers = q.answers.map((a, i) => `
     <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:84px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 34px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
   const beam = EQ.session.bossBeam ? `
@@ -216,28 +221,29 @@ EQS.screens.boss = function (s) {
       <div style="position:absolute;left:60px;top:52px;width:9px;height:9px;border-radius:50%;background:#FFF7EA"></div>
     </div>` : '';
   if (EQ.session.bossBeam) EQ.session.bossBeam = false;
-  return `<div class="scr" style="background:#2A1B4A">
-    <div style="position:absolute;inset:0;background:radial-gradient(320px 300px at 62% 34%, rgba(255,138,76,0.30), rgba(42,27,74,0) 70%)"></div>
-    <div style="position:absolute;bottom:0;left:0;right:0;height:290px;background:#1E1338;border-radius:50% 50% 0 0 / 60px 60px 0 0"></div>
-    <div class="spark" style="bottom:240px;left:26px;width:9px;height:9px;border-radius:50%;background:#5CE39B"></div>
-    <div class="spark" style="bottom:300px;right:36px;width:7px;height:7px;border-radius:50%;background:#FFC24B;animation-delay:.6s"></div>
-    <div style="position:absolute;top:56px;left:16px;right:16px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="press" onclick="EQ.go('quest')" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex:none">${EQC.xIcon('#fff', 17)}</div>
-        <div style="flex:1;text-align:center"><div style="font:800 22px 'Baloo 2', system-ui;color:#fff;line-height:1.1">${TX({ az: 'Riyaziyyat Əjdahası', en: 'Math Dragon', ru: 'Дракон Математики' })}</div><div style="font:700 10px Nunito;color:#FFB08A;letter-spacing:1.6px">${TX({ az: 'KÖRPÜNÜN KEŞİKÇİSİ', en: 'GUARDIAN OF THE BRIDGE', ru: 'ХРАНИТЕЛЬ МОСТА' })}</div></div>
-        <div style="width:44px"></div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">${hearts}</div>
-      <div style="text-align:center;font:800 11px Nunito;color:#C9BCEF;margin-top:8px;letter-spacing:0.6px">${TX({ az: `${s.bossHits} bilik zərbəsi vuruldu · ${4 - s.bossHits} qaldı`, en: `${s.bossHits} knowledge hit${s.bossHits === 1 ? '' : 's'} landed · ${4 - s.bossHits} to go`, ru: `${s.bossHits} ${RUP(s.bossHits, 'удар знаний нанесён', 'удара знаний нанесено', 'ударов знаний нанесено')} · осталось ${4 - s.bossHits}` })}</div>
-    </div>
-
-    <div style="position:absolute;top:196px;right:6px">
-      <svg width="270" height="230" viewBox="0 0 270 230">
-        <path d="M96 120 q-44-34 -60-8 q22 6 28 28 Z" fill="#7B5CFF"></path>
-        <path d="M212 150 q44 6 48-28 q-4 26 -34 32 Z" fill="#5B3FD6"></path>
+  /* the chapter guardian keeps the dragon silhouette (tinted per chapter);
+     the finale gets its own shape so the last stage reads as a different fight */
+  const creature = cp.final
+    ? `<svg width="270" height="240" viewBox="0 0 270 240">
+        <g opacity="0.5"><ellipse cx="140" cy="128" rx="104" ry="96" fill="${B.accent}"></ellipse></g>
+        <path d="M140 24 q66 30 74 104 q8 74 -74 96 q-82-22 -74-96 q8-74 74-104 Z" fill="${B.floor}"></path>
+        <path d="M140 42 q54 26 60 88 q6 60 -60 78 q-66-18 -60-78 q6-62 60-88 Z" fill="${B.accent}" opacity="0.32"></path>
+        <g fill="${B.accentSoft}" opacity="0.9">
+          <path d="M140 58 l12 26 28 4 -20 20 5 28 -25-14 -25 14 5-28 -20-20 28-4 Z"></path>
+        </g>
+        <ellipse cx="112" cy="140" rx="17" ry="20" fill="#FFF7EA"></ellipse>
+        <ellipse cx="168" cy="140" rx="17" ry="20" fill="#FFF7EA"></ellipse>
+        <circle cx="114" cy="144" r="9" fill="#1A0F2E"></circle><circle cx="170" cy="144" r="9" fill="#1A0F2E"></circle>
+        <circle cx="118" cy="140" r="3" fill="#fff"></circle><circle cx="174" cy="140" r="3" fill="#fff"></circle>
+        <path d="M116 180 q24 16 48 0" stroke="#1A0F2E" stroke-width="4" fill="none" stroke-linecap="round"></path>
+        <g fill="${B.accentSoft}"><circle cx="54" cy="70" r="5"></circle><circle cx="226" cy="92" r="4"></circle><circle cx="78" cy="206" r="4"></circle><circle cx="214" cy="198" r="5"></circle></g>
+      </svg>`
+    : `<svg width="270" height="230" viewBox="0 0 270 230">
+        <path d="M96 120 q-44-34 -60-8 q22 6 28 28 Z" fill="${B.accent}"></path>
+        <path d="M212 150 q44 6 48-28 q-4 26 -34 32 Z" fill="${B.floor}"></path>
         <ellipse cx="152" cy="152" rx="74" ry="54" fill="#6B4BC4"></ellipse>
-        <ellipse cx="156" cy="164" rx="48" ry="34" fill="#C8B4FF"></ellipse>
-        <path d="M108 96 l10 18 h-20 Z M140 88 l10 18 h-20 Z M172 92 l10 18 h-20 Z" fill="#FF8A4C"></path>
+        <ellipse cx="156" cy="164" rx="48" ry="34" fill="${B.accentSoft}"></ellipse>
+        <path d="M108 96 l10 18 h-20 Z M140 88 l10 18 h-20 Z M172 92 l10 18 h-20 Z" fill="${B.accent}"></path>
         <ellipse cx="128" cy="76" rx="54" ry="44" fill="#7B5CFF"></ellipse>
         <ellipse cx="86" cy="92" rx="28" ry="19" fill="#8A6BE0"></ellipse>
         <circle cx="74" cy="88" r="3" fill="#3A2A6E"></circle><circle cx="84" cy="96" r="2.6" fill="#3A2A6E"></circle>
@@ -247,8 +253,23 @@ EQS.screens.boss = function (s) {
         <circle cx="112" cy="60" r="2.6" fill="#fff"></circle><circle cx="152" cy="56" r="2.6" fill="#fff"></circle>
         <path d="M92 104 q20 14 38 2" stroke="#3A2A6E" stroke-width="3.4" fill="none" stroke-linecap="round"></path>
         <path d="M118 106 l4 8 -8 0 Z" fill="#FFF7EA"></path>
-      </svg>
+      </svg>`;
+  return `<div class="scr" style="background:${B.sky}">
+    <div style="position:absolute;inset:0;background:radial-gradient(320px 300px at 62% 34%, ${B.glow}, rgba(0,0,0,0) 70%)"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:290px;background:${B.floor};border-radius:50% 50% 0 0 / 60px 60px 0 0"></div>
+    <div class="spark" style="bottom:240px;left:26px;width:9px;height:9px;border-radius:50%;background:#5CE39B"></div>
+    <div class="spark" style="bottom:300px;right:36px;width:7px;height:7px;border-radius:50%;background:#FFC24B;animation-delay:.6s"></div>
+    <div style="position:absolute;top:56px;left:16px;right:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="press" onclick="EQ.go('quest')" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex:none">${EQC.xIcon('#fff', 17)}</div>
+        <div style="flex:1;text-align:center"><div style="font:800 ${cp.final ? 20 : 22}px 'Baloo 2', system-ui;color:#fff;line-height:1.1">${TX(B.name)}</div><div style="font:700 10px Nunito;color:${B.accentSoft};letter-spacing:1.6px">${TX(B.role)}</div></div>
+        <div style="width:44px"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">${hearts}</div>
+      <div style="text-align:center;font:800 11px Nunito;color:#C9BCEF;margin-top:8px;letter-spacing:0.6px">${TX({ az: `${s.bossHits} bilik zərbəsi vuruldu · ${left} qaldı`, en: `${s.bossHits} knowledge hit${s.bossHits === 1 ? '' : 's'} landed · ${left} to go`, ru: `${s.bossHits} ${RUP(s.bossHits, 'удар знаний нанесён', 'удара знаний нанесено', 'ударов знаний нанесено')} · осталось ${left}` })}</div>
     </div>
+
+    <div style="position:absolute;top:196px;right:6px">${creature}</div>
     ${beam}
     <div class="rise" style="position:absolute;top:400px;left:16px;right:16px;background:#FFF7EA;border-radius:30px;padding:16px;box-shadow:0 7px 0 #C9BCA6, 0 20px 34px -16px rgba(0,0,0,0.5)">
       <div style="display:flex;align-items:center;gap:8px"><div style="padding:4px 10px;border-radius:10px;background:#EFE7FF;font:800 10px Nunito;color:#5B3FD6;letter-spacing:1.2px">${TX(q.tag)}</div><div style="font:700 11px Nunito;color:#A08A5E">${TX(q.meta)}</div></div>
@@ -267,12 +288,15 @@ EQS.screens.boss = function (s) {
 /* 12 · Boss victory */
 EQS.meta.victory = { light: true };
 EQS.screens.victory = function (s) {
-  return `<div class="scr" style="background:#241A3F">
+  const cp = EQ.chapter();
+  const B = cp.boss;
+  return `<div class="scr" style="background:${cp.final ? '#1C1030' : '#241A3F'}">
     <div class="rays" style="position:absolute;top:-80px;left:-100px;right:-100px;height:760px;background:repeating-conic-gradient(from 0deg, rgba(255,194,75,0.20) 0 5deg, rgba(255,194,75,0) 5deg 24deg);mask-image:radial-gradient(closest-side, rgba(0,0,0,0.9) 18%, transparent 68%);-webkit-mask-image:radial-gradient(closest-side, rgba(0,0,0,0.9) 18%, transparent 68%);opacity:0.9"></div>
     <div style="position:absolute;top:96px;left:0;right:0;text-align:center">
-      <div style="font:800 15px Nunito;color:#5CE39B;letter-spacing:3px">${TX({ az: 'KÖRPÜ AÇIQDIR', en: 'BRIDGE OPEN', ru: 'МОСТ ОТКРЫТ' })}</div>
+      <div style="font:800 15px Nunito;color:#5CE39B;letter-spacing:3px">${TX(B.banner)}</div>
       <div class="pop" style="font:800 50px 'Baloo 2', system-ui;color:#FFF7EA;line-height:1.05;margin-top:8px">${TX({ az: 'Bacardın!', en: 'You did it!', ru: 'Получилось!' })}</div>
-      <div style="font:800 18px 'Baloo 2', system-ui;color:#FFD98A;margin-top:10px">${TX({ az: 'Riyaziyyat Əjdahası artıq sənin dostundur', en: 'The Math Dragon is your friend now', ru: 'Дракон Математики теперь твой друг' })}</div>
+      <div style="font:800 18px 'Baloo 2', system-ui;color:#FFD98A;margin-top:10px">${TX(B.befriended)}</div>
+      ${cp.final ? `<div style="font:700 12px Nunito;color:#A896E0;margin-top:8px;letter-spacing:1.4px">${TX({ az: `FƏSİL ${cp.chapterNo} · ${TX(cp.ch.name).toUpperCase()}`, en: `CHAPTER ${cp.chapterNo} · ${TX(cp.ch.name).toUpperCase()}`, ru: `ГЛАВА ${cp.chapterNo} · ${TX(cp.ch.name).toUpperCase()}` })}</div>` : ''}
     </div>
     <div style="position:absolute;top:270px;left:0;right:0;display:flex;align-items:flex-end;justify-content:center;gap:4px">
       ${EQC.questy('celebrating', 'width:104px', s.questyFur, s.questyFurDark)}
@@ -285,8 +309,8 @@ EQS.screens.victory = function (s) {
     <div style="position:absolute;top:452px;left:20px;right:20px;background:rgba(255,255,255,0.07);border-radius:30px;padding:18px;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
       <div style="font:800 11px Nunito;color:#A896E0;letter-spacing:2px">${TX({ az: 'MÜKAFATLARIN', en: 'YOUR REWARDS', ru: 'ТВОИ НАГРАДЫ' })}</div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <div style="flex:1;border-radius:20px;background:rgba(92,227,155,0.16);padding:14px 10px;text-align:center"><div style="font:800 22px 'Baloo 2';color:#5CE39B">+250</div><div style="font:700 10px Nunito;color:#8FE0B6;letter-spacing:1px">XP</div></div>
-        <div style="flex:1;border-radius:20px;background:rgba(255,194,75,0.16);padding:14px 10px;text-align:center"><div style="font:800 22px 'Baloo 2';color:#FFC24B">+100</div><div style="font:700 10px Nunito;color:#FFD98A;letter-spacing:1px">${TX({ az: 'SİKKƏ', en: 'COINS', ru: 'МОНЕТ' })}</div></div>
+        <div style="flex:1;border-radius:20px;background:rgba(92,227,155,0.16);padding:14px 10px;text-align:center"><div style="font:800 22px 'Baloo 2';color:#5CE39B">+${cp.final ? 400 : 250}</div><div style="font:700 10px Nunito;color:#8FE0B6;letter-spacing:1px">XP</div></div>
+        <div style="flex:1;border-radius:20px;background:rgba(255,194,75,0.16);padding:14px 10px;text-align:center"><div style="font:800 22px 'Baloo 2';color:#FFC24B">+${cp.final ? 160 : 100}</div><div style="font:700 10px Nunito;color:#FFD98A;letter-spacing:1px">${TX({ az: 'SİKKƏ', en: 'COINS', ru: 'МОНЕТ' })}</div></div>
         <div style="flex:1;border-radius:20px;background:rgba(123,92,255,0.20);padding:14px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px">
           ${EQC.trophy('#C8B4FF', 26)}
           <div style="font:700 10px Nunito;color:#C8B4FF;letter-spacing:1px">${TX({ az: 'NİŞAN', en: 'BADGE', ru: 'ЗНАЧОК' })}</div>
@@ -294,7 +318,7 @@ EQS.screens.victory = function (s) {
       </div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.06);border-radius:20px;padding:12px 14px">
         <div style="width:44px;height:44px;border-radius:16px;background:#FFC24B;display:flex;align-items:center;justify-content:center;flex:none">${EQC.trophy('#4A3208', 24)}</div>
-        <div><div style="font:800 15px 'Baloo 2';color:#fff">${TX({ az: 'Körpü Keşikçisi', en: 'Bridge Keeper', ru: 'Хранитель Моста' })}</div><div style="font:700 11.5px Nunito;color:#A896E0">${TX({ az: 'Bilik Meşəsində ilk boss məğlub edildi', en: 'First boss cleared in Knowledge Forest', ru: 'Первый босс Леса Знаний побеждён' })}</div></div>
+        <div><div style="font:800 15px 'Baloo 2';color:#fff">${TX(B.badge)}</div><div style="font:700 11.5px Nunito;color:#A896E0">${TX(B.badgeNote)}</div></div>
       </div>
     </div>
     <div class="press" onclick="EQ.go('chest')" style="position:absolute;bottom:110px;left:20px;right:20px;height:66px;border-radius:22px;background:#FFC24B;box-shadow:0 6px 0 #E39B1C, 0 16px 26px -12px rgba(227,155,28,0.55);display:flex;align-items:center;justify-content:center;font:800 21px 'Baloo 2', system-ui;color:#4A3208">${TX({ az: 'Sandığı aç', en: 'Open the chest', ru: 'Открыть сундук' })}</div>
