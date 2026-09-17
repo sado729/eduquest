@@ -8,7 +8,7 @@
 const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest', 'sticker'];
 /* calm screens where the heartbeat may bring the rest screen up on its own
    (never mid-question: a challenge already started is always allowed to finish) */
-const EQ_REST_NUDGE = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'album', 'wardrobe', 'unlock', 'welcomeback'];
+const EQ_REST_NUDGE = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcomeback'];
 const EQ_REST_MORNING = 5 * 60; /* the bedtime window closes at 05:00 */
 
 const EQ_DEFAULTS = {
@@ -23,6 +23,8 @@ const EQ_DEFAULTS = {
   chestReady: false, chestOpened: false,
   wizardHatOwned: false, crownOwned: false,
   mathSolved: 0, hintSparks: 0, stickers: 0, stickerIds: [], trophiesEarned: 0,
+  /* Questy'nin qulluğu: bugünkü verilmiş qulluqlar və ümumi say (bax: EQ.careGive) */
+  careDay: null, careGiven: [], careTotal: 0,
   trophyPlaced: false, pendingLevelUp: false,
   lastVisit: null,
   lastDay: null, questDay: 0, playedDays: [], bestStreak: 1,
@@ -114,7 +116,7 @@ const EQ = {
   checkNewDay(fromResume) {
     const today = this.dayKey();
     if (!this.s || !this.s.lastDay || this.s.lastDay === today) return false;
-    const safe = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
+    const safe = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
     if (!fromResume && safe.indexOf(this.current) === -1) return false;
     this.newDay(today);
     this.session.q = null; this.session.qIdx = -1;
@@ -629,6 +631,54 @@ const EQ = {
     this.save(); this.render();
   },
   saveLook() { this.save(); SFX.correct(); this.toast(TX({ az: 'Görkəm yadda saxlanıldı — Questy bəyəndi!', en: 'Look saved — Questy loves it!', ru: 'Образ сохранён — Квести в восторге!' })); },
+
+  /* ── Questy'nin qulluğu ──
+     Sikkənin gündəlik xərclənmə yeri. Tac bir dəfəlik alışdır; qulluq hər gün təkrarlanır.
+
+     Üç qayda, hər üçü uşağın xeyrinə:
+       1. gün ərzində heç nə azalmır. Questy ac qalmır, kədərlənmir, "səni gözləyir"
+          demir — uşaq oynamadığı üçün cəzalandırılmır. Qulluq yalnız əlavə edir.
+       2. hər qulluq gündə bir dəfə. İkinci dəfə toxunmaq sikkə aparmır: sadəcə mehriban
+          bir cavab qayıdır ("Questy doydu — sabah yenə acacaq!").
+       3. sikkə çatmırsa, nə qədər çatmadığı deyilir — sındırıcı deyil, hədəf verən cavab.
+
+     Gün dəyişimi `careDay` ilə tutulur: resetDaily deyil, çünki qulluq təqvim gününə
+     bağlıdır və oyunçu gün ərzində neçə dəfə girsə də eyni qalmalıdır. */
+  careToday() {
+    if (this.s.careDay !== this.dayKey()) return [];
+    return Array.isArray(this.s.careGiven) ? this.s.careGiven : [];
+  },
+  caredWith(id) { return this.careToday().indexOf(id) >= 0; },
+  careLeft() { return EQD.CARE.filter(c => !this.caredWith(c.id)).length; },
+  /* bugünkü qulluqdan sonra Questy hansı ovqatda görünür (sonuncu verilən qulluq) */
+  careMood() {
+    const given = this.careToday();
+    if (!given.length) return 'happy';
+    const last = EQD.CARE_BY_ID[given[given.length - 1]];
+    return (last && last.mood) || 'happy';
+  },
+  careGive(id) {
+    const item = EQD.CARE_BY_ID[id];
+    if (!item) return;
+    if (this.caredWith(id)) { this.toast(TX(item.again)); return; }
+    if (this.s.coins < EQD.CARE_COST) {
+      const need = EQD.CARE_COST - this.s.coins;
+      this.toast(TX({
+        az: `${TX(item.name)} ${EQD.CARE_COST} sikkədir — ${need} sikkə çatmır. Bir sınaq həll et!`,
+        en: `${TX(item.name)} costs ${EQD.CARE_COST} coins — ${need} to go. Solve a challenge!`,
+        ru: `${TX(item.name)} стоит ${EQD.CARE_COST} монет — не хватает ${need}. Реши испытание!`
+      }));
+      return;
+    }
+    if (this.s.careDay !== this.dayKey()) { this.s.careDay = this.dayKey(); this.s.careGiven = []; }
+    this.s.coins -= EQD.CARE_COST;
+    this.s.careGiven = this.s.careGiven.concat([id]);
+    this.s.careTotal = (this.s.careTotal || 0) + 1;
+    this.save();
+    SFX.correct();
+    this.render();
+    this.toast(TX(item.done));
+  },
 
   /* ── home ── */
   placeTrophy() { SFX.correct(); this.s.trophyPlaced = true; this.save(); this.render(); },

@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all seven suites
+npm test              # all nine suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -12,6 +12,8 @@ npm run test:profiles
 npm run test:ranges
 npm run test:album
 npm run test:missions
+npm run test:adaptive
+npm run test:care
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -223,3 +225,59 @@ hand-written, so a re-sync can restore the approval button and drop the playing.
 suite goes red after a re-sync, that is what happened — see `EQ.openMission` /
 `EQ.missionAdvance` in [js/app.js](../js/app.js), `EQD.missionSet` in
 [js/data.js](../js/data.js) and `EQT.nextMission` in [js/tracking.js](../js/tracking.js).
+
+
+## adaptive.js — the adaptive daily set
+
+Guards the part of the adventure that is supposed to notice how a child is doing. The
+day's five questions are not a fixed lineup: the plan weights topics the child has been
+getting wrong and brings topics back on a spaced schedule (3 / 6 / 12 / 21 days). None
+of that is visible in the app — a plan that has quietly reverted to the fixed lineup
+looks exactly like a plan that is adapting.
+
+Covers: the weighting actually favouring weak topics, the spacing intervals advancing on
+a clean answer and collapsing on a miss, the plan being frozen for the day (so the five
+questions do not reshuffle underneath a child mid-adventure), the schedule surviving a
+device transfer, and the grown-up's progress screen explaining the adaptation in all
+three languages.
+
+## care.js — caring for Questy
+
+Guards the coin's second, and only daily, sink. The Star Crown costs 250 and is bought
+once; after that a child keeps earning coins that buy nothing, and every reward the game
+hands out quietly stops meaning anything. Three small things for Questy — 20 coins each,
+once a day — are what the coins are *for* in between.
+
+Three things fail silently here:
+
+1. **The once-a-day.** Care is keyed to the calendar day, not to `resetDaily()`. Lose
+   the day key and a child either re-buys the same berry forever (coins drain to zero
+   with nothing to show) or can never buy it again (the loop dies after day one). Both
+   render perfectly.
+2. **The never-decays.** This is the design rule that matters most and the easiest to
+   lose to a re-sync that brings back generic "virtual pet" behaviour. Nothing about
+   Questy may get worse while a child is away: no hunger, no falling mood, no bar
+   draining overnight. A pet that starves while a seven-year-old sleeps punishes them
+   for sleeping — and this app already took the opposite position with the rest screen,
+   which *stops* play rather than rewarding more of it. Care may only ever be added to.
+3. **The carry.** A transfer moves an adventure to a new phone. Care that does not ride
+   along lets the child re-buy what they already bought today, or wipes their running
+   total.
+
+Also covered: all three items being fully trilingual (name, note, thank-you, and the
+kind "already done today" reply — a screen that just goes silent reads, at seven, as
+broken); a day of care costing less than a finished adventure pays, so caring sits
+beside the Crown rather than competing with it; a child short on coins being told how
+far off they are and pointed back at the adventure, never dropped below zero; an unknown
+item not being a way to spend coins; the badge and both doors into the screen (the map
+and the bedroom); the daily limit and bedtime still taking over the care screen; a
+transfer carrying today's care and the running total inside the QR budget; a code
+written before care existed still importing as "never cared"; and a corrupt code being
+unable to smuggle unknown ids, duplicates or a negative total into the care state.
+
+The Questy drawing is a design-project visual and the loop beneath it is hand-written,
+so a re-sync can restore the fox and drop the caring — leaving something you tap for a
+chirp and coins with nowhere to go. If this suite goes red after a re-sync, that is what
+happened — see `EQ.careGive` / `EQ.careToday` in [js/app.js](../js/app.js), `EQD.CARE`
+in [js/data.js](../js/data.js) and `EQS.screens.care` in
+[js/screens-collect.js](../js/screens-collect.js).

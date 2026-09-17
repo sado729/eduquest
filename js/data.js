@@ -1181,3 +1181,46 @@ EQD.nextSticker = function (owned) {
   }
   return null;
 };
+
+/* ── Questy'nin qulluğu ──
+   Sikkənin ikinci — və gündəlik — xərclənmə yeri. Ulduz Tacı 250 sikkəlik tək alışdır:
+   alındıqdan sonra sikkə yığılır, amma heç nəyə çevrilmir. Qulluq onu kiçik, təkrarlanan
+   seçimə çevirir: bu gün Questy-yə nə alım?
+
+   Üç qulluq növü var və hər biri gündə bir dəfə verilir. Bu, qəsdən belədir:
+     · gün ərzində tükənən "aclıq" yoxdur — uşaq oynamadığı üçün Questy ac qalmamalıdır
+       (istirahət ekranı ilə eyni prinsip: oyundan uzaq qalmaq cəza deyil);
+     · gündə üç qulluq = 60 sikkə, yəni gündəlik macəranın qazandırdığının bir hissəsi —
+       uşaq həm qulluq edə, həm də Tac üçün yığa bilir;
+     · hər qulluq bir dəfə olduğu üçün "sikkəni tez xərclə" təzyiqi yaranmır.
+
+   `mood` — qulluqdan sonra Questy-nin hansı ovqatla görünəcəyi (EQC.questy ovqatları). */
+EQD.CARE_COST = 20;
+EQD.CARE = [
+  {
+    id: 'feed', mood: 'excited',
+    name: { az: 'Giləmeyvə', en: 'Berry snack', ru: 'Ягодка' },
+    note: { az: 'Questy-nin ən sevdiyi meyvə', en: 'Questy’s favourite fruit', ru: 'Любимая ягода Квести' },
+    done: { az: 'Questy giləmeyvəni yedi — çox dadlı idi! 🫐', en: 'Questy ate the berry — delicious! 🫐', ru: 'Квести съел ягодку — вкуснотища! 🫐' },
+    again: { az: 'Questy doydu — sabah yenə acacaq!', en: 'Questy is full — hungry again tomorrow!', ru: 'Квести сыт — проголодается завтра!' },
+    art: '<circle cx="14" cy="22" r="8" fill="#7B5CFF"></circle><circle cx="23" cy="20" r="6.5" fill="#9B7CFF"></circle><circle cx="11.5" cy="19.5" r="2.4" fill="#C4B2FF" opacity="0.9"></circle><path d="M14 14 q2-6 8-7 q-3 5 -6 7 Z" fill="#3DBE6E"></path><path d="M14 14 V10" stroke="#2A9455" stroke-width="2.2" stroke-linecap="round"></path>'
+  },
+  {
+    id: 'play', mood: 'celebrating',
+    name: { az: 'Top', en: 'Bouncy ball', ru: 'Мячик' },
+    note: { az: 'Bir yerdə oynamaq üçün', en: 'For a game together', ru: 'Чтобы поиграть вместе' },
+    done: { az: 'Questy topla oynadı — necə də hoppanır! 🐾', en: 'Questy played with the ball — what a bounce! 🐾', ru: 'Квести поиграл с мячиком — вот это прыжки! 🐾' },
+    again: { az: 'Questy oynayıb yoruldu — sabah yenə!', en: 'Questy is played out — again tomorrow!', ru: 'Квести наигрался — завтра ещё!' },
+    art: '<circle cx="18" cy="20" r="11" fill="#FF5D73"></circle><path d="M7 20 h22" stroke="#FFF7EA" stroke-width="2.6"></path><path d="M18 9 q7 11 0 22 q-7-11 0-22 Z" fill="#FFF7EA" opacity="0.85"></path><circle cx="14" cy="15" r="2.6" fill="#fff" opacity="0.55"></circle>'
+  },
+  {
+    id: 'brush', mood: 'happy',
+    name: { az: 'Daraq', en: 'Soft brush', ru: 'Щётка' },
+    note: { az: 'Tükünü darayıb parıldatmaq üçün', en: 'To brush that fur shiny', ru: 'Чтобы расчесать шёрстку' },
+    done: { az: 'Questy darandı — tükü parıldayır! ✨', en: 'Questy got brushed — that fur shines! ✨', ru: 'Квести расчёсан — шёрстка блестит! ✨' },
+    again: { az: 'Questy artıq tərtəmizdir — sabah yenə darayarsan!', en: 'Questy is all neat — brush again tomorrow!', ru: 'Квести уже причёсан — завтра ещё разок!' },
+    art: '<rect x="8" y="18" width="20" height="7" rx="3.5" fill="#C9762F"></rect><rect x="8" y="16" width="20" height="5" rx="2.5" fill="#E0A365"></rect><path d="M11 25 v5 M15 25 v5 M19 25 v5 M23 25 v5" stroke="#8A5A0A" stroke-width="2.2" stroke-linecap="round"></path><path d="M14 11 l1.6 3.4 3.4 1.6 -3.4 1.6 -1.6 3.4 -1.6-3.4 -3.4-1.6 3.4-1.6 Z" fill="#FFE9A8"></path>'
+  }
+];
+EQD.CARE_BY_ID = {};
+EQD.CARE.forEach(c => { EQD.CARE_BY_ID[c.id] = c; });

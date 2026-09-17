@@ -255,7 +255,10 @@ EQS.screens.home = function (s) {
     </div>
 
     ${EQC.hero(s.hero, 'position:absolute;bottom:230px;left:150px;width:110px')}
-    ${EQC.questy('happy', 'position:absolute;bottom:224px;left:248px;width:74px', s.questyFur, s.questyFurDark)}
+    <div class="press" onclick="EQ.go('care')" style="position:absolute;bottom:224px;left:248px;width:74px">
+      ${EQ.careLeft() ? `<div style="position:absolute;right:-6px;top:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff;z-index:2">${EQ.careLeft()}</div>` : ''}
+      ${EQC.questy(EQ.careMood(), 'width:74px', s.questyFur, s.questyFurDark)}
+    </div>
 
     ${trophyCard}
     ${EQC.nav('hero')}
@@ -466,5 +469,90 @@ EQS.screens.sticker = function (s) {
     </div>
     <div class="press" onclick="EQ.openAlbum('${st.set}')" style="position:absolute;bottom:126px;left:20px;right:20px;height:60px;border-radius:22px;background:#FFC24B;box-shadow:0 6px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 19px 'Baloo 2', system-ui;color:#4A3208">${TX({ az: 'Albomuma bax', en: 'See my album', ru: 'Открыть альбом' })}</div>
     <div class="press" onclick="EQ.afterSticker()" style="position:absolute;bottom:56px;left:20px;right:20px;height:56px;border-radius:22px;background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:center;font:800 17px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Macəraya davam', en: 'Back to the adventure', ru: 'Дальше в приключение' })}</div>
+  </div>`;
+};
+
+/* 17b · Questy'nin qulluğu — sikkənin gündəlik xərclənmə yeri.
+   Ekran qəsdən "boşalan zolaqlar" göstərmir: burada azalan heç nə yoxdur. Verilməmiş
+   qulluq "gözləyir" kimi deyil, təklif kimi görünür; verilmiş qulluq isə bugünkü kiçik
+   qələbədir. Uşaq oyuna qayıtmayanda Questy pisləşmir — sadəcə sabah yeni gün açılır. */
+EQS.meta.care = { light: false };
+EQS.screens.care = function (s) {
+  const given = EQ.careToday();
+  const left = EQ.careLeft();
+  const mood = EQ.careMood();
+  const allDone = left === 0;
+
+  const bubble = allDone
+    ? TX({ az: 'Bu gün hər şey əladır — sağ ol! 🧡', en: 'Today was perfect — thank you! 🧡', ru: 'Сегодня всё чудесно — спасибо! 🧡' })
+    : (given.length
+      ? TX({ az: 'Nə gözəl! Bəs bu?', en: 'That was lovely! And this one?', ru: 'Как здорово! А это?' })
+      : TX({ az: 'Salam! Bu gün mənə nə gətirdin?', en: 'Hi! What did you bring me today?', ru: 'Привет! Что ты мне принёс сегодня?' }));
+
+  const cards = EQD.CARE.map(item => {
+    const done = EQ.caredWith(item.id);
+    const afford = s.coins >= EQD.CARE_COST;
+    const art = `<svg width="42" height="42" viewBox="0 0 36 36">${item.art}</svg>`;
+    if (done) return `<div class="press" onclick="EQ.careGive('${item.id}')" style="border-radius:24px;background:#EAF7EF;box-shadow:0 5px 0 #C3E3D0;padding:13px 12px;display:flex;align-items:center;gap:12px;position:relative">
+      <div style="width:56px;height:56px;border-radius:20px;background:#fff;display:flex;align-items:center;justify-content:center;flex:none;opacity:0.65">${art}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font:800 15px 'Baloo 2', system-ui;color:#2A9455">${TX(item.name)}</div>
+        <div style="font:700 11.5px Nunito;color:#5C8A70">${TX({ az: 'Bu gün verildi', en: 'Given today', ru: 'Подарено сегодня' })}</div>
+      </div>
+      <div style="width:34px;height:34px;border-radius:14px;background:#3DBE6E;box-shadow:0 3px 0 #2A9455;display:flex;align-items:center;justify-content:center;flex:none">${EQC.check('#fff', 16, 3.6)}</div>
+    </div>`;
+    return `<div class="press" onclick="EQ.careGive('${item.id}')" style="border-radius:24px;background:#FFF7EA;box-shadow:0 5px 0 #D8BC92;padding:13px 12px;display:flex;align-items:center;gap:12px">
+      <div style="width:56px;height:56px;border-radius:20px;background:#FBE9CC;display:flex;align-items:center;justify-content:center;flex:none">${art}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font:800 15px 'Baloo 2', system-ui;color:#2A1F45">${TX(item.name)}</div>
+        <div style="font:700 11.5px Nunito;color:#8B7A55">${TX(item.note)}</div>
+      </div>
+      <div style="flex:none;height:36px;padding:0 12px 0 9px;border-radius:15px;background:${afford ? '#FFC24B' : 'rgba(42,31,69,0.08)'};${afford ? 'box-shadow:0 3px 0 #E39B1C;' : ''}display:flex;align-items:center;gap:5px">
+        ${EQC.coin(18)}<span style="font:800 14px 'Baloo 2', system-ui;color:${afford ? '#4A3208' : '#A197BC'}">${EQD.CARE_COST}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="scr" style="background:#3B2A6B">
+    <div style="position:absolute;inset:0">
+      <div style="position:absolute;top:0;left:0;right:0;height:380px;background:#4A3585;border-radius:0 0 40px 40px;overflow:hidden">
+        <div style="position:absolute;inset:0;background:radial-gradient(260px 200px at 50% 74%, rgba(255,146,67,0.34), rgba(74,53,133,0) 72%)"></div>
+        <div style="position:absolute;top:96px;left:34px;width:7px;height:7px;border-radius:4px;background:#FFE9A8;opacity:0.7"></div>
+        <div style="position:absolute;top:140px;right:44px;width:9px;height:9px;border-radius:5px;background:#9BE8C0;opacity:0.6"></div>
+        <div style="position:absolute;top:196px;left:58px;width:6px;height:6px;border-radius:3px;background:#8FD8F5;opacity:0.65"></div>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
+      <div class="press" onclick="EQ.go('map')" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#fff', 19)}</div>
+      <div style="flex:1">
+        <div style="font:800 20px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Questy-yə qulluq', en: 'Care for Questy', ru: 'Забота о Квести' })}</div>
+        <div style="font:700 11px Nunito;color:#C6B9EE">${allDone
+          ? TX({ az: 'Bugünkü qulluq tamamlandı', en: 'Today’s care is complete', ru: 'Забота на сегодня завершена' })
+          : TX({ az: `Bu gün ${left} qulluq qalıb`, en: `${left} to give today`, ru: `Сегодня осталось: ${left}` })}</div>
+      </div>
+      <div style="flex:none;height:40px;border-radius:20px;background:rgba(30,21,54,0.7);padding:0 12px 0 8px;display:flex;align-items:center;gap:6px">
+        ${EQC.coin(22)}<span style="font:800 15px 'Baloo 2', system-ui;color:#fff">${s.coins}</span>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:132px;left:0;right:0;display:flex;flex-direction:column;align-items:center">
+      <div style="max-width:250px;background:#FFF7EA;border-radius:20px;padding:10px 15px;box-shadow:0 5px 0 rgba(20,10,40,0.3);font:800 13.5px 'Baloo 2', system-ui;color:#2A1F45;text-align:center;line-height:1.35">${bubble}</div>
+      <div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:11px solid #FFF7EA;margin-top:-1px"></div>
+      ${EQC.questy(mood, 'width:128px;margin-top:2px', s.questyFur, s.questyFurDark)}
+    </div>
+
+    <div style="position:absolute;top:398px;left:14px;right:14px;display:flex;flex-direction:column;gap:11px">
+      ${cards}
+    </div>
+
+    <div style="position:absolute;top:680px;left:14px;right:14px;border-radius:22px;background:rgba(255,255,255,0.1);padding:12px 14px;display:flex;align-items:center;gap:11px">
+      <div style="width:40px;height:40px;border-radius:15px;background:rgba(255,194,75,0.24);display:flex;align-items:center;justify-content:center;flex:none">${EQC.coin(22)}</div>
+      <div style="flex:1;font:700 11.5px Nunito;color:#C6B9EE;line-height:1.45">${allDone
+        ? TX({ az: 'Sabah üç qulluq yenidən açılır — sikkələri macərada qazan.', en: 'All three open again tomorrow — earn coins on the adventure.', ru: 'Завтра все три откроются снова — монеты зарабатываются в приключении.' })
+        : TX({ az: 'Sikkələr bugünkü macəradan gəlir. Hər qulluq gündə bir dəfədir.', en: 'Coins come from today’s adventure. Each care is once a day.', ru: 'Монеты приходят из приключения. Каждая забота — раз в день.' })}</div>
+    </div>
+
+    ${EQC.nav('hero')}
   </div>`;
 };

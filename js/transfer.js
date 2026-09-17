@@ -51,6 +51,22 @@ const EQX = {
     return out;
   },
 
+  /* today's care is at most three known items, so it packs into one base-36 digit
+     the same way the album packs into five */
+  careMask(ids) {
+    let m = 0;
+    (ids || []).forEach(id => {
+      const i = EQD.CARE.findIndex(c => c.id === id);
+      if (i >= 0 && i < 31) m |= (1 << i);
+    });
+    return m;
+  },
+  careIds(mask) {
+    const out = [];
+    EQD.CARE.forEach((c, i) => { if (i < 31 && (mask & (1 << i))) out.push(c.id); });
+    return out;
+  },
+
   /* the day's quest title is one of the fixed themes — store which, not the three strings */
   themeNo(title) {
     if (!title || !title.en) return 0;
@@ -77,8 +93,9 @@ const EQX = {
     const last = this.dayNo(s.lastDay);
     const played = (s.playedDays || []).map(k => this.dayNo(k)).filter(v => v !== null);
     const bonus = this.dayNo(s.settings.bonusDay);
+    const careDay = this.dayNo(s.careDay);
     const pq = (s.parentQuests || []).filter(m => this.TOPIC.indexOf(m.t) >= 0 && this.dayNo(m.day) !== null);
-    const all = dates.concat(played, [start, last, bonus].filter(v => v !== null), pq.map(m => this.dayNo(m.day)));
+    const all = dates.concat(played, [start, last, bonus, careDay].filter(v => v !== null), pq.map(m => this.dayNo(m.day)));
     const base = all.length ? Math.min.apply(null, all) : this.dayNo(EQ.dayKey());
     const off = v => (v === null ? '' : this.b(v - base));
 
@@ -105,10 +122,10 @@ const EQX = {
       hx(s.questyFur) + '.' + hx(s.questyFurDark),
       [s.xp, s.level, s.coins, s.streak, s.bestStreak, s.xpToday, s.coinsToday, s.challengesDone,
         s.bossHits, s.mathSolved, s.hintSparks, s.stickers, s.trophiesEarned, s.questDay,
-        this.stickerMask(s.stickerIds)].map(v => this.b(v)).join('.'),
+        this.stickerMask(s.stickerIds), this.careMask(s.careGiven), s.careTotal].map(v => this.b(v)).join('.'),
       this.b(flags),
       [this.b(sflags), this.b(st.limit), this.b(st.bedMin), this.b(Math.max(0, this.LANGS.indexOf(st.lang))), this.b(st.bonusMins)].join('.'),
-      [this.b(base), off(start), off(last), off(bonus)].join('.'),
+      [this.b(base), off(start), off(last), off(bonus), off(careDay)].join('.'),
       played.map(v => off(v)).join('.'),
       /* topic.day[.progress] — progress is how many of the mission's questions the child
          has answered, with MISSION_LEN meaning finished. A code written before missions
@@ -144,6 +161,11 @@ const EQX = {
       xpToday: f4[5], coinsToday: f4[6], challengesDone: f4[7], bossHits: f4[8],
       mathSolved: f4[9], hintSparks: f4[10], stickers: f4[11], trophiesEarned: f4[12], questDay: f4[13],
       stickerIds: g[4].split('.').length > 14 ? this.stickerIds(f4[14]) : null,
+      /* care rides at the end of the counters group and of the date group: a code
+         written before Questy's care simply has neither, and reads as "never cared" */
+      careGiven: g[4].split('.').length > 15 ? this.careIds(f4[15]) : [],
+      careTotal: f4[16] || 0,
+      careDay: dt.length > 4 ? at(4) : null,
       onboarded: !!(flags & 1), bossBeaten: !!(flags & 2), chestReady: !!(flags & 4), chestOpened: !!(flags & 8),
       wizardHatOwned: !!(flags & 16), crownOwned: !!(flags & 32), trophyPlaced: !!(flags & 64), pendingLevelUp: !!(flags & 128),
       settings: {
@@ -221,6 +243,15 @@ const EQX = {
     out.stickerIds = EQ.cleanStickers(r.stickerIds, out.stickers);
     out.stickers = out.stickerIds.length;
     out.trophiesEarned = int(r.trophiesEarned, 0, 9e6, 0);
+    /* care: only known ids, no duplicates, and only if they belong to a real day.
+       A careDay that is not a date makes today's care simply unspent — never a crash,
+       and never a day the child is locked out of caring. */
+    out.careDay = date(r.careDay, null);
+    out.careGiven = out.careDay
+      ? (Array.isArray(r.careGiven) ? r.careGiven : [])
+        .filter((id, i, a) => EQD.CARE_BY_ID[id] && a.indexOf(id) === i)
+      : [];
+    out.careTotal = Math.max(out.careGiven.length, int(r.careTotal, 0, 9e6, 0));
     out.questDay = int(r.questDay, 0, 99999, 0);
     ['onboarded', 'bossBeaten', 'chestReady', 'chestOpened', 'wizardHatOwned', 'crownOwned', 'trophyPlaced', 'pendingLevelUp']
       .forEach(k => { out[k] = !!r[k]; });

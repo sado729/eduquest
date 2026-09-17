@@ -101,7 +101,11 @@ EQS.screens.map = function (s) {
       <div style="background:#FFF7EA;border-radius:14px;padding:5px 11px;box-shadow:0 4px 0 rgba(20,10,40,0.25);font:800 14px 'Baloo 2', system-ui;color:#FF5D73">!</div>
       ${EQC.hero(s.hero, 'width:68px;margin-top:2px')}
     </div>
-    <div class="press" onclick="EQ.questyChirp()" style="position:absolute;left:302px;top:618px;width:52px">${EQC.questy('happy', 'width:52px', s.questyFur, s.questyFurDark)}</div>
+    <div class="press" onclick="EQ.go('care')" style="position:absolute;left:296px;top:606px;width:64px;display:flex;flex-direction:column;align-items:center;gap:3px">
+      ${EQ.careLeft() ? `<div style="position:absolute;right:-2px;top:-4px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff;z-index:2">${EQ.careLeft()}</div>` : ''}
+      ${EQC.questy(EQ.careMood(), 'width:52px', s.questyFur, s.questyFurDark)}
+      <div style="padding:3px 8px;border-radius:9px;background:rgba(36,26,63,0.86);font:800 9.5px Nunito;color:#fff;white-space:nowrap">${TX({ az: 'Questy', en: 'Questy', ru: 'Квести' })}</div>
+    </div>
 
     ${EQC.hud(s, 'position:absolute;top:60px;left:0;right:0')}
 
