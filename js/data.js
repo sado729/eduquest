@@ -937,14 +937,279 @@ EQD._qDouble = function (ri, hard) {
   };
 };
 
-/* the generator behind each topic key, so a plan of topic keys can be turned into
-   questions. Same functions the missions use — one topic, one generator, everywhere. */
+/* ── hands-on question formats ────────────────────────────────────────────────
+   Three generators that build a question the child answers with their hands instead of
+   by picking one of three numbers. They are ordinary questions in every other respect —
+   same tag, so EQT.topicKey files them under the same topic as the tapping version and
+   the adaptive schedule cannot tell them apart; same hint and explain, so a child who
+   gets stuck is taught the same idea, not a different one.
+
+   They carry `kind`, which is the only thing the play screen keys off: `kind` present
+   means render the interactive panel from js/interact.js, absent means three buttons.
+   Every one of them still carries `answers`/`correct` too, so the question stays
+   playable and gradeable even if the interaction layer never loads. */
+
+/* counting by dragging: "put 9 apples in the basket" (topic: add) */
+EQD._qDragCount = function (ri, hard) {
+  const c = ri(hard ? 7 : 4, hard ? 12 : 8);
+  const total = Math.min(14, c + ri(2, 4));
+  return {
+    name: { az: 'Səbətə almalar', en: 'Apples for the basket', ru: 'Яблоки в корзину' },
+    subject: EQD._subjMath, subj: 'math', tag: EQD._tagAdd, kind: 'drag',
+    cardTitle: { az: 'Əjdahanın səbəti', en: 'The dragon’s basket', ru: 'Корзина дракона' },
+    cardStory: {
+      az: 'Əjdaha səbəti uzadır — düz sayda alma qoy, o da səni buraxsın.',
+      en: 'The dragon holds out his basket — put exactly the right number of apples in.',
+      ru: 'Дракон протягивает корзину — положи ровно столько яблок, сколько нужно.'
+    },
+    meta: EQD._metaCalm,
+    title: {
+      az: `Səbətə <b>${c}</b> alma qoy.<br>Bir-bir sürüklə — saymağı unutma.`,
+      en: `Put <b>${c}</b> apples in the basket.<br>Drag them one by one — count as you go.`,
+      ru: `Положи в корзину <b>${c}</b> ${RUP(c, 'яблоко', 'яблока', 'яблок')}.<br>Перетаскивай по одному и считай.`
+    },
+    visual: () => '',
+    drag: {
+      total: total, icon: '🍎', color: '#FFD9DE',
+      trayLabel: { az: 'Almalar', en: 'Apples', ru: 'Яблоки' },
+      dropLabel: { az: 'Almaları bura sürüklə', en: 'Drag apples here', ru: 'Перетащи яблоки сюда' },
+      doneLabel: { az: 'Hazıram', en: 'Done', ru: 'Готово' }
+    },
+    answers: EQD._answers(ri, c), correct: c,
+    tip: {
+      az: 'Hər almanı qoyanda ucadan say — tələsmə.',
+      en: 'Say each number out loud as you drop an apple — no rush.',
+      ru: 'Называй число вслух на каждом яблоке — не спеши.'
+    },
+    successLine: { az: `${c} alma — tam düzdür!`, en: `${c} apples — exactly right!`, ru: `${c} ${RUP(c, 'яблоко', 'яблока', 'яблок')} — точно!` },
+    praise: {
+      az: 'Hər almanı bir dəfə saydın. Sayma məhz belə işləyir!',
+      en: 'You counted each apple exactly once. That’s how counting works!',
+      ru: 'Ты сосчитал каждое яблоко ровно один раз. Именно так и считают!'
+    },
+    hint: {
+      heading: { az: 'Gəl birlikdə sayaq.', en: 'Let’s count them together.', ru: 'Давай сосчитаем вместе.' },
+      sub: {
+        az: `Səbəti boşalt və yenidən başla: 1, 2, 3… ${c}-ə qədər.`,
+        en: `Empty the basket and start again: 1, 2, 3… all the way to ${c}.`,
+        ru: `Освободи корзину и начни снова: 1, 2, 3… до ${c}.`
+      },
+      panelTitle: { az: 'Bir-bir say', en: 'Count them one by one', ru: 'Считай по одному' },
+      body: () => EQD.vNumberRow([1, 2, 3, '?'], true),
+      note: {
+        az: 'Bir alma — bir ədəd. İkisini birdən sayma.',
+        en: 'One apple, one number. Never count two at once.',
+        ru: 'Одно яблоко — одно число. Не считай два сразу.'
+      }
+    },
+    explain: {
+      title: { az: 'Saymaq toxunmaq deməkdir.', en: 'Counting means touching.', ru: 'Считать — значит касаться.' },
+      text: {
+        az: `Sayarkən hər əşyaya bir dəfə toxunur və bir ədəd deyirsən. ${c} alma — ${c} toxunuş, nə az, nə çox.`,
+        en: `When you count, you touch each thing once and say one number. ${c} apples means ${c} touches — no more, no less.`,
+        ru: `Когда считаешь, ты касаешься каждого предмета один раз и называешь одно число. ${c} яблок — это ${c} касаний.`
+      },
+      why: {
+        az: 'Bir-bir saymaq böyük ədədlərdə də işləyir — səhv etməyə yer qalmır.',
+        en: 'One-to-one counting keeps working with big numbers too — it leaves no room to slip.',
+        ru: 'Счёт по одному работает и с большими числами — ошибиться почти невозможно.'
+      },
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;width:120px">${EQC.appleBox(Math.min(10, c))}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${c}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər almaya bir dəfə toxun.', en: 'Touch each apple exactly once.', ru: 'Коснись каждого яблока ровно один раз.' })}</div></div></div>`
+    },
+    easier: EQD._qAddEasy(ri)
+  };
+};
+
+/* matching pairs: "join every lantern to its double" (topic: double) */
+EQD._qPairDouble = function (ri, hard) {
+  const n = hard ? 4 : 3;
+  const bases = [];
+  let guard = 0;
+  while (bases.length < n && guard++ < 60) {
+    const v = ri(2, hard ? 9 : 6);
+    if (bases.indexOf(v) < 0) bases.push(v);
+  }
+  while (bases.length < n) { let v = 2; while (bases.indexOf(v) >= 0) v++; bases.push(v); }
+  const doubles = bases.map(v => v * 2);
+  /* the right column is shuffled, so match[i] says where base i's double ended up */
+  const rightShown = EQD._shuffleAns(ri, doubles.slice());
+  const match = doubles.map(d => rightShown.indexOf(d));
+  return {
+    name: { az: 'Əkiz fənərlər', en: 'The twin lanterns', ru: 'Парные фонари' },
+    subject: EQD._subjMath, subj: 'math', tag: EQD._tagDouble, kind: 'pair',
+    cardTitle: { az: 'Əkiz fənərlər', en: 'The twin lanterns', ru: 'Парные фонари' },
+    cardStory: {
+      az: 'Hər fənər öz qoşasını axtarır — onları birləşdir, işıqlar yansın.',
+      en: 'Every lantern is looking for its double — join them and the lights come on.',
+      ru: 'Каждый фонарь ищет свою пару — соедини их, и огни загорятся.'
+    },
+    meta: EQD._metaNoRush,
+    title: {
+      az: 'Hər ədədi öz qoşası ilə birləşdir.<br>Solda birinə, sonra sağda cütünə toxun.',
+      en: 'Match every number to its double.<br>Tap one on the left, then its partner on the right.',
+      ru: 'Соедини каждое число с его двойником.<br>Нажми слева, потом справа.'
+    },
+    visual: () => '',
+    pair: {
+      left: bases, rightShown: rightShown, match: match,
+      label: { az: 'Qoşanı tap', en: 'Find the double', ru: 'Найди двойник' }
+    },
+    answers: EQD._answers(ri, bases[0] * 2, 2), correct: bases[0] * 2,
+    tip: {
+      az: 'Qoşa demək — eyni ədədi iki dəfə toplamaq.',
+      en: 'A double is just the same number added to itself.',
+      ru: 'Двойное — это число, сложенное с самим собой.'
+    },
+    successLine: { az: 'Bütün fənərlər yandı!', en: 'Every lantern is lit!', ru: 'Все фонари горят!' },
+    praise: {
+      az: 'Hər qoşanı tapdın — bir dənə də səhv cüt yox.',
+      en: 'You found every double — not one wrong pair.',
+      ru: 'Ты нашёл все пары — и ни одной ошибки.'
+    },
+    hint: {
+      heading: { az: 'Az qaldı! Qoşaları yoxlayaq.', en: 'Almost! Let’s check the doubles.', ru: 'Почти! Проверим двойные.' },
+      sub: {
+        az: `${bases[0]} qoşası: ${bases[0]} + ${bases[0]} = ${bases[0] * 2}.`,
+        en: `The double of ${bases[0]} is ${bases[0]} + ${bases[0]} = ${bases[0] * 2}.`,
+        ru: `Двойное от ${bases[0]}: ${bases[0]} + ${bases[0]} = ${bases[0] * 2}.`
+      },
+      panelTitle: { az: 'Qoşanı hesabla', en: 'Work out the double', ru: 'Посчитай двойное' },
+      body: () => EQD.vGrid(2, bases[0], '#45C6F0'),
+      note: {
+        az: 'İki bərabər sıra — qoşa elə budur.',
+        en: 'Two equal rows — that is what a double looks like.',
+        ru: 'Два равных ряда — вот как выглядит двойное.'
+      }
+    },
+    explain: {
+      title: { az: 'Qoşalar cütlərlə gəlir.', en: 'Doubles come in pairs.', ru: 'Двойные ходят парами.' },
+      text: {
+        az: 'Hər ədədin bir qoşası var və o həmişə eynidir: ədədi özünə əlavə et. Bir dəfə öyrənəndə daha saymaq lazım olmur.',
+        en: 'Every number has one double and it never changes: add the number to itself. Learn it once and you never count again.',
+        ru: 'У каждого числа одно двойное, и оно не меняется: прибавь число к самому себе. Выучил один раз — считать больше не нужно.'
+      },
+      why: {
+        az: 'Qoşaları biləndə böyük toplamalar da asanlaşır.',
+        en: 'Knowing your doubles makes bigger sums easy.',
+        ru: 'Зная двойные, легче складывать большие числа.'
+      },
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, bases[0], '#8FDCF7')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${bases[0]} + ${bases[0]} = ${bases[0] * 2}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki eyni sıra — bir qoşa.', en: 'Two identical rows — one double.', ru: 'Два одинаковых ряда — одно двойное.' })}</div></div></div>`
+    }
+  };
+};
+
+/* putting in order: "smallest first" (topic: pattern — the same ordering sense) */
+EQD._qOrder = function (ri, hard) {
+  const step = hard ? ri(2, 4) : ri(1, 3);
+  const start = ri(1, hard ? 9 : 5);
+  const sorted = [];
+  for (let i = 0; i < 4; i++) sorted.push(start + step * i);
+  let shown = EQD._shuffleAns(ri, sorted.slice());
+  /* a shuffle that happens to come out already sorted is not a question */
+  if (shown.every((v, i) => v === sorted[i])) shown = shown.slice().reverse();
+  return {
+    name: { az: 'Pillələri düz', en: 'Order the steps', ru: 'Расставь ступени' },
+    subject: EQD._subjLogic, subj: 'logic', tag: EQD._tagPattern, kind: 'order',
+    cardTitle: { az: 'Dağılmış pillələr', en: 'The scattered steps', ru: 'Рассыпавшиеся ступени' },
+    cardStory: {
+      az: 'Pillələr qarışıb — kiçikdən böyüyə düz ki, qülləyə qalxa biləsən.',
+      en: 'The steps are jumbled — put them smallest to biggest so you can climb the tower.',
+      ru: 'Ступени перепутались — расставь от меньшего к большему, чтобы подняться на башню.'
+    },
+    meta: EQD._metaNoRush,
+    title: {
+      az: 'Ədədləri kiçikdən böyüyə düz.<br>Birinə toxun, sonra getməli olduğu yerə toxun.',
+      en: 'Put the numbers in order, smallest first.<br>Tap a tile, then tap where it goes.',
+      ru: 'Расставь числа от меньшего к большему.<br>Нажми на число, потом на место.'
+    },
+    visual: () => '',
+    order: {
+      shown: shown, sorted: sorted,
+      label: { az: 'Kiçikdən böyüyə', en: 'Smallest to biggest', ru: 'От меньшего к большему' },
+      doneLabel: { az: 'Hazıram', en: 'Done', ru: 'Готово' }
+    },
+    answers: EQD._answers(ri, sorted[0]), correct: sorted[0],
+    tip: {
+      az: 'Əvvəlcə ən kiçik ədədi tap və başa qoy.',
+      en: 'Find the smallest number first and put it at the front.',
+      ru: 'Сначала найди самое маленькое число и поставь в начало.'
+    },
+    successLine: { az: 'Pillələr düzüldü — qalx!', en: 'The steps line up — climb!', ru: 'Ступени в ряд — поднимайся!' },
+    praise: {
+      az: 'Kiçikdən böyüyə — hər dəfə işləyən qayda.',
+      en: 'Smallest to biggest — a rule that works every time.',
+      ru: 'От меньшего к большему — правило, которое всегда работает.'
+    },
+    hint: {
+      heading: { az: 'Az qaldı! İkisini qarşılaşdır.', en: 'Almost! Compare them two at a time.', ru: 'Почти! Сравнивай по два.' },
+      sub: {
+        az: `Ən kiçiyi ${sorted[0]}-dir. Onu başa qoy, sonra qalanları müqayisə et.`,
+        en: `The smallest is ${sorted[0]}. Put it first, then compare what is left.`,
+        ru: `Самое маленькое — ${sorted[0]}. Поставь его в начало, потом сравни остальные.`
+      },
+      panelTitle: { az: 'Düzgün sıra', en: 'The right order', ru: 'Правильный порядок' },
+      body: () => EQD.vNumberRow([sorted[0], sorted[1], '?', '?'], false),
+      note: {
+        az: 'Hər dəfə qalanların ən kiçiyini seç.',
+        en: 'Each time, pick the smallest of what is left.',
+        ru: 'Каждый раз выбирай меньшее из оставшихся.'
+      }
+    },
+    explain: {
+      title: { az: 'Sıralamaq müqayisə etməkdir.', en: 'Ordering is comparing.', ru: 'Упорядочить — значит сравнить.' },
+      text: {
+        az: `Dörd ədədi birdən düzməyə çalışma. Ən kiçiyini tap, yerinə qoy, sonra qalanların ən kiçiyini tap. Sıra belə alınır: ${sorted.join(', ')}.`,
+        en: `Don’t try to place all four at once. Find the smallest, set it down, then find the smallest of what is left. That gives ${sorted.join(', ')}.`,
+        ru: `Не пытайся расставить все сразу. Найди меньшее, поставь, потом меньшее из оставшихся. Получится ${sorted.join(', ')}.`
+      },
+      why: {
+        az: 'Bir dəfəyə iki ədəd müqayisə etmək həmişə asandır — neçə ədəd olsa da.',
+        en: 'Comparing two numbers at a time is always easy — however many there are.',
+        ru: 'Сравнивать по два всегда просто — сколько бы их ни было.'
+      },
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><svg width="96" height="80" viewBox="0 0 120 80"><g fill="#FFC24B"><rect x="8" y="56" width="22" height="18" rx="5"></rect><rect x="36" y="44" width="22" height="30" rx="5"></rect><rect x="64" y="30" width="22" height="44" rx="5"></rect><rect x="92" y="14" width="22" height="60" rx="5"></rect></g></svg><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${sorted.join(' · ')}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər pillə əvvəlkindən hündürdür.', en: 'Each step is taller than the one before.', ru: 'Каждая ступень выше предыдущей.' })}</div></div></div>`
+    }
+  };
+};
+
+/* The generator behind each topic key, so a plan of topic keys can be turned into
+   questions. Same functions the missions use — one topic, one generator, everywhere.
+
+   Three of the five topics now have a second, hands-on shape as well as the classic
+   three-button one. Which shape a topic wears is decided per day by `EQD.formatFor`,
+   never at random inside the generator: a child who reloads mid-quest, or comes back
+   to the same day on another device, has to be given the same question they left. */
 EQD.TOPIC_GEN = {
-  add: (ri, hard) => EQD._qAdd(ri, hard),
-  pattern: (ri) => EQD._qPattern(ri),
+  add: (ri, hard, alt) => alt ? EQD._qDragCount(ri, hard) : EQD._qAdd(ri, hard),
+  pattern: (ri, hard, alt) => alt ? EQD._qOrder(ri, hard) : EQD._qPattern(ri),
   groups: (ri, hard) => EQD._qGroups(ri, hard),
   take: (ri) => EQD._qTakeAway(ri),
-  double: (ri, hard) => EQD._qDouble(ri, hard)
+  double: (ri, hard, alt) => alt ? EQD._qPairDouble(ri, hard) : EQD._qDouble(ri, hard)
+};
+
+/* the topics that have a hands-on variant at all */
+EQD.ALT_TOPICS = { add: 1, pattern: 1, double: 1 };
+
+/* Does this topic wear its hands-on shape on this day, in this slot?
+
+   The rule is deliberately plain: a topic alternates by day, offset by the slot it
+   sits in, so a child meets both shapes of a topic across a week and never a day made
+   entirely of one format. Because it is pure arithmetic on the day and the slot, it
+   gives the same answer every time it is asked — which is what keeps a reload from
+   swapping a drag question for a tap question underneath the child. */
+EQD.formatFor = function (topic, day, slot) {
+  if (!EQD.ALT_TOPICS[topic]) return false;
+  /* `day` is a quest-day number for the daily set and a date key like '2026-09-17'
+     for a mission, so it is folded to a number before the arithmetic rather than
+     assumed to be one — a string here would make every comparison NaN and quietly
+     pin every mission to the tapping format forever. */
+  let d = day;
+  if (typeof d !== 'number') {
+    const str = String(d || '');
+    d = 0;
+    for (let i = 0; i < str.length; i++) d = (d * 31 + str.charCodeAt(i)) | 0;
+  }
+  return (Math.abs(d) + (slot || 0)) % 2 === 1;
 };
 
 /* the lineup a day falls back to when nothing is known about the child yet — the
@@ -979,7 +1244,7 @@ EQD.genDay = function (day, plan) {
     title: theme.title, headline: theme.headline, chestTitle: theme.chestTitle,
     progressLine: theme.progressLine,
     plan: topics.slice(),
-    questions: topics.map(t => (EQD.TOPIC_GEN[t] || EQD.TOPIC_GEN.add)(ri, hard(t))),
+    questions: topics.map((t, i) => (EQD.TOPIC_GEN[t] || EQD.TOPIC_GEN.add)(ri, hard(t), EQD.formatFor(t, day, i))),
     /* six, so a chapter finale (6 hits) has its own question for every hit;
        an ordinary guardian simply stops after the first four */
     boss: [EQD._qGroups(ri, true), EQD._qDouble(ri, true), EQD._qTakeAway(ri), EQD._qAdd(ri, true), EQD._qPattern(ri), EQD._qGroups(ri, true)]
@@ -1041,13 +1306,12 @@ EQD.questSet = function (day) {
    than repeating one difficulty eight times. */
 EQD.MISSION_LEN = 8;
 
-EQD._missionGen = {
-  add: (ri, hard) => EQD._qAdd(ri, hard),
-  pattern: (ri) => EQD._qPattern(ri),
-  groups: (ri, hard) => EQD._qGroups(ri, hard),
-  take: (ri) => EQD._qTakeAway(ri),
-  double: (ri, hard) => EQD._qDouble(ri, hard)
-};
+/* A mission's questions come from the same registry as the daily ones. It used to be a
+   second copy of that table, and the copy is exactly how the hands-on formats first
+   failed to reach missions: the daily generators grew a third argument for the format
+   and the duplicate quietly went on ignoring it, so every mission stayed eight
+   identical tapping questions. One topic, one generator, everywhere. */
+EQD._missionGen = EQD.TOPIC_GEN;
 
 /* a stable small number from the approval day, so the seed changes day to day */
 EQD._missionSeed = function (topic, day) {
@@ -1067,7 +1331,9 @@ EQD.missionSet = function (topic, day) {
   const rnd = EQD.mulberry(EQD._missionSeed(topic, day));
   const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const questions = [];
-  for (let i = 0; i < EQD.MISSION_LEN; i++) questions.push(gen(ri, i >= 3 && i % 2 === 1));
+  /* a mission is eight questions on one topic, so alternating the shape matters more
+     here than anywhere else: eight identical panels in a row is a worksheet. */
+  for (let i = 0; i < EQD.MISSION_LEN; i++) questions.push(gen(ri, i >= 3 && i % 2 === 1, EQD.formatFor(topic, day, i)));
   const set = { topic: topic, day: day, questions: questions };
   EQD._missionCache[ck] = set;
   return set;

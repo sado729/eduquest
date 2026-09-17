@@ -53,7 +53,12 @@ EQS.screens.challenge = function (s) {
   const counter = mis
     ? TX({ az: `Missiya ${Math.min(total, idx + 1)} / ${total}`, en: `Mission ${Math.min(total, idx + 1)} of ${total}`, ru: `Миссия ${Math.min(total, idx + 1)} из ${total}` })
     : TX({ az: `Sınaq ${Math.min(5, s.challengesDone + 1)} / 5`, en: `Challenge ${Math.min(5, s.challengesDone + 1)} of 5`, ru: `Испытание ${Math.min(5, s.challengesDone + 1)} из 5` });
-  const answers = q.answers.map((a, i) => `
+  /* a hands-on question owns the whole answer area: its panel goes inside the card,
+     where the child can see the question and what they are moving at the same time,
+     and the three buttons below are simply not drawn */
+  const hands = !!(typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q));
+  const panel = hands ? EQIX.render(q, s) : '';
+  const answers = hands ? '' : q.answers.map((a, i) => `
     <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 38px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
   return `<div class="scr" style="background:#BFE9FB">
     ${EQS.dragonScene()}
@@ -70,6 +75,7 @@ EQS.screens.challenge = function (s) {
       </div>
       <div style="font:800 21px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.25">${TX(q.title)}</div>
       ${q.visual()}
+      ${panel}
     </div>
     <div style="position:absolute;top:640px;left:16px;right:16px;display:flex;gap:12px">${answers}</div>
     <div style="position:absolute;bottom:44px;left:16px;right:16px;display:flex;align-items:flex-end;gap:10px">
@@ -231,7 +237,11 @@ EQS.screens.boss = function (s) {
   const left = Math.max(0, need - s.bossHits);
   /* a finale runs to 6 hits, so the hearts wrap onto a second row rather than shrink */
   const hearts = Array.from({ length: need }, (_, i) => EQC.heart(i < s.bossHits, need > 4 ? 28 : 34)).join('');
-  const answers = q.answers.map((a, i) => `
+  /* the guardian's six are all tapping questions today, but the screen asks rather than
+     assumes, so a hands-on boss question would render instead of drawing dead buttons */
+  const hands = !!(typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q));
+  const panel = hands ? EQIX.render(q, s) : '';
+  const answers = hands ? '' : q.answers.map((a, i) => `
     <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:84px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 34px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
   const beam = EQ.session.bossBeam ? `
     <div class="pop" style="position:absolute;top:308px;left:18px;width:150px;height:80px">
@@ -294,6 +304,7 @@ EQS.screens.boss = function (s) {
       <div style="display:flex;align-items:center;gap:8px"><div style="padding:4px 10px;border-radius:10px;background:#EFE7FF;font:800 10px Nunito;color:#5B3FD6;letter-spacing:1.2px">${TX(q.tag)}</div><div style="font:700 11px Nunito;color:#A08A5E">${TX(q.meta)}</div></div>
       <div style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.3">${TX(q.title)}</div>
       ${q.visual()}
+      ${panel}
     </div>
     <div style="position:absolute;top:648px;left:16px;right:16px;display:flex;gap:12px">${answers}</div>
     <div style="position:absolute;bottom:26px;left:16px;right:16px;display:flex;align-items:center;gap:10px">

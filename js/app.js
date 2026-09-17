@@ -255,7 +255,13 @@ const EQ = {
   render() {
     const fn = EQS.screens[this.current];
     if (!fn) { this.current = 'map'; return this.render(); }
+    /* a hands-on panel hangs listeners on `document`, so the outgoing screen has to
+       drop them before the new HTML lands — otherwise a drag handler from a question
+       already answered goes on firing over whatever is drawn next */
+    if (typeof EQIX !== 'undefined') EQIX.unmount();
     document.getElementById('screen').innerHTML = fn(this.s);
+    /* the panel's markup exists only now, so its listeners are wired after the write */
+    if (typeof EQIX !== 'undefined') EQIX.mount(this.session.q);
     const meta = EQS.meta[this.current] || { light: true };
     this.paintChrome(meta.light);
   },
@@ -438,11 +444,38 @@ const EQ = {
     this.s.coins += coins; this.s.coinsToday += coins;
     if (this.s.xp >= 1500) this.s.pendingLevelUp = true;
   },
+  /* Tapping one of the three answer buttons. Multiple choice is still the game's
+     default question, so this stays the shortest possible path into resolve(): judge
+     the tap, and say how to paint that one button. */
   answer(i) {
     if (this.session.answering) return;
     const q = this.session.q;
-    const el = document.getElementById('ans-' + i);
     const correct = q.answers[i] === q.correct;
+    this.resolve(correct, () => {
+      const el = document.getElementById('ans-' + i);
+      if (!el) return;
+      if (correct) {
+        el.classList.add('good');
+        el.innerHTML = `${q.answers[i]} ${EQC.check('#fff', 26, 3.4)}`;
+      } else {
+        el.classList.add('warm');
+        el.innerHTML = `${q.answers[i]}<span style="font:800 13px Nunito;margin-left:8px">${TX({ az: 'bir də yoxla', en: 'try again', ru: 'ещё раз' })}</span>`;
+      }
+    });
+  },
+
+  /* Everything that happens once a question has been judged — for every question
+     format there is. The three-button tap and the drag, pair and order screens all end
+     up here, because what a right answer *means* (the XP, the coin, the boss hit, the
+     mission step, the spaced-repetition entry) is a property of the question, not of
+     how the child touched the screen. Adding a format must never mean re-deriving any
+     of that; a format that forked this path would drift out of step with the rest.
+
+     `paint` is the one part a format owns: it marks up its own pieces before the
+     shared pause. A format that has already shown its own feedback passes nothing. */
+  resolve(correct, paint) {
+    if (this.session.answering) return;
+    const q = this.session.q;
     /* the first try is the one that counts, both for the stats and for the spacing:
        a topic recalled unaided moves out to a longer gap, a miss brings it straight
        back. Later tries on the same question are practice, not evidence. */
@@ -452,8 +485,8 @@ const EQ = {
       EQT.review(q, correct, this.session.hinted);
     }
     this.session.answering = true;
+    if (paint) paint();
     if (correct) {
-      if (el) { el.classList.add('good'); el.innerHTML = `${q.answers[i]} ${EQC.check('#fff', 26, 3.4)}`; }
       SFX.correct();
       setTimeout(() => {
         this.session.answering = false;
@@ -493,7 +526,6 @@ const EQ = {
         }
       }, 900);
     } else {
-      if (el) { el.classList.add('warm'); el.innerHTML = `${q.answers[i]}<span style="font:800 13px Nunito;margin-left:8px">${TX({ az: 'bir də yoxla', en: 'try again', ru: 'ещё раз' })}</span>`; }
       SFX.wrong();
       this.session.streakRow = 0;
       setTimeout(() => { this.session.answering = false; this.go('hint'); }, 950);
@@ -592,6 +624,10 @@ const EQ = {
     if (q && q.easier) {
       this.session.q = q.easier;
       this.session.attempted = false; this.session.hinted = false;
+      /* the gentler question is a question in its own right: if the one being stepped
+         away from was a hands-on panel that had already been judged, that verdict must
+         not carry over and lock the new one before it is even drawn */
+      if (typeof EQIX !== 'undefined') EQIX.reset();
       SFX.tap();
       this.go(this.session.ctx === 'boss' ? 'boss' : 'challenge');
       this.toast(TX({ az: 'Əvvəlcə bir az asanı — eyni fikirdir!', en: 'A gentler one first — same idea!', ru: 'Сначала полегче — идея та же!' }));
@@ -998,7 +1034,11 @@ const EQ = {
     const step = () => {
       const q = this.session.q;
       if (this.current === 'challenge' || this.current === 'boss') {
-        if (!this.session.answering && q) this.answer(q.answers.indexOf(q.correct));
+        /* a hands-on question has no answer button to press, so the driver reports a
+           correct answer straight to resolve() rather than trying to fake a drag */
+        if (this.session.answering || !q) return;
+        if (typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q)) EQIX.commit(q, true);
+        else this.answer(q.answers.indexOf(q.correct));
       } else if (this.current === 'success') this.continueAfterSuccess();
       else if (this.current === 'victory') this.go('chest');
       else if (this.current === 'chest') this.openChest();

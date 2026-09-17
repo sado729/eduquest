@@ -91,3 +91,7 @@ body{
 html,body{touch-action:manipulation;overscroll-behavior:none}
 #stage{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 body.standalone-touch #statusbar{display:none}
+
+/* a mis-matched pair shakes and comes loose again (js/interact.js) */
+.eqi-shake{animation:eqWobble 240ms ease}
+.calm .eqi-shake{animation:none}
