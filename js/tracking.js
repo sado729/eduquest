@@ -65,6 +65,18 @@ const EQT = {
     if (!s.track || typeof s.track !== 'object') s.track = {};
     if (!s.track.days || typeof s.track.days !== 'object') s.track.days = {};
     if (!s.track.start) s.track.start = EQ.dayKey();
+    /* the spaced-repetition schedule; entries for topics that no longer exist are
+       dropped so a renamed topic cannot hold a slot nothing can ever answer */
+    if (!s.track.sched || typeof s.track.sched !== 'object') s.track.sched = {};
+    /* the frozen plan for the quest day in progress (rebuilt on demand if absent) */
+    if (s.track.plan && (typeof s.track.plan !== 'object' || !Array.isArray(s.track.plan.topics))) s.track.plan = null;
+    for (const k in s.track.sched) {
+      const e = s.track.sched[k];
+      if (!this.TOPICS[k] || !e || typeof e !== 'object') { delete s.track.sched[k]; continue; }
+      e.gap = Math.min(this.MAX_GAP, Math.max(0, parseInt(e.gap, 10) || 0));
+      e.streak = Math.max(0, parseInt(e.streak, 10) || 0);
+      if (typeof e.due !== 'string' || this.daysAgo(e.due) == null) e.due = EQ.dayKey();
+    }
     if (!Array.isArray(s.parentQuests)) s.parentQuests = [];
     s.parentQuests = s.parentQuests
       .filter(m => m && this.MISSIONS[m.t] && m.day)
@@ -303,6 +315,283 @@ const EQT = {
       en: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
       ru: ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ']
     })[date.getDay()];
+  },
+
+  /* ── adaptive difficulty ────────────────────────────────────────────────────
+     Everything above this line watches the child play. This is the part that lets
+     what it saw change what comes next, which is the whole difference between a
+     question booklet and a teacher: a booklet asks page 4 after page 3 no matter
+     how page 3 went.
+
+     Two forces decide tomorrow's five questions.
+
+     WEAKNESS. Every topic carries a mastery score in [0,1] built from first-try
+     accuracy and how often a hint was needed. A topic the child misses or leans on
+     hints for scores low and is asked more often; a topic answered cleanly scores
+     high and steps back. Recent days count for more than old ones (RECENCY_HALFLIFE),
+     so a topic that has been fixed stops being punished for how it went two weeks ago
+     — and one that has quietly decayed is caught before it becomes a wall.
+
+     SPACING. A topic answered correctly is not finished, it is scheduled. It comes
+     back after a gap that grows with each clean pass — 3 days, then 6, then 12, capped
+     at MAX_GAP — which is the spacing effect: the review that lands just as recall
+     starts to fade is worth several that land while it is still fresh. The 3-day first
+     gap is the floor deliberately: sooner is wasted effort for a six-year-old, later
+     and the first pass has usually gone. A wrong answer cancels the schedule and the
+     topic is due again immediately, because a lapse means the interval was too long.
+
+     What the two forces cannot do is make the day unrecognisable. A child who finds
+     subtraction hard must not get five subtraction questions — that is a worksheet,
+     and it is how a child learns that the game punishes being bad at something. So the
+     plan below guarantees variety: MAX_REPEAT caps any one topic, and every topic in
+     the rotation keeps appearing. Adaptivity here changes the *mix*, never the menu. */
+
+  /* how long a day's evidence keeps half its weight (days) */
+  RECENCY_HALFLIFE: 8,
+  /* the window of play the mastery score is computed over (days) */
+  MASTERY_WINDOW: 28,
+  /* the smallest number of weighted attempts before a score is trusted at full strength */
+  CONFIDENCE_N: 4,
+  /* spaced repetition: first gap after a clean pass, then each gap multiplies */
+  FIRST_GAP: 3,
+  GAP_GROWTH: 2,
+  MAX_GAP: 21,
+  /* no topic may take more than this many of the five daily slots */
+  MAX_REPEAT: 2,
+  /* mastery at or below this is "weak"; at or above it is "solid" */
+  WEAK_AT: 0.55,
+  SOLID_AT: 0.8,
+
+  /* how many days ago a day key was; null for anything unparseable */
+  daysAgo(key, from) {
+    const p = String(key || '').split('-');
+    if (p.length !== 3) return null;
+    const d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(d.getTime())) return null;
+    const now = from || new Date();
+    const a = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const b = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.round((a - b) / 86400000);
+  },
+
+  /* a day key `n` days from today, which is how a due date is stored */
+  dayKeyIn(n) {
+    const t = new Date();
+    return EQ.dayKey(new Date(t.getFullYear(), t.getMonth(), t.getDate() + (n || 0)));
+  },
+
+  /* ── mastery ──
+     Weighted first-try accuracy, with hints counted as partial misses: a child who
+     answers correctly but needed the hint every time has not mastered the topic, and
+     a score built on correctness alone would say they had. Returns one entry per topic
+     in TOPICS, always — a topic never played yet scores null (unknown), not zero,
+     because "never tried" and "always wrong" must not be treated the same. */
+  mastery() {
+    const out = {};
+    for (const k in this.TOPICS) out[k] = { w: 0, score: null, a: 0, c: 0, h: 0 };
+    const days = (EQ.s.track && EQ.s.track.days) || {};
+    const now = new Date();
+    for (const key in days) {
+      const ago = this.daysAgo(key, now);
+      if (ago == null || ago < 0 || ago >= this.MASTERY_WINDOW) continue;
+      const topics = days[key].topics || {};
+      const w = Math.pow(0.5, ago / this.RECENCY_HALFLIFE);
+      for (const t in topics) {
+        if (!out[t]) continue;
+        const st = topics[t];
+        const a = st.a || 0;
+        if (a <= 0) continue;
+        const c = st.c || 0;
+        /* a hint is half a miss, and never drags one attempt below zero credit */
+        const credit = Math.max(0, c - 0.5 * Math.min(st.h || 0, a));
+        out[t].w += w * a;
+        out[t].raw = (out[t].raw || 0) + w * credit;
+        out[t].a += a; out[t].c += c; out[t].h += st.h || 0;
+      }
+    }
+    for (const k in out) {
+      const o = out[k];
+      if (o.w <= 0) continue;
+      const rate = (o.raw || 0) / o.w;
+      /* thin evidence is pulled toward the middle rather than believed outright, so
+         one unlucky miss on a new topic doesn't brand it as the child's weakest */
+      const conf = Math.min(1, o.w / this.CONFIDENCE_N);
+      o.score = rate * conf + 0.5 * (1 - conf);
+      o.rate = rate;
+    }
+    return out;
+  },
+
+  /* ── the spaced-repetition schedule ──
+     `s.track.sched[topic] = { due: dayKey, gap: days, streak: clean passes }`.
+     A topic with no entry is due now — it has never been scheduled, so it should be
+     asked. Written by review() below as answers come in. */
+  sched(s) {
+    const st = s || EQ.s;
+    if (!st.track) this.init(st);
+    if (!st.track.sched || typeof st.track.sched !== 'object') st.track.sched = {};
+    return st.track.sched;
+  },
+
+  /* days until a topic is due; 0 or less means due now, and an unseen topic is due */
+  dueIn(topic) {
+    const e = this.sched()[topic];
+    if (!e || !e.due) return 0;
+    const ago = this.daysAgo(e.due);
+    return ago == null ? 0 : -ago;
+  },
+
+  /* record what one answer does to a topic's schedule.
+     Correct and unhinted → the gap grows and the topic goes away for a while.
+     Wrong, or leaning on a hint → the schedule collapses back to "due now", because
+     the last interval clearly outran what had actually stuck. */
+  review(q, correct, hinted) {
+    const t = this.topicKey(q);
+    if (!t || !this.TOPICS[t]) return;
+    const sc = this.sched();
+    const e = sc[t] || (sc[t] = { due: EQ.dayKey(), gap: 0, streak: 0 });
+    if (correct && !hinted) {
+      e.streak = (e.streak || 0) + 1;
+      e.gap = Math.min(this.MAX_GAP, e.gap > 0 ? e.gap * this.GAP_GROWTH : this.FIRST_GAP);
+      e.due = this.dayKeyIn(e.gap);
+    } else {
+      e.streak = 0;
+      e.gap = 0;
+      e.due = EQ.dayKey();
+    }
+  },
+
+  /* ── priority ──
+     One number per topic deciding who gets the day's slots. Higher wins.
+     Weak topics outrank due ones, and a topic that is both is the clearest case of
+     all — it is failing *and* the schedule agrees it is time. Overdue days add a
+     little each, so nothing can be starved out forever by a permanently weaker topic. */
+  priority(topic, m) {
+    const mm = (m || this.mastery())[topic] || { score: null };
+    /* unknown topics sit just under genuinely weak ones: worth asking, not urgent */
+    const score = mm.score == null ? 0.5 : mm.score;
+    const weakness = 1 - score;
+    const overdue = Math.max(0, -this.dueIn(topic));
+    const due = this.dueIn(topic) <= 0 ? 1 : 0;
+    return weakness * 2 + due * 0.6 + Math.min(overdue, 14) * 0.05;
+  },
+
+  /* ── the day's plan ──
+     Five topic keys, in the order they will be asked. Weakest-and-due first, but
+     never more than MAX_REPEAT of one topic, and the opener is deliberately not the
+     child's worst topic — a session that begins with the hardest thing is a session
+     a six-year-old quits. So the plan is built by priority and then *arranged*: a
+     solid topic opens, the heavy ones sit in the middle, and a solid one closes it.
+
+     Deterministic for a given day and a given history, so re-entering the quest does
+     not reshuffle the questions underneath the child. */
+  plan(day, n) {
+    const size = n || 5;
+    const keys = Object.keys(this.TOPICS);
+    if (!keys.length) return [];
+    const m = this.mastery();
+    const ranked = keys
+      .map(k => ({ k, p: this.priority(k, m), score: m[k] && m[k].score == null ? 0.5 : m[k].score }))
+      .sort((x, y) => (y.p - x.p) || (x.k < y.k ? -1 : 1));
+
+    /* fill the slots by priority, re-queuing each pick with a lowered score so the
+       second slot for a topic only comes after every other topic has had its turn */
+    const used = {};
+    const picked = [];
+    const pool = ranked.map(r => ({ k: r.k, p: r.p, n: 0 }));
+    while (picked.length < size) {
+      let best = null;
+      for (const c of pool) {
+        if ((used[c.k] || 0) >= this.MAX_REPEAT) continue;
+        const eff = c.p - (used[c.k] || 0) * 1.5;
+        if (!best || eff > best.eff) best = { c, eff };
+      }
+      if (!best) break; /* every topic is at its cap — the set is as full as it can be */
+      used[best.c.k] = (used[best.c.k] || 0) + 1;
+      picked.push(best.c.k);
+    }
+    /* fewer topics than slots (MAX_REPEAT * topics < size): cycle to fill the rest */
+    for (let i = 0; picked.length < size; i++) picked.push(keys[i % keys.length]);
+
+    return this.arrange(picked, m);
+  },
+
+  /* ── the plan the child is actually playing ──
+     plan() is recomputed from live stats, and those stats change with every answer —
+     so asking it twice inside one day can return two different sets. That would swap
+     the questions under a child mid-adventure: they answer challenge 3, the topic
+     reschedules, and challenge 4 silently becomes a different question than the one
+     the set was counting on.
+
+     So the plan is decided once per quest day and stored. Everything the child plays
+     reads the stored one; it is recomputed only when the day rolls over (a new
+     `questDay`, or the next stage opened early via nextStage). The adaptation from
+     today's answers lands on tomorrow's set, which is where it belongs anyway —
+     spacing is a between-sessions idea, not a within-session one. */
+  todayPlan(day) {
+    const s = EQ.s;
+    if (!s.track) this.init(s);
+    const d = day == null ? (s.questDay || 0) : day;
+    const cur = s.track.plan;
+    if (cur && cur.day === d && Array.isArray(cur.topics) && cur.topics.length) {
+      /* a stored plan naming a topic that no longer exists is rebuilt, not trusted */
+      if (cur.topics.every(t => this.TOPICS[t])) return cur.topics.slice();
+    }
+    const topics = this.plan(d, 5);
+    s.track.plan = { day: d, topics: topics.slice() };
+    return topics;
+  },
+
+  /* called when the quest day advances, so the next set is planned from what the
+     child has just done rather than reusing the set they have already played */
+  replan(day) {
+    const s = EQ.s;
+    if (!s.track) this.init(s);
+    s.track.plan = null;
+    return this.todayPlan(day);
+  },
+
+  /* put a confident topic first and last, the demanding ones in between */
+  arrange(picked, m) {
+    if (picked.length < 3) return picked.slice();
+    const mm = m || this.mastery();
+    const sc = k => { const v = mm[k] && mm[k].score; return v == null ? 0.5 : v; };
+    const rest = picked.slice();
+    /* the strongest topic present opens the set */
+    let bi = 0;
+    for (let i = 1; i < rest.length; i++) if (sc(rest[i]) > sc(rest[bi])) bi = i;
+    const opener = rest.splice(bi, 1)[0];
+    /* the strongest of what is left closes it, so the child finishes on a win */
+    let ci = 0;
+    for (let i = 1; i < rest.length; i++) if (sc(rest[i]) > sc(rest[ci])) ci = i;
+    const closer = rest.splice(ci, 1)[0];
+    return [opener].concat(rest, [closer]);
+  },
+
+  /* ── per-question difficulty ──
+     The generators take a `hard` flag that widens the number ranges. A topic the
+     child has mastered gets the harder variant — otherwise mastery means being asked
+     the same easy question forever, which is its own kind of neglect. A weak topic
+     always gets the gentler one. */
+  hardFor(topic, m) {
+    const mm = (m || this.mastery())[topic];
+    return !!(mm && mm.score != null && mm.score >= this.SOLID_AT);
+  },
+
+  /* ── what the grown-up is told ──
+     The dashboard already names weak topics. This says what the app *did* about them,
+     because an adaptive system the parent cannot see looks exactly like a random one. */
+  adaptSummary() {
+    const m = this.mastery();
+    const weak = [], solid = [], due = [];
+    for (const k in this.TOPICS) {
+      const s = m[k] && m[k].score;
+      if (s == null) continue;
+      if (s <= this.WEAK_AT) weak.push(k);
+      else if (s >= this.SOLID_AT) solid.push(k);
+      if (this.dueIn(k) <= 0 && this.sched()[k]) due.push(k);
+    }
+    return { mastery: m, weak, solid, due };
   },
 
   /* ── recommendation engine (screen 26) ──

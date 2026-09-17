@@ -937,21 +937,54 @@ EQD._qDouble = function (ri, hard) {
   };
 };
 
-EQD._dayCache = null; EQD._dayCacheNo = -1;
-EQD.genDay = function (day) {
-  if (EQD._dayCacheNo === day && EQD._dayCache) return EQD._dayCache;
+/* the generator behind each topic key, so a plan of topic keys can be turned into
+   questions. Same functions the missions use — one topic, one generator, everywhere. */
+EQD.TOPIC_GEN = {
+  add: (ri, hard) => EQD._qAdd(ri, hard),
+  pattern: (ri) => EQD._qPattern(ri),
+  groups: (ri, hard) => EQD._qGroups(ri, hard),
+  take: (ri) => EQD._qTakeAway(ri),
+  double: (ri, hard) => EQD._qDouble(ri, hard)
+};
+
+/* the lineup a day falls back to when nothing is known about the child yet — the
+   original fixed order, which is still the right first day: one of each, easy first. */
+EQD.DEFAULT_PLAN = ['add', 'pattern', 'groups', 'take', 'double'];
+
+/* ── the day's five questions ───────────────────────────────────────────────
+   Which topics appear is decided by EQT.plan() from how the child has actually been
+   playing: weak topics come round more often, and a topic answered cleanly is held
+   back until its spaced-repetition gap has run out (see the adaptive section in
+   js/tracking.js). This function only turns that plan into questions.
+
+   The cache is keyed by day *and* plan, not day alone. That matters: the plan can
+   change inside a single day — answering a question reschedules its topic — and a
+   cache keyed on the day number would keep serving the set that was planned before
+   the child had answered anything. Caching still holds within a screen's worth of
+   re-renders, which is what it was there for.
+
+   The boss keeps its own fixed six. A guardian is the day's set piece and its shape
+   is part of the chapter's design, so adaptivity stops at the challenges. */
+EQD._dayCache = null; EQD._dayCacheKey = null;
+EQD.genDay = function (day, plan) {
+  const topics = (plan && plan.length ? plan : EQD.DEFAULT_PLAN).slice(0, 5);
+  const ck = day + '|' + topics.join(',');
+  if (EQD._dayCacheKey === ck && EQD._dayCache) return EQD._dayCache;
   const rnd = EQD.mulberry(day * 7919 + 13);
   const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const theme = EQD.THEMES[(day - 1) % EQD.THEMES.length];
+  /* a mastered topic gets the wider number range; a shaky one stays gentle */
+  const hard = t => (typeof EQT !== 'undefined' && EQT.hardFor) ? EQT.hardFor(t) : false;
   const set = {
     title: theme.title, headline: theme.headline, chestTitle: theme.chestTitle,
     progressLine: theme.progressLine,
-    questions: [EQD._qAdd(ri, false), EQD._qPattern(ri), EQD._qGroups(ri, false), EQD._qTakeAway(ri), EQD._qDouble(ri, false)],
+    plan: topics.slice(),
+    questions: topics.map(t => (EQD.TOPIC_GEN[t] || EQD.TOPIC_GEN.add)(ri, hard(t))),
     /* six, so a chapter finale (6 hits) has its own question for every hit;
        an ordinary guardian simply stops after the first four */
     boss: [EQD._qGroups(ri, true), EQD._qDouble(ri, true), EQD._qTakeAway(ri), EQD._qAdd(ri, true), EQD._qPattern(ri), EQD._qGroups(ri, true)]
   };
-  EQD._dayCache = set; EQD._dayCacheNo = day;
+  EQD._dayCache = set; EQD._dayCacheKey = ck;
   return set;
 };
 
@@ -985,7 +1018,10 @@ EQD.questSet = function (day) {
     }
     return EQD._day0;
   }
-  return EQD.genDay(day);
+  /* day 1 onward is adaptive: ask tracking what this child should practise today */
+  const plan = (typeof EQT !== 'undefined' && EQT.todayPlan && EQ && EQ.s && EQ.s.track)
+    ? EQT.todayPlan(day) : null;
+  return EQD.genDay(day, plan);
 };
 
 /* ── parent-approved missions (screen 26 → the child's quest list) ───────────

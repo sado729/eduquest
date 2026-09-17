@@ -323,6 +323,30 @@ EQS.screens.parent_analytics = function (s) {
   });
   const strengths = entries.filter(e => e.rate >= 0.7).sort((a, b) => b.rate - a.rate).slice(0, 3);
   const needs = entries.filter(e => e.rate < 0.7 || (ts[e.k].h >= 2)).sort((a, b) => b.rough - a.rough).slice(0, 3);
+  /* ── what the app did about it ──
+     The two cards below name the child's weak topics. Without this line the parent
+     has no way to tell whether anything acted on them: an adaptive daily set and a
+     fixed one look exactly alike from outside. So say plainly which topics today's
+     five questions lean on, and that a cleared topic comes back later rather than
+     being dropped — the spacing is the part a grown-up would otherwise read as the
+     app "forgetting" something the child had got right. */
+  const planToday = (EQT.todayPlan ? EQT.todayPlan() : []).filter(k => EQT.TOPICS[k]);
+  const focus = [];
+  planToday.forEach(k => { if (focus.indexOf(k) < 0) focus.push(k); });
+  const repeated = planToday.filter((k, i) => planToday.indexOf(k) !== i);
+  const focusName = k => TX(EQT.TOPICS[k].name);
+  const adaptLine = repeated.length
+    ? TX({
+      az: `Bugünkü macərada «${focusName(repeated[0])}» daha tez-tez soruşulur. Düzgün cavablanan mövzu 3 gündən sonra təkrar qayıdır.`,
+      en: `Today's adventure asks about “${focusName(repeated[0])}” more often. A topic answered correctly comes back after 3 days.`,
+      ru: `В сегодняшнем приключении тема «${focusName(repeated[0])}» встречается чаще. Верно решённая тема вернётся через 3 дня.`
+    })
+    : (focus.length ? TX({
+      az: `Bugünkü macərada ${focus.length} mövzu var. Düzgün cavablanan mövzu 3 gündən sonra təkrar qayıdır — beləcə yadda qalır.`,
+      en: `Today's adventure covers ${focus.length} topics. A topic answered correctly comes back after 3 days, so it stays learned.`,
+      ru: `Сегодняшнее приключение охватывает ${focus.length} ${focus.length === 1 ? 'тему' : 'тем'}. Верно решённая тема вернётся через 3 дня — так она закрепляется.`
+    }) : '');
+
   const nameList = (arr, color) => arr.length
     ? arr.map(e => `<div style="font:800 12.5px Nunito;color:${color}">${TX(EQT.TOPICS[e.k].name)}</div>`).join('')
     : `<div style="font:700 12px Nunito;color:${color};opacity:0.65">${TX({ az: 'Məlumat toplanır…', en: 'Collecting data…', ru: 'Данные собираются…' })}</div>`;
@@ -353,6 +377,10 @@ EQS.screens.parent_analytics = function (s) {
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">${nameList(needs, '#6B4406')}</div>
       </div>
     </div>
+    ${adaptLine ? `<div style="position:absolute;top:684px;left:20px;right:20px;border-radius:20px;background:#EFE7FF;padding:13px 15px">
+      <div style="font:700 10px Nunito;color:#5B3FD6;letter-spacing:1.2px">${TX({ az: 'QUESTY NECƏ UYĞUNLAŞIR', en: 'HOW QUESTY ADAPTS', ru: 'КАК КВЕСТИ ПОДСТРАИВАЕТСЯ' })}</div>
+      <div style="font:700 12px Nunito;color:#4A3B77;line-height:1.55;margin-top:6px">${adaptLine}</div>
+    </div>` : ''}
     <div class="press" onclick="EQ.go('parent_quests')" style="position:absolute;bottom:100px;left:20px;right:20px;height:58px;border-radius:20px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 17px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Questy nə təklif edir — bax', en: 'See what Questy suggests', ru: 'Посмотреть советы Квести' })}</div>
     ${EQS.ptabs('progress')}
   </div>`;

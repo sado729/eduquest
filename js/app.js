@@ -97,6 +97,8 @@ const EQ = {
   newDay(today) {
     this.s.questDay = (this.s.questDay || 0) + 1;
     this.resetDaily();
+    /* a fresh day gets a fresh plan, built from everything played up to now */
+    EQT.replan(this.s.questDay);
     this.s.streak++;
     this.s.bestStreak = Math.max(this.s.bestStreak || 0, this.s.streak);
     this.s.playedDays = (this.s.playedDays || []).concat([today]).slice(-14);
@@ -408,6 +410,8 @@ const EQ = {
     this.s.challengesDone = 0; this.s.bossHits = 0; this.s.bossBeaten = false;
     this.s.chestReady = false; this.s.chestOpened = false;
     this.session.q = null; this.session.qIdx = -1;
+    /* the next stage is a new set, so it is planned from the set just finished */
+    EQT.replan(this.s.questDay);
     this.save();
     this.go('quest');
     /* crossing a chapter boundary is a bigger moment than the next stage of the same one */
@@ -437,7 +441,14 @@ const EQ = {
     const q = this.session.q;
     const el = document.getElementById('ans-' + i);
     const correct = q.answers[i] === q.correct;
-    if (!this.session.attempted) { this.session.attempted = true; EQT.attempt(q, correct); }
+    /* the first try is the one that counts, both for the stats and for the spacing:
+       a topic recalled unaided moves out to a longer gap, a miss brings it straight
+       back. Later tries on the same question are practice, not evidence. */
+    if (!this.session.attempted) {
+      this.session.attempted = true;
+      EQT.attempt(q, correct);
+      EQT.review(q, correct, this.session.hinted);
+    }
     this.session.answering = true;
     if (correct) {
       if (el) { el.classList.add('good'); el.innerHTML = `${q.answers[i]} ${EQC.check('#fff', 26, 3.4)}`; }
@@ -894,7 +905,7 @@ const EQ = {
 
     /* dev-only: force a quest day with ?day=N */
     const devDay = parseInt(params.get('day'), 10);
-    if (!isNaN(devDay)) { this.s.questDay = devDay; this.resetDaily(); }
+    if (!isNaN(devDay)) { this.s.questDay = devDay; this.resetDaily(); EQT.replan(devDay); }
 
     /* daily rollover: new calendar day → fresh quest set, streak +1 */
     const today = this.dayKey();
