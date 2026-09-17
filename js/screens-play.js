@@ -30,8 +30,10 @@ EQS.dragonScene = function () {
   </svg>`;
 };
 
-EQS.progressPips = function (s, activeIdx) {
-  return [0, 1, 2, 3, 4].map(i => {
+EQS.progressPips = function (s, activeIdx, total) {
+  const pips = [];
+  for (let i = 0; i < (total || 5); i++) pips.push(i);
+  return pips.map(i => {
     if (i < activeIdx) return `<div style="flex:1;height:12px;border-radius:6px;background:#5CE39B"></div>`;
     if (i === activeIdx) return `<div style="flex:1;height:12px;border-radius:6px;background:rgba(30,21,54,0.35);box-shadow:0 0 0 2px #FFC24B inset"></div>`;
     return `<div style="flex:1;height:12px;border-radius:6px;background:rgba(30,21,54,0.28)"></div>`;
@@ -42,20 +44,29 @@ EQS.progressPips = function (s, activeIdx) {
 EQS.meta.challenge = { light: false };
 EQS.screens.challenge = function (s) {
   const q = EQ.session.q;
+  /* the same screen serves the daily quest and a parent-approved mission; only the
+     counter, the exit and the badge above the question change */
+  const mis = EQ.session.ctx === 'mission' ? EQ.missionEntry() : null;
+  const total = mis ? EQD.MISSION_LEN : 5;
+  const idx = mis ? mis.n : s.challengesDone;
+  const exitTo = mis ? 'mission' : 'quest';
+  const counter = mis
+    ? TX({ az: `Missiya ${Math.min(total, idx + 1)} / ${total}`, en: `Mission ${Math.min(total, idx + 1)} of ${total}`, ru: `Миссия ${Math.min(total, idx + 1)} из ${total}` })
+    : TX({ az: `Sınaq ${Math.min(5, s.challengesDone + 1)} / 5`, en: `Challenge ${Math.min(5, s.challengesDone + 1)} of 5`, ru: `Испытание ${Math.min(5, s.challengesDone + 1)} из 5` });
   const answers = q.answers.map((a, i) => `
     <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 38px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
   return `<div class="scr" style="background:#BFE9FB">
     ${EQS.dragonScene()}
     ${EQC.hero(s.hero, 'position:absolute;left:34px;top:196px;width:78px')}
     <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
-      <div class="press" onclick="EQ.go('quest')" style="width:44px;height:44px;border-radius:16px;background:rgba(30,21,54,0.82);display:flex;align-items:center;justify-content:center;flex:none">${EQC.xIcon('#fff', 17)}</div>
-      <div style="flex:1;display:flex;gap:5px;align-items:center">${EQS.progressPips(s, s.challengesDone)}</div>
+      <div class="press" onclick="EQ.go('${exitTo}')" style="width:44px;height:44px;border-radius:16px;background:rgba(30,21,54,0.82);display:flex;align-items:center;justify-content:center;flex:none">${EQC.xIcon('#fff', 17)}</div>
+      <div style="flex:1;display:flex;gap:5px;align-items:center">${EQS.progressPips(s, idx, total)}</div>
       <div class="press" onclick="EQ.go('hint')" style="width:44px;height:44px;border-radius:16px;background:#FFC24B;box-shadow:0 4px 0 #E39B1C;display:flex;align-items:center;justify-content:center;flex:none">${EQC.bulb('#4A3208', 20)}</div>
     </div>
     <div class="rise" style="position:absolute;top:352px;left:16px;right:16px;background:#FFF7EA;border-radius:30px;padding:20px;box-shadow:0 7px 0 #E0C79A, 0 20px 34px -16px rgba(20,10,40,0.45)">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="padding:4px 10px;border-radius:10px;background:#E4F6FF;font:800 10px Nunito;color:#2196C9;letter-spacing:1.2px">${TX(q.tag)}</div>
-        <div style="font:700 11px Nunito;color:#A08A5E">${TX({ az: `Sınaq ${Math.min(5, s.challengesDone + 1)} / 5`, en: `Challenge ${Math.min(5, s.challengesDone + 1)} of 5`, ru: `Испытание ${Math.min(5, s.challengesDone + 1)} из 5` })}</div>
+        <div style="font:700 11px Nunito;color:#A08A5E">${counter}</div>
       </div>
       <div style="font:800 21px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.25">${TX(q.title)}</div>
       ${q.visual()}
@@ -78,8 +89,16 @@ EQS.screens.success = function (s) {
     ? TX({ az: `Dalbadal ${EQ.session.streakRow} dənə!`, en: `${EQ.session.streakRow} in a row!`, ru: `${EQ.session.streakRow} подряд!` })
     : TX({ az: 'Ağıllı fikirdir!', en: 'Nice thinking!', ru: 'Отлично соображаешь!' });
   const pct = Math.min(100, Math.round(s.xp / 1500 * 100));
+  /* a mission question pays less than a daily challenge, so the two reward chips have
+     to read the context rather than the fixed +50 / +10 of the adventure */
+  const mis = EQ.session.ctx === 'mission' ? EQ.missionEntry() : null;
+  const misDone = EQ.session.ctx === 'mission' && !mis;
+  const gainXP = (mis || misDone) ? 25 : 50;
+  const gainCoins = (mis || misDone) ? 5 : 10;
   let ctaText = TX({ az: 'Növbəti sınaq', en: 'Next challenge', ru: 'Следующее испытание' }), cta = "EQ.continueAfterSuccess()";
   if (EQ.session.ctx === 'boss') ctaText = s.bossHits >= EQ.bossHitsNeeded() ? TX({ az: 'Qələbəni götür', en: 'Claim your victory', ru: 'Забери свою победу' }) : TX({ az: 'Davam et', en: 'Keep going', ru: 'Продолжай' });
+  else if (misDone) ctaText = TX({ az: 'Missiyanı bitir', en: 'Finish the mission', ru: 'Завершить миссию' });
+  else if (mis) ctaText = TX({ az: 'Növbəti sual', en: 'Next question', ru: 'Следующий вопрос' });
   else if (s.challengesDone >= 5) ctaText = TX(EQ.boss().face);
   return `<div class="scr" style="background:#BFE9FB">
     <div style="position:absolute;inset:0;background:#A9E2FA"></div>
@@ -99,13 +118,13 @@ EQS.screens.success = function (s) {
       ${EQC.hero(s.hero, 'width:150px')}
       ${EQC.questy('celebrating', 'width:124px;margin-bottom:6px', s.questyFur, s.questyFurDark)}
     </div>
-    <div class="pop" style="position:absolute;top:250px;left:34px;padding:8px 14px;border-radius:18px;background:#5CE39B;box-shadow:0 5px 0 #2FA76D;font:800 18px 'Baloo 2', system-ui;color:#0B3D25">+50 XP</div>
-    <div class="pop" style="position:absolute;top:320px;right:28px;padding:8px 14px;border-radius:18px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;font:800 18px 'Baloo 2', system-ui;color:#4A3208;animation-delay:120ms">${TX({ az: '+10 sikkə', en: '+10 coins', ru: '+10 монет' })}</div>
+    <div class="pop" style="position:absolute;top:250px;left:34px;padding:8px 14px;border-radius:18px;background:#5CE39B;box-shadow:0 5px 0 #2FA76D;font:800 18px 'Baloo 2', system-ui;color:#0B3D25">+${gainXP} XP</div>
+    <div class="pop" style="position:absolute;top:320px;right:28px;padding:8px 14px;border-radius:18px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;font:800 18px 'Baloo 2', system-ui;color:#4A3208;animation-delay:120ms">${TX({ az: `+${gainCoins} sikkə`, en: `+${gainCoins} coins`, ru: `+${gainCoins} монет` })}</div>
     <div style="position:absolute;top:470px;left:22px;right:22px;background:#FFF7EA;border-radius:28px;padding:20px;box-shadow:0 7px 0 #E0C79A">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px Nunito;color:#8B7A55;letter-spacing:1.2px">${TX({ az: `SƏVİYYƏ ${s.level} · ${UPC(EQ.rank(s.level))}`, en: `LEVEL ${s.level} · ${UPC(EQ.rank(s.level))}`, ru: `УРОВЕНЬ ${s.level} · ${UPC(EQ.rank(s.level))}` })}</span><span style="font:800 13px Nunito;color:#2A9455">${EQC.fmt(s.xp)} / ${EQC.fmt(1500)}</span></div>
       <div style="height:16px;border-radius:8px;background:#EAD9BC;margin-top:10px;overflow:hidden;position:relative"><div style="width:${pct}%;height:100%;border-radius:8px;background:#5CE39B"></div><div style="position:absolute;left:${Math.max(0, pct - 8)}%;top:0;bottom:0;width:8%;background:rgba(255,255,255,0.55)"></div></div>
       <div style="display:flex;gap:10px;margin-top:16px">
-        <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${Math.min(5, s.challengesDone)}/5</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${TX({ az: 'AÇILAN MÖHÜR', en: 'SEALS OPEN', ru: 'ПЕЧАТЕЙ СНЯТО' })}</div></div>
+        <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${(mis || misDone) ? `${misDone ? EQD.MISSION_LEN : mis.n}/${EQD.MISSION_LEN}` : `${Math.min(5, s.challengesDone)}/5`}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${(mis || misDone) ? TX({ az: 'MİSSİYA', en: 'MISSION', ru: 'МИССИЯ' }) : TX({ az: 'AÇILAN MÖHÜR', en: 'SEALS OPEN', ru: 'ПЕЧАТЕЙ СНЯТО' })}</div></div>
         <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${Math.max(0, 1500 - s.xp)}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${TX({ az: `SƏVİYYƏ ${s.level + 1}-Ə QALAN XP`, en: `XP TO LEVEL ${s.level + 1}`, ru: `XP ДО УРОВНЯ ${s.level + 1}` })}</div></div>
       </div>
     </div>

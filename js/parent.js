@@ -433,6 +433,38 @@ EQS.screens.parent_quests = function (s) {
     </div>`;
   };
 
+  /* ── what happened to the missions already approved ──
+     The header promises the mission appears in the child's world. Once it is playable
+     there, the honest other half of that promise is showing back what the child did
+     with it — otherwise approving is a button that reports nothing. Newest first. */
+  const sent = (s.parentQuests || []).slice().reverse().slice(0, 4);
+  const sentRow = m => {
+    const info = EQT.MISSIONS[m.t];
+    if (!info) return '';
+    const n = m.n || 0;
+    const pct = Math.round(n / EQD.MISSION_LEN * 100);
+    const when = m.day === todayKey
+      ? TX({ az: 'bu gün göndərildi', en: 'sent today', ru: 'отправлено сегодня' })
+      : TX({ az: `göndərildi: ${m.day}`, en: `sent ${m.day}`, ru: `отправлено ${m.day}` });
+    const state = m.done
+      ? TX({ az: 'tamamlandı', en: 'completed', ru: 'выполнено' })
+      : (n > 0
+        ? TX({ az: `${n} / ${EQD.MISSION_LEN} sual`, en: `${n} of ${EQD.MISSION_LEN} questions`, ru: `${n} из ${EQD.MISSION_LEN} вопросов` })
+        : TX({ az: 'hələ başlanmayıb', en: 'not started yet', ru: 'ещё не начато' }));
+    const ink = m.done ? '#2A9455' : (n > 0 ? '#8A5A0A' : '#8878A8');
+    const bg = m.done ? '#E8FBF1' : (n > 0 ? '#FFF3D6' : '#EFEAF9');
+    return `<div style="border-radius:22px;background:#fff;padding:14px 16px;box-shadow:0 5px 16px -12px rgba(42,31,69,0.3);flex:none">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><div style="font:800 14px 'Baloo 2';color:#2A1F45">${TX(info.name)}</div><div style="font:700 11px Nunito;color:#A197BC;margin-top:2px">${when}</div></div>
+        <div style="padding:5px 11px;border-radius:12px;background:${bg};font:800 11px Nunito;color:${ink};flex:none">${state}</div>
+      </div>
+      <div style="height:8px;border-radius:4px;background:#EFEAF9;margin-top:11px;overflow:hidden"><div style="width:${pct}%;height:100%;border-radius:4px;background:${m.done ? '#3DBE6E' : '#FFC24B'}"></div></div>
+    </div>`;
+  };
+  const sentBlock = sent.length
+    ? `<div style="font:800 13px 'Baloo 2';color:#5C4E7E;flex:none">${TX({ az: 'Göndərdiyiniz missiyalar', en: 'Missions you have sent', ru: 'Отправленные вами миссии' })}</div>${sent.map(sentRow).join('')}`
+    : '';
+
   return `<div class="scr" style="background:#F4F1FA">
     <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
       <div class="press" onclick="EQ.go('parent_dashboard')" style="width:42px;height:42px;border-radius:15px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 18)}</div>
@@ -441,6 +473,7 @@ EQS.screens.parent_quests = function (s) {
     ${heroCard}
     <div class="vscroll" style="position:absolute;top:502px;left:20px;right:20px;bottom:94px;display:flex;flex-direction:column;gap:11px">
       ${alts.length ? `<div style="font:800 13px 'Baloo 2';color:#5C4E7E;flex:none">${TX({ az: 'Bunları da yoxlamağa dəyər', en: 'Also worth a try', ru: 'Тоже стоит попробовать' })}</div>${alts.map(altRow).join('')}` : ''}
+      ${sentBlock}
       <div style="border-radius:20px;background:#EFEAF9;padding:14px 16px;display:flex;gap:10px;align-items:flex-start;flex:none;margin-top:auto">
         <svg width="18" height="18" viewBox="0 0 24 24" style="flex:none;margin-top:1px"><path d="M12 3 l8 4 v6 c0 5-3.6 7.4-8 8.6 -4.4-1.2 -8-3.6 -8-8.6 V7 Z" fill="none" stroke="#7B5CFF" stroke-width="2"></path></svg>
         <div style="font:700 12.5px Nunito;color:#5C4E7E;line-height:1.5">${TX({ az: 'Təkliflər uşağın öz oyun məlumatlarına əsaslanır. Bu cihazdan kənara heç nə ötürülmür.', en: `Suggestions come from ${EQ.pron(s)} own play data. Nothing is shared outside this device.`, ru: 'Рекомендации строятся на игровых данных ребёнка. Ничего не передаётся за пределы этого устройства.' })}</div>

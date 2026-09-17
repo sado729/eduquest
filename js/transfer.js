@@ -110,7 +110,14 @@ const EQX = {
       [this.b(sflags), this.b(st.limit), this.b(st.bedMin), this.b(Math.max(0, this.LANGS.indexOf(st.lang))), this.b(st.bonusMins)].join('.'),
       [this.b(base), off(start), off(last), off(bonus)].join('.'),
       played.map(v => off(v)).join('.'),
-      pq.map(m => this.b(this.TOPIC.indexOf(m.t)) + '.' + off(this.dayNo(m.day))).join('-'),
+      /* topic.day[.progress] — progress is how many of the mission's questions the child
+         has answered, with MISSION_LEN meaning finished. A code written before missions
+         were playable has only two fields, so the reader defaults it to 0. */
+      pq.map(m => {
+        const n = m.done ? EQD.MISSION_LEN : Math.min(EQD.MISSION_LEN, Math.max(0, m.n || 0));
+        const head = this.b(this.TOPIC.indexOf(m.t)) + '.' + off(this.dayNo(m.day));
+        return n > 0 ? head + '.' + this.b(n) : head;
+      }).join('-'),
       rows.join('-')
     ].join('_');
   },
@@ -146,8 +153,14 @@ const EQX = {
       lastDay: at(2),
       playedDays: (g[8] ? g[8].split('.') : []).map(v => this.dayKey(base + this.n(v))),
       parentQuests: (g[9] ? g[9].split('-') : []).map(p => {
-        const [t, d] = p.split('.');
-        return { t: this.TOPIC[this.n(t)], day: this.dayKey(base + this.n(d)) };
+        const [t, d, n] = p.split('.');
+        const got = n == null || n === '' ? 0 : this.n(n);
+        return {
+          t: this.TOPIC[this.n(t)],
+          day: this.dayKey(base + this.n(d)),
+          n: Math.min(EQD.MISSION_LEN, Math.max(0, got)),
+          done: got >= EQD.MISSION_LEN
+        };
       }),
       track: { start: at(1) || this.dayKey(base), days: {} }
     };
@@ -226,7 +239,10 @@ const EQX = {
     out.playedDays = (Array.isArray(r.playedDays) ? r.playedDays : []).map(v => date(v, null)).filter(Boolean).slice(-14);
     out.parentQuests = (Array.isArray(r.parentQuests) ? r.parentQuests : [])
       .filter(m => m && this.TOPIC.indexOf(m.t) >= 0 && this.dayNo(m.day) !== null)
-      .slice(-40).map(m => ({ t: m.t, day: String(m.day) }));
+      .slice(-40).map(m => {
+        const n = int(m.n, 0, EQD.MISSION_LEN, 0);
+        return { t: m.t, day: String(m.day), n: n, done: !!m.done || n >= EQD.MISSION_LEN };
+      });
 
     const tr = r.track || {};
     out.track = { start: date(tr.start, EQ.dayKey()), days: {} };

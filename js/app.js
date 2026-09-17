@@ -8,7 +8,7 @@
 const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest', 'sticker'];
 /* calm screens where the heartbeat may bring the rest screen up on its own
    (never mid-question: a challenge already started is always allowed to finish) */
-const EQ_REST_NUDGE = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'album', 'wardrobe', 'unlock', 'welcomeback'];
+const EQ_REST_NUDGE = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'album', 'wardrobe', 'unlock', 'welcomeback'];
 const EQ_REST_MORNING = 5 * 60; /* the bedtime window closes at 05:00 */
 
 const EQ_DEFAULTS = {
@@ -58,7 +58,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
+  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', mission: null, tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
 
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
   pron() { return 'their'; },
@@ -112,7 +112,7 @@ const EQ = {
   checkNewDay(fromResume) {
     const today = this.dayKey();
     if (!this.s || !this.s.lastDay || this.s.lastDay === today) return false;
-    const safe = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
+    const safe = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
     if (!fromResume && safe.indexOf(this.current) === -1) return false;
     this.newDay(today);
     this.session.q = null; this.session.qIdx = -1;
@@ -184,14 +184,37 @@ const EQ = {
     EQT.tick(); /* attribute elapsed time to the screen being left */
     if (this.current === 'album' && name !== 'album') this.leaveAlbum();
     if (this.restGuard(name)) name = 'restday'; /* limit reached / bedtime — Questy takes over */
-    if (name === 'challenge' && this.s.challengesDone >= 5) name = 'boss';
-    if (name === 'challenge') {
-      this.session.ctx = 'daily';
-      if (!this.session.q || this.session.qIdx !== this.s.challengesDone) {
-        this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)];
-        this.session.qIdx = this.s.challengesDone;
-        this.session.attempted = false; this.session.hinted = false;
+    /* a mission in progress owns the challenge screen: its own eight questions, its
+       own counter, and no boss at the end — so the daily redirect must not fire */
+    if (name === 'challenge' && this.session.ctx === 'mission' && this.missionEntry()) {
+      const m = this.missionEntry();
+      if (m.n >= EQD.MISSION_LEN) name = 'mission';
+      else {
+        const mq = this.missionSet().questions[m.n];
+        if (this.session.qIdx !== m.n || this.session.q !== mq) {
+          this.session.q = mq;
+          this.session.qIdx = m.n;
+          this.session.attempted = false; this.session.hinted = false;
+        }
       }
+    } else if (name === 'challenge') {
+      if (this.s.challengesDone >= 5) name = 'boss';
+      else {
+        this.session.ctx = 'daily';
+        if (!this.session.q || this.session.qIdx !== this.s.challengesDone) {
+          this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)];
+          this.session.qIdx = this.s.challengesDone;
+          this.session.attempted = false; this.session.hinted = false;
+        }
+      }
+    }
+    /* leaving the mission for anywhere that isn't part of playing it drops the pointer,
+       so the daily quest never inherits a mission's context or its question */
+    if (name !== 'challenge' && name !== 'mission' && name !== 'hint' && name !== 'tutor'
+      && name !== 'success' && name !== 'restday' && this.session.ctx === 'mission') {
+      this.session.ctx = 'daily';
+      this.session.mission = null;
+      this.session.q = null; this.session.qIdx = -1;
     }
     if (name === 'boss') {
       if (this.s.bossBeaten) name = 'victory';
@@ -203,8 +226,14 @@ const EQ = {
       }
     }
     if ((name === 'success' || name === 'hint' || name === 'tutor') && !this.session.q) {
-      this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)] || this.qset().questions[3];
-      this.session.qIdx = this.s.challengesDone;
+      if (this.session.ctx === 'mission' && this.missionEntry()) {
+        const m = this.missionEntry();
+        this.session.q = this.missionSet().questions[Math.min(EQD.MISSION_LEN - 1, m.n)];
+        this.session.qIdx = m.n;
+      } else {
+        this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)] || this.qset().questions[3];
+        this.session.qIdx = this.s.challengesDone;
+      }
       this.session.attempted = false; this.session.hinted = false;
     }
     if (name === 'hint' && this.session.q && !this.session.hinted) {
@@ -301,6 +330,73 @@ const EQ = {
     else this.toast(TX({ az: 'Sandığı qazanmaq üçün bugünkü macəranı bitir! 🗝️', en: 'Finish today’s adventure to earn the chest! 🗝️', ru: 'Заверши сегодняшнее приключение, чтобы получить сундук! 🗝️' }));
   },
 
+  /* ── parent-approved missions ──
+     The grown-up approves one on screen 26 and it is promised to appear "in the child's
+     world". It appears on the quest list as its own card, and playing it is the same
+     loop as a daily challenge — same challenge screen, same hint, same tutor — over the
+     eight questions of the approved topic. It has no boss and does not touch the daily
+     5/5: a mission is extra practice beside the adventure, never in place of it. */
+
+  /* the mission the session is currently playing, re-read from state every time so a
+     stale session pointer can never keep a finished mission alive */
+  missionEntry() {
+    const p = this.session.mission;
+    if (!p) return null;
+    const m = EQT.findMission(this.s, p.t, p.day);
+    return m && !m.done ? m : null;
+  },
+  missionSet() {
+    const m = this.missionEntry();
+    return m ? EQD.missionSet(m.t, m.day) : null;
+  },
+  /* open the mission's own screen (its card, its progress, its start button) */
+  openMission(topic, day) {
+    const m = EQT.findMission(this.s, topic, day);
+    if (!m || m.done) return;
+    SFX.tap();
+    this.session.mission = { t: m.t, day: m.day };
+    this.session.ctx = 'mission';
+    this.session.q = null; this.session.qIdx = -1;
+    this.go('mission');
+  },
+  /* the next unplayed mission, which is what the card on the quest list points at */
+  startNextMission() {
+    const m = EQT.nextMission(this.s);
+    if (m) this.openMission(m.t, m.day);
+  },
+  startMissionQuestion() {
+    if (!this.missionEntry()) return;
+    SFX.tap();
+    this.session.ctx = 'mission';
+    this.go('challenge');
+  },
+  /* one mission question answered correctly: advance the mission, then either the next
+     question or the finish. The reward is smaller than a daily challenge on purpose —
+     practice a grown-up asked for should not become the fastest way to farm coins. */
+  missionAdvance() {
+    const m = this.missionEntry();
+    if (!m) { this.go('quest'); return; }
+    m.n = Math.min(EQD.MISSION_LEN, (m.n || 0) + 1);
+    this.grant(25, 5);
+    if (m.n >= EQD.MISSION_LEN) {
+      m.done = true;
+      this.s.coins += 40; this.s.coinsToday += 40;
+    }
+    this.save();
+  },
+  /* the button under a mission's success screen */
+  continueMission() {
+    const m = this.missionEntry();
+    const next = m ? 'challenge' : 'mission';
+    if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
+    else this.go(next);
+  },
+  /* leaving a finished mission (or one the child put down) goes back to the quest list */
+  leaveMission() {
+    SFX.tap();
+    this.go('quest');
+  },
+
   /* ── quest flow ── */
   startChallenge() { SFX.tap(); this.go('challenge'); },
   /* the set is fully done (boss beaten, chest opened) → the next one opens right away,
@@ -369,6 +465,11 @@ const EQ = {
             this.save();
             this.go('boss');
           }
+        } else if (this.session.ctx === 'mission') {
+          if (q.subj === 'math') this.s.mathSolved = Math.min(100, this.s.mathSolved + 1);
+          EQT.done(q, this.session.hinted);
+          this.missionAdvance();
+          this.go('success');
         } else {
           if (q.subj === 'math') this.s.mathSolved = Math.min(100, this.s.mathSolved + 1);
           this.grant(50, 10);
@@ -386,6 +487,7 @@ const EQ = {
     }
   },
   continueAfterSuccess() {
+    if (this.session.ctx === 'mission') return this.continueMission();
     const next = this.s.challengesDone >= 5 ? 'boss' : 'challenge';
     if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
     else this.go(next);
@@ -592,7 +694,9 @@ const EQ = {
     const today = this.dayKey();
     if (this.s.parentQuests.some(m => m.t === topic && m.day === today)) return;
     SFX.correct();
-    this.s.parentQuests.push({ t: topic, day: today });
+    /* `n` and `done` are the child's side of it — the entry is born unplayed, and the
+       mission card appears on the quest list the next time the child opens it */
+    this.s.parentQuests.push({ t: topic, day: today, n: 0, done: false });
     this.save();
     this.render();
     const nm = TX(EQT.MISSIONS[topic].name);

@@ -4,13 +4,14 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all six suites
+npm test              # all seven suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
 npm run test:profiles
 npm run test:ranges
 npm run test:album
+npm run test:missions
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -175,3 +176,50 @@ The album screen is design-shaped but the store beneath it is hand-written, so a
 can bring back the visuals and drop the awarding. If this suite goes red after a re-sync,
 that is what happened — see `EQ.awardSticker` / `EQ.cleanStickers` in [js/app.js](../js/app.js)
 and `EQD.STICKERS` in [js/data.js](../js/data.js).
+
+## missions.js — parent-approved missions
+
+Guards the last step of the loop the grown-up dashboard exists for:
+analytics → recommendation → approval → **play**. Screen 26 promises a parent, in three
+languages, that "you approve, then it appears in the child's world". For a long time
+nothing behind that button was true: `EQ.addMission()` pushed `{t, day}` into
+`s.parentQuests`, the screen turned green, and the entry sat in localStorage where no
+child could ever reach it. That is the worst kind of failure in this app — the parent
+believes they acted, and there is nothing anywhere to tell them they did not.
+
+What closes the loop is a real mission: eight questions on the approved topic, generated
+by the same `EQD._q*` generators the daily quest uses, played on the same challenge,
+hint, tutor and success screens. Four things about that break silently:
+
+1. **The appearance.** If the card fails to render on the child's quest list, the
+   approval screen still says "added" and the parent still believes it arrived.
+2. **The separation.** A mission borrows the adventure's screens. Let its context leak
+   and a mission answer advances `challengesDone` — or opens the boss early — and the
+   daily adventure quietly plays itself while the child practises something else.
+3. **The resumption.** Eight questions is more than one sitting for a six-year-old. The
+   questions are seeded from topic + approval day so that stopping halfway and coming
+   back continues the *same* mission. Reseed it and the child restarts forever, never
+   reaching an end that exists.
+4. **The report.** Once a mission is playable, screen 26 has to say what became of it.
+   An approval that reports nothing back is the same open loop in a new place.
+
+Also covered: all five approvable topics generating eight answerable, drawable,
+hintable, trilingual questions that are all actually the approved topic; the same
+mission being the same eight questions twice and a different day being different
+practice; the card appearing and disappearing with the mission and naming who sent it;
+the full eight-question playthrough never touching `challengesDone`, the chest or the
+boss, including when the adventure is already sitting at 5/5; a mission question paying
+25 XP rather than the adventure's 50, so approved practice cannot become the fastest way
+to farm coins; progress surviving a restart and resuming on the right question; several
+approved missions queueing oldest-first; a wrong answer still opening the hint and the
+tutor's easier question still counting; the daily limit and bedtime still taking over a
+mission in progress; the transfer code carrying how far the child got (as an optional
+third field, so a code written before missions were playable still reads); a save from
+before missions were playable becoming a playable mission with clamped progress; and
+every new string rendering in az/en/ru.
+
+The recommendation screen is a design-project visual and the loop beneath it is
+hand-written, so a re-sync can restore the approval button and drop the playing. If this
+suite goes red after a re-sync, that is what happened — see `EQ.openMission` /
+`EQ.missionAdvance` in [js/app.js](../js/app.js), `EQD.missionSet` in
+[js/data.js](../js/data.js) and `EQT.nextMission` in [js/tracking.js](../js/tracking.js).

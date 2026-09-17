@@ -55,12 +55,42 @@ const EQT = {
     return null;
   },
 
-  /* ── state ── */
+  /* ── state ──
+     A parent quest is `{ t: topic, day: approval day }` plus the progress the child
+     has made through it: `n` questions answered and `done` once the set is finished.
+     Only `t` and `day` travel in a transfer code, so an entry arriving from another
+     device (or from a save written before missions were playable) has no progress
+     fields at all — they are filled in here rather than at every read site. */
   init(s) {
     if (!s.track || typeof s.track !== 'object') s.track = {};
     if (!s.track.days || typeof s.track.days !== 'object') s.track.days = {};
     if (!s.track.start) s.track.start = EQ.dayKey();
     if (!Array.isArray(s.parentQuests)) s.parentQuests = [];
+    s.parentQuests = s.parentQuests
+      .filter(m => m && this.MISSIONS[m.t] && m.day)
+      .map(m => ({
+        t: m.t,
+        day: m.day,
+        n: Math.min(EQD.MISSION_LEN, Math.max(0, parseInt(m.n, 10) || 0)),
+        done: !!m.done
+      }));
+    /* a finished mission stays in the list as history for the grown-up, but only the
+       most recent handful is worth carrying — the child's list shows the open ones */
+    if (s.parentQuests.length > 40) s.parentQuests = s.parentQuests.slice(-40);
+  },
+
+  /* ── missions the child still has to play ──
+     Oldest first: a mission approved on Monday is played before Tuesday's, so the
+     card on the quest list is the one that has been waiting longest. */
+  openMissions(s) {
+    return (s.parentQuests || []).filter(m => !m.done && this.MISSIONS[m.t]);
+  },
+  nextMission(s) {
+    return this.openMissions(s)[0] || null;
+  },
+  /* the entry for one approved mission (topic + approval day identify it) */
+  findMission(s, topic, day) {
+    return (s.parentQuests || []).filter(m => m.t === topic && m.day === day)[0] || null;
   },
 
   /* today's bucket (created lazily by the recorders, never by the queries) */

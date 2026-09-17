@@ -988,6 +988,55 @@ EQD.questSet = function (day) {
   return EQD.genDay(day);
 };
 
+/* ── parent-approved missions (screen 26 → the child's quest list) ───────────
+   A grown-up approves one practice mission on the recommendations screen and the
+   promise made there is "you approve it, it shows up in the child's world". This
+   is the set that shows up: eight questions on the single topic that was approved,
+   built from the same per-topic generators the daily quest uses, so a mission is
+   real practice and not a different, thinner game.
+
+   Eight, because the mission card says eight — `EQT.MISSIONS[*].detail` has
+   promised "8 challenges" in all three languages since the screen was designed.
+
+   The seed is the topic plus the day it was approved, so a mission's questions are
+   stable: a child who leaves halfway through and comes back gets the rest of the
+   same mission, not eight fresh ones. Two missions approved on different days are
+   different practice. The `hard` flag alternates so the set climbs a little rather
+   than repeating one difficulty eight times. */
+EQD.MISSION_LEN = 8;
+
+EQD._missionGen = {
+  add: (ri, hard) => EQD._qAdd(ri, hard),
+  pattern: (ri) => EQD._qPattern(ri),
+  groups: (ri, hard) => EQD._qGroups(ri, hard),
+  take: (ri) => EQD._qTakeAway(ri),
+  double: (ri, hard) => EQD._qDouble(ri, hard)
+};
+
+/* a stable small number from the approval day, so the seed changes day to day */
+EQD._missionSeed = function (topic, day) {
+  const keys = Object.keys(EQD._missionGen);
+  let h = (keys.indexOf(topic) + 1) * 104729;
+  const d = String(day || '');
+  for (let i = 0; i < d.length; i++) h = (h * 31 + d.charCodeAt(i)) | 0;
+  return h;
+};
+
+EQD._missionCache = {};
+EQD.missionSet = function (topic, day) {
+  const gen = EQD._missionGen[topic];
+  if (!gen) return null;
+  const ck = topic + '|' + (day || '');
+  if (EQD._missionCache[ck]) return EQD._missionCache[ck];
+  const rnd = EQD.mulberry(EQD._missionSeed(topic, day));
+  const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const questions = [];
+  for (let i = 0; i < EQD.MISSION_LEN; i++) questions.push(gen(ri, i >= 3 && i % 2 === 1));
+  const set = { topic: topic, day: day, questions: questions };
+  EQD._missionCache[ck] = set;
+  return set;
+};
+
 /* ── sticker album (24 stickers) ─────────────────────────────
    Every sticker has a stable id, because the album remembers *which* ones a child
    owns — `s.stickerIds` — not just how many. The counter `s.stickers` stays the

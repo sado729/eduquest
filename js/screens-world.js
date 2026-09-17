@@ -169,6 +169,29 @@ EQS.screens.quest = function (s) {
       </div>`);
     }
   }
+  /* the parent-approved mission sits above the day's five challenges: it is extra
+     practice a grown-up asked for, so it is visible first and never blocks the
+     adventure. Only the next open one is shown — a stack of cards would turn a
+     helpful nudge into a chore list. */
+  let missionRow = '';
+  const mis = EQT.nextMission(s);
+  if (mis) {
+    const info = EQT.MISSIONS[mis.t];
+    const open = EQT.openMissions(s).length;
+    const sub = mis.n > 0
+      ? TX({ az: `${mis.n} / ${EQD.MISSION_LEN} sual hazırdır`, en: `${mis.n} of ${EQD.MISSION_LEN} questions done`, ru: `${mis.n} из ${EQD.MISSION_LEN} вопросов готово` })
+      : TX(info.detail);
+    missionRow = `<div class="press rise" onclick="EQ.startNextMission()" style="border-radius:26px;background:#2C1F52;box-shadow:0 6px 0 #1C1338, 0 16px 26px -14px rgba(42,31,69,0.5);padding:14px;display:flex;align-items:center;gap:12px">
+      <div style="width:52px;height:52px;border-radius:18px;background:rgba(255,194,75,0.2);display:flex;align-items:center;justify-content:center;flex:none"><svg width="30" height="30" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="#FFC24B"></circle><path d="M50 50 L50 6 A44 44 0 0 1 94 50 Z" fill="#FF8A4C"></path><path d="M50 6 V94 M6 50 H94" stroke="#FFF7EA" stroke-width="5"></path></svg></div>
+      <div style="flex:1">
+        <div style="font:700 10px Nunito;color:#FFD98A;letter-spacing:1.2px">${TX({ az: 'VALİDEYNDƏN XÜSUSİ MİSSİYA', en: 'SPECIAL MISSION FROM A GROWN-UP', ru: 'ОСОБАЯ МИССИЯ ОТ ВЗРОСЛОГО' })}${open > 1 ? ` · ${open}` : ''}</div>
+        <div style="font:800 18px 'Baloo 2';color:#fff;line-height:1.2">${TX(info.name)}</div>
+        <div style="font:700 11.5px Nunito;color:#C9BCEF;margin-top:3px">${sub}</div>
+      </div>
+      <div style="width:44px;height:44px;border-radius:16px;background:#FFC24B;box-shadow:0 4px 0 #E39B1C;display:flex;align-items:center;justify-content:center;flex:none">${EQC.playIcon('#4A3208', 18)}</div>
+    </div>`;
+  }
+
   let bossRow = '';
   if (done >= 5 && !s.bossBeaten) {
     bossRow = `<div class="press rise" onclick="EQ.go('boss')" style="border-radius:26px;background:#2C1F52;box-shadow:0 6px 0 #1C1338;padding:14px;display:flex;align-items:center;gap:12px">
@@ -217,10 +240,101 @@ EQS.screens.quest = function (s) {
     </div>
 
     <div style="position:absolute;top:384px;left:16px;right:16px;bottom:110px;display:flex;flex-direction:column;gap:8px" class="vscroll">
+      ${missionRow}
       ${rows.join('')}
       ${bossRow}
     </div>
     ${EQC.nav('quests')}
+  </div>`;
+};
+
+
+/* 06b · Parent-approved mission —
+   the other end of the promise screen 26 makes to a grown-up. This is the mission's own
+   small world: who sent it, what it practises, how far through it the child is, and the
+   one button that plays the next question. It deliberately borrows nothing from the boss
+   ladder — a mission has no fight at the end, only the eight questions and a thank-you. */
+EQS.meta.mission = { light: false };
+EQS.screens.mission = function (s) {
+  const m = EQ.missionEntry();
+  /* the mission finished on the last answer: this screen is then its closing beat */
+  if (!m) {
+    const last = (s.parentQuests || []).filter(x => x.done).slice(-1)[0];
+    const nm = last && EQT.MISSIONS[last.t] ? TX(EQT.MISSIONS[last.t].name) : TX({ az: 'Missiya', en: 'Mission', ru: 'Миссия' });
+    const more = EQT.nextMission(s);
+    return `<div class="scr" style="background:#2C1F52">
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 30%, rgba(123,92,255,0.5), transparent 62%)"></div>
+      <div class="spark" style="top:150px;left:54px;font-size:22px">✦</div>
+      <div class="spark" style="top:196px;right:58px;font-size:16px;animation-delay:.5s">✦</div>
+      <div style="position:absolute;top:150px;left:24px;right:24px;text-align:center">
+        <div style="font:700 11px Nunito;color:#A896E0;letter-spacing:1.6px">${TX({ az: 'MİSSİYA TAMAMLANDI', en: 'MISSION COMPLETE', ru: 'МИССИЯ ВЫПОЛНЕНА' })}</div>
+        <div class="pop" style="font:800 32px 'Baloo 2', system-ui;color:#fff;line-height:1.15;margin-top:10px">${nm}</div>
+      </div>
+      <div style="position:absolute;top:300px;left:0;right:0;display:flex;justify-content:center">${EQC.questy('celebrating', 'width:150px', s.questyFur, s.questyFurDark)}</div>
+      <div style="position:absolute;top:472px;left:24px;right:24px;border-radius:26px;background:rgba(255,255,255,0.10);padding:18px;text-align:center">
+        <div style="font:700 14px Nunito;color:#E6DEFF;line-height:1.6">${TX({
+          az: `Bütün ${EQD.MISSION_LEN} sual bitdi. Səni bu missiyaya göndərən böyüyün bunu görəcək.`,
+          en: `All ${EQD.MISSION_LEN} questions done. The grown-up who sent this mission will see it.`,
+          ru: `Все ${EQD.MISSION_LEN} вопросов пройдены. Взрослый, отправивший эту миссию, это увидит.`
+        })}</div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:14px">
+          <div style="padding:8px 14px;border-radius:16px;background:rgba(255,194,75,0.2);font:800 15px 'Baloo 2';color:#FFD98A">${TX({ az: '+40 sikkə bonus', en: '+40 coin bonus', ru: '+40 монет бонус' })}</div>
+        </div>
+      </div>
+      <div class="press" onclick="EQ.leaveMission()" style="position:absolute;bottom:52px;left:24px;right:24px;height:66px;border-radius:24px;background:#5CE39B;box-shadow:0 6px 0 #2FA76D;display:flex;align-items:center;justify-content:center;gap:10px;font:800 20px 'Baloo 2', system-ui;color:#0B3D25">${more ? TX({ az: 'Tapşırıqlara qayıt', en: 'Back to your quests', ru: 'Назад к заданиям' }) : TX({ az: 'Macəraya qayıt', en: 'Back to the adventure', ru: 'Назад к приключению' })}${EQC.arrowR('#0B3D25', 20)}</div>
+    </div>`;
+  }
+
+  const info = EQT.MISSIONS[m.t];
+  const topic = EQT.TOPICS[m.t];
+  const subj = EQT.SUBJECTS[topic.subj];
+  const pct = Math.round(m.n / EQD.MISSION_LEN * 100);
+  const started = m.n > 0;
+  const pips = [];
+  for (let i = 0; i < EQD.MISSION_LEN; i++) {
+    pips.push(`<div style="flex:1;height:10px;border-radius:5px;background:${i < m.n ? '#5CE39B' : 'rgba(255,255,255,0.18)'}"></div>`);
+  }
+
+  return `<div class="scr" style="background:#2C1F52">
+    <div style="position:absolute;top:0;left:0;right:0;height:300px;overflow:hidden">
+      <div style="position:absolute;width:340px;height:340px;border-radius:50%;background:rgba(123,92,255,0.34);left:-60px;top:-110px"></div>
+      <div style="position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,194,75,0.14);right:-50px;top:40px"></div>
+    </div>
+    <div style="position:absolute;top:62px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
+      <div class="press" onclick="EQ.leaveMission()" style="width:42px;height:42px;border-radius:15px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#fff', 19)}</div>
+      <div><div style="font:700 10px Nunito;color:#A896E0;letter-spacing:1.6px">${TX({ az: 'VALİDEYNDƏN XÜSUSİ MİSSİYA', en: 'SPECIAL MISSION FROM A GROWN-UP', ru: 'ОСОБАЯ МИССИЯ ОТ ВЗРОСЛОГО' })}</div><div style="font:800 22px 'Baloo 2', system-ui;color:#fff;line-height:1.2">${TX(info.name)}</div></div>
+    </div>
+
+    <div style="position:absolute;top:158px;left:20px;right:20px;display:flex;gap:14px;align-items:flex-end">
+      ${EQC.questy('excited', 'width:92px;flex:none', s.questyFur, s.questyFurDark)}
+      <div style="flex:1;background:rgba(255,255,255,0.10);border-radius:24px;border-bottom-left-radius:8px;padding:15px 17px">
+        <div style="font:700 14px Nunito;color:#fff;line-height:1.55">${started
+          ? TX({ az: `Qaldığın yerdən davam edirik — ${EQD.MISSION_LEN - m.n} sual qalıb.`, en: `We pick up where you left off — ${EQD.MISSION_LEN - m.n} question${EQD.MISSION_LEN - m.n === 1 ? '' : 's'} to go.`, ru: `Продолжаем с того места, где остановились — осталось ${EQD.MISSION_LEN - m.n} ${RUP(EQD.MISSION_LEN - m.n, 'вопрос', 'вопроса', 'вопросов')}.` })
+          : TX({ az: 'Bunu sənin üçün böyüyün seçdi. Birlikdə məşq edək!', en: 'A grown-up picked this one just for you. Let’s practise together!', ru: 'Взрослый выбрал это специально для тебя. Потренируемся вместе!' })}</div>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:304px;left:20px;right:20px;border-radius:28px;background:rgba(255,255,255,0.08);padding:18px">
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="width:58px;height:58px;border-radius:20px;background:${subj.bg};display:flex;align-items:center;justify-content:center;flex:none;font:800 26px 'Baloo 2';color:${subj.fg}">${TX(subj.letter)}</div>
+        <div style="flex:1">
+          <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:1.2px">${UPC(TX(subj.name))} · ${UPC(TX(topic.name))}</div>
+          <div style="font:700 13.5px Nunito;color:#E6DEFF;margin-top:5px;line-height:1.5">${TX(info.detail)}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 8px">
+        <span style="font:800 11px Nunito;color:#fff">${TX({ az: `${m.n} / ${EQD.MISSION_LEN} sual`, en: `${m.n} / ${EQD.MISSION_LEN} questions`, ru: `${m.n} / ${EQD.MISSION_LEN} вопросов` })}</span>
+        <span style="font:700 11px Nunito;color:#A896E0">${pct}%</span>
+      </div>
+      <div style="display:flex;gap:5px">${pips.join('')}</div>
+    </div>
+
+    <div style="position:absolute;top:498px;left:20px;right:20px;display:flex;gap:12px">
+      <div style="flex:1;height:64px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2.6 l2.6 6.4 6.8 0.6 -5.2 4.6 1.6 6.8 -5.8-3.6 -5.8 3.6 1.6-6.8 -5.2-4.6 6.8-0.6 Z" fill="#5CE39B"></path></svg><div><div style="font:800 15px 'Baloo 2';color:#fff">+25</div><div style="font:700 9px Nunito;color:#A896E0;letter-spacing:0.6px">${TX({ az: 'HƏR SUAL', en: 'EACH', ru: 'ЗА ВОПРОС' })}</div></div></div>
+      <div style="flex:1;height:64px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;gap:8px">${EQC.coin(20)}<div><div style="font:800 15px 'Baloo 2';color:#fff">+40</div><div style="font:700 9px Nunito;color:#A896E0;letter-spacing:0.6px">${TX({ az: 'SONDA', en: 'AT THE END', ru: 'В КОНЦЕ' })}</div></div></div>
+    </div>
+
+    <div class="press rise" onclick="EQ.startMissionQuestion()" style="position:absolute;bottom:52px;left:20px;right:20px;height:70px;border-radius:24px;background:#FFC24B;box-shadow:0 6px 0 #E39B1C, 0 16px 26px -12px rgba(227,155,28,0.6);display:flex;align-items:center;justify-content:center;gap:10px;font:800 21px 'Baloo 2', system-ui;color:#4A3208">${started ? TX({ az: 'Davam et', en: 'Keep going', ru: 'Продолжить' }) : TX({ az: 'Missiyaya başla', en: 'Start the mission', ru: 'Начать миссию' })}${EQC.arrowR('#4A3208', 20)}</div>
   </div>`;
 };
 
