@@ -58,7 +58,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [] },
+  session: { createCat: 'skin', wardrobeCat: 'hats', gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
 
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
   pron() { return 'their'; },
@@ -485,6 +485,7 @@ const EQ = {
     this.session.gateInput = '';
     this.session.gateNext = null;
     this.session.code = null; this.session.inbox = null; /* nothing half-transferred is left behind */
+    this.session.range = 'week'; /* the dashboard opens on the week every visit */
     this.go(this.s.onboarded ? 'map' : 'welcome');
   },
 
@@ -550,6 +551,14 @@ const EQ = {
       localStorage.removeItem(EQP.key());
       location.reload();
     }
+  },
+
+  /* the dashboard range is a way of looking, not a setting: it cycles on tap and goes
+     back to the week when the grown-up leaves, so the next visit opens on the default */
+  cycleRange() {
+    SFX.tap();
+    this.session.range = EQT.nextRange(this.session.range);
+    this.render();
   },
 
   /* ── child profiles (grown-up area only — the child can never switch alone) ── */

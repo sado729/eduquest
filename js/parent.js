@@ -71,22 +71,47 @@ EQS.screens.parent_gate = function (s) {
 /* 23 · Parent dashboard — real numbers from EQ.s.track */
 EQS.meta.parent_dashboard = { light: false };
 EQS.screens.parent_dashboard = function (s) {
-  const days7 = EQT.lastDays(7);
+  /* everything on this screen reads one range: the week by default, a fortnight or a
+     month if the grown-up taps the picker. `prev` is always the same span just before it. */
+  const R = EQT.range(EQ.session.range);
+  const N = R.days;
+  const rangeName = TX({
+    week: { az: 'Bu həftə', en: 'This week', ru: 'Эта неделя' },
+    fort: { az: '2 həftə', en: '2 weeks', ru: '2 недели' },
+    month: { az: '30 gün', en: '30 days', ru: '30 дней' }
+  }[R.key]);
+  const rangeSub = TX({
+    week: { az: 'son 7 gün', en: 'last 7 days', ru: 'последние 7 дней' },
+    fort: { az: 'son 14 gün', en: 'last 14 days', ru: 'последние 14 дней' },
+    month: { az: 'son 30 gün', en: 'last 30 days', ru: 'последние 30 дней' }
+  }[R.key]);
+  const vsPrev = TX({
+    week: { az: 'keçən həftəyə görə', en: 'vs last week', ru: 'к прошлой неделе' },
+    fort: { az: 'əvvəlki 2 həftəyə görə', en: 'vs previous 2 weeks', ru: 'к прошлым 2 неделям' },
+    month: { az: 'əvvəlki 30 günə görə', en: 'vs previous 30 days', ru: 'к прошлым 30 дням' }
+  }[R.key]);
+  const firstActive = TX({
+    week: { az: 'ilk aktiv həftə', en: 'first active week', ru: 'первая активная неделя' },
+    fort: { az: 'ilk aktiv 2 həftə', en: 'first active 2 weeks', ru: 'первые активные 2 недели' },
+    month: { az: 'ilk aktiv 30 gün', en: 'first active 30 days', ru: 'первые активные 30 дней' }
+  }[R.key]);
+
+  const span = EQT.lastDays(N);
   const todayKey = EQ.dayKey();
-  const mins7 = EQT.weekMins(0);
-  const minsPrev = EQT.weekMins(1);
-  const a7 = EQT.sumDays(7, 'a');
-  const c7 = EQT.sumDays(7, 'c');
+  const mins7 = EQT.rangeMins(R.key, 0);
+  const minsPrev = EQT.rangeMins(R.key, 1);
+  const a7 = EQT.sumDays(N, 'a');
+  const c7 = EQT.sumDays(N, 'c');
 
   /* learning-time delta line */
   let deltaLine, deltaColor;
   if (mins7 === 0 && minsPrev === 0) {
     deltaLine = TX({ az: 'hələ oyun vaxtı yoxdur', en: 'no play time yet', ru: 'времени игры пока нет' }); deltaColor = '#8878A8';
   } else if (minsPrev === 0) {
-    deltaLine = TX({ az: 'ilk aktiv həftə', en: 'first active week', ru: 'первая активная неделя' }); deltaColor = '#2A9455';
+    deltaLine = firstActive; deltaColor = '#2A9455';
   } else {
     const dl = mins7 - minsPrev;
-    deltaLine = (dl >= 0 ? '+' : '−') + EQT.fmtMin(Math.abs(dl)) + ' ' + TX({ az: 'keçən həftəyə görə', en: 'vs last week', ru: 'к прошлой неделе' });
+    deltaLine = (dl >= 0 ? '+' : '−') + EQT.fmtMin(Math.abs(dl)) + ' ' + vsPrev;
     deltaColor = dl >= 0 ? '#2A9455' : '#8878A8';
   }
 
@@ -96,34 +121,36 @@ EQS.screens.parent_dashboard = function (s) {
     : TX({ az: 'hələ sınaq yoxdur', en: 'no challenges yet', ru: 'испытаний пока нет' });
   const chColor = a7 > 0 ? '#2A9455' : '#8878A8';
 
-  /* daily-limit card — today's state first, the week behind it */
+  /* daily-limit card — today's state first, the rest of the range behind it */
   const bonusNow = EQ.bonusMins();
   const limitToday = s.settings.limit + bonusNow;
   const minsToday = Math.round(EQ.playedToday());
-  const limitHit = days7.filter(x => EQT.minutes(x.d) >= s.settings.limit).length;
+  const limitHit = span.filter(x => EQT.minutes(x.d) >= s.settings.limit).length;
   const limitFull = minsToday >= limitToday;
   const limitLine = limitFull
     ? TX({ az: `bu gün dolub${bonusNow ? ` · +${bonusNow} dəq verildi` : ''}`, en: `reached today${bonusNow ? ` · +${bonusNow} min given` : ''}`, ru: `сегодня достигнут${bonusNow ? ` · выдано +${bonusNow} мин` : ''}` })
     : minsToday > 0
       ? TX({ az: `bu gün ${minsToday}/${limitToday} dəq`, en: `today ${minsToday}/${limitToday} min`, ru: `сегодня ${minsToday}/${limitToday} мин` })
       : limitHit > 0
-        ? TX({ az: `bu həftə ${limitHit} gündə dolub`, en: `Reached ${limitHit} of 7 days`, ru: `Достигнут в ${limitHit} из 7 дней` })
-        : TX({ az: 'bu həftə dolmayıb', en: 'not reached this week', ru: 'на этой неделе не достигнут' });
+        ? TX({ az: `${N} gündə ${limitHit}-ində dolub`, en: `Reached ${limitHit} of ${N} days`, ru: `Достигнут в ${limitHit} из ${N} дней` })
+        : TX({ az: `son ${N} gündə dolmayıb`, en: `not reached in ${N} days`, ru: `не достигнут за ${N} дней` });
 
-  /* minutes-per-day bars (last 7 calendar days, oldest left) */
-  const maxM = Math.max(1, ...days7.map(x => EQT.minutes(x.d)));
-  const bars = days7.map(x => {
-    const m = EQT.minutes(x.d);
-    const isToday = x.k === todayKey;
+  /* minutes bars, oldest left — one per day for a week, one per block for longer ranges */
+  const blocks = EQT.buckets(R.key);
+  const maxM = Math.max(1, ...blocks.map(b => b.mins));
+  const gap = blocks.length > 10 ? 5 : 9;
+  const bars = blocks.map(b => {
+    const m = b.mins;
+    const isNow = b.k === todayKey; /* the block the child is in right now */
     const h = m > 0 ? Math.max(12, Math.round(m / maxM * 84)) : 6;
-    const bg = isToday ? '#7B5CFF' : (m > 0 ? '#C8B4FF' : '#E4DDF4');
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end"><div style="width:100%;height:${h}px;border-radius:8px;background:${bg}" title="${m}"></div><span style="font:700 9.5px Nunito;color:${isToday ? '#5C4E7E' : '#8878A8'}">${EQT.dayLetter(x.date)}</span></div>`;
+    const bg = isNow ? '#7B5CFF' : (m > 0 ? '#C8B4FF' : '#E4DDF4');
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end"><div style="width:100%;height:${h}px;border-radius:8px;background:${bg}" title="${m}"></div><span style="font:700 9.5px Nunito;color:${isNow ? '#5C4E7E' : '#8878A8'}">${EQT.bucketLabel(b)}</span></div>`;
   }).join('');
 
-  /* where the time went (this week, split by screen type) */
-  const secQ = days7.reduce((t, x) => t + ((x.d && x.d.secsQ) || 0), 0);
-  const secB = days7.reduce((t, x) => t + ((x.d && x.d.secsB) || 0), 0);
-  const secT = days7.reduce((t, x) => t + ((x.d && x.d.secs) || 0), 0);
+  /* where the time went (over the chosen range, split by screen type) */
+  const secQ = span.reduce((t, x) => t + ((x.d && x.d.secsQ) || 0), 0);
+  const secB = span.reduce((t, x) => t + ((x.d && x.d.secsB) || 0), 0);
+  const secT = span.reduce((t, x) => t + ((x.d && x.d.secs) || 0), 0);
   const secE = Math.max(0, secT - secQ - secB);
   const splitRow = (icon, iconBg, label, secs, barColor) => {
     const pct = secT > 0 ? Math.round(secs / secT * 100) : 0;
@@ -142,7 +169,7 @@ EQS.screens.parent_dashboard = function (s) {
         <div style="position:absolute;inset:3px;border-radius:50%;background:#FFF3DF;overflow:hidden">${EQC.hero(s.hero, 'position:absolute;left:-19px;top:-8px;width:88px')}</div>
       </div>
       <div style="flex:1"><div style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${s.heroName}</div><div style="font:700 12px Nunito;color:#8878A8">${TX({ az: `Səviyyə ${s.level} · ${EQ.rank(s.level)}`, en: `Level ${s.level} · ${EQ.rank(s.level)}`, ru: `Уровень ${s.level} · ${EQ.rank(s.level)}` })}</div></div>
-      <div class="press" onclick="EQ.toast(TX({az:'Həftəlik görünüş — digər aralıqlar tezliklə',en:'Weekly view — more ranges coming soon',ru:'Недельный вид — другие диапазоны скоро'}))" style="height:38px;padding:0 12px;border-radius:14px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;gap:6px;font:800 12px Nunito;color:#5C4E7E">${TX({ az: 'Bu həftə', en: 'This week', ru: 'Эта неделя' })}<svg width="12" height="12" viewBox="0 0 24 24"><path d="M6 9.5 L12 15.5 L18 9.5" fill="none" stroke="#5C4E7E" stroke-width="2.6" stroke-linecap="round"></path></svg></div>
+      <div class="press" onclick="EQ.cycleRange()" style="height:38px;padding:0 12px;border-radius:14px;background:#fff;box-shadow:0 2px 0 #E0D8F2;display:flex;align-items:center;gap:6px;font:800 12px Nunito;color:#5C4E7E">${rangeName}<svg width="12" height="12" viewBox="0 0 24 24"><path d="M6 9.5 L12 15.5 L18 9.5" fill="none" stroke="#5C4E7E" stroke-width="2.6" stroke-linecap="round"></path></svg></div>
     </div>
     <div style="position:absolute;top:124px;left:20px;right:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'ÖYRƏNMƏ VAXTI', en: 'LEARNING TIME', ru: 'ВРЕМЯ УЧЁБЫ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${EQT.fmtMin(mins7)}</div><div style="font:700 11px Nunito;color:${deltaColor}">${deltaLine}</div></div>
@@ -151,8 +178,8 @@ EQS.screens.parent_dashboard = function (s) {
       <div style="border-radius:24px;background:#fff;padding:15px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)"><div style="font:700 10.5px Nunito;color:#8878A8;letter-spacing:1.2px">${TX({ az: 'GÜNLÜK LİMİT', en: 'DAILY LIMIT', ru: 'ДНЕВНОЙ ЛИМИТ' })}</div><div style="font:800 28px 'Baloo 2';color:#2A1F45;margin-top:6px">${s.settings.limit}${TX({ az: 'd', en: 'm', ru: 'м' })}</div><div style="font:700 11px Nunito;color:${limitFull || minsToday > 0 || limitHit > 0 ? '#7B5CFF' : '#8878A8'}">${limitLine}</div></div>
     </div>
     <div style="position:absolute;top:368px;left:20px;right:20px;border-radius:26px;background:#fff;padding:16px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3)">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Oynanılan dəqiqələr', en: 'Minutes played', ru: 'Сыгранные минуты' })}</div><div style="font:700 11px Nunito;color:#8878A8">${TX({ az: 'son 7 gün', en: 'last 7 days', ru: 'последние 7 дней' })}</div></div>
-      <div style="display:flex;align-items:flex-end;gap:9px;height:86px;margin-top:12px">${bars}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Oynanılan dəqiqələr', en: 'Minutes played', ru: 'Сыгранные минуты' })}</div><div style="font:700 11px Nunito;color:#8878A8">${rangeSub}</div></div>
+      <div style="display:flex;align-items:flex-end;gap:${gap}px;height:86px;margin-top:12px">${bars}</div>
     </div>
     <div style="position:absolute;top:518px;left:20px;right:20px;border-radius:26px;background:#fff;padding:14px;box-shadow:0 6px 18px -12px rgba(42,31,69,0.3);display:flex;flex-direction:column;gap:11px">
       <div style="font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Vaxt hara gedib', en: 'Where the time went', ru: 'Куда ушло время' })}</div>

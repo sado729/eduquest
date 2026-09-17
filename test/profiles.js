@@ -47,7 +47,9 @@ vm.runInContext(`
   var EQS = { meta: {}, screens: {}, ptoggle: () => '' };
 `, sandbox);
 
-for (const f of ['i18n.js', 'tracking.js', 'app.js', 'profiles.js']) {
+/* data.js comes along because EQ.load() reads the real sticker album through EQD —
+   loading it beats hand-maintaining a fake copy that would drift from the real one */
+for (const f of ['i18n.js', 'data.js', 'tracking.js', 'app.js', 'profiles.js']) {
   vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox, { filename: f });
 }
 

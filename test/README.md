@@ -4,11 +4,12 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all four suites
+npm test              # all five suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
 npm run test:profiles
+npm run test:ranges
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -106,3 +107,30 @@ storage key, so an adventure that started before this feature existed simply bec
 child 1 — never migrated, never copied, never lost. And a damaged or unreadable index
 falls back to that same single child rather than to a blank state, so a corrupt index
 costs a grown-up nothing.
+
+## ranges.js — the parent dashboard's date ranges
+
+Guards the numbers. The dashboard is the one place a grown-up is handed *figures* about
+their child, and a wrong figure is worse than a missing one — it looks exactly as
+trustworthy as a right one. The screen reads a range chosen from the picker (7 / 14 / 30
+days) rather than a hardcoded week, so learning time, the comparison with the period
+before, the challenge count, the limit tally and the chart all have to move together. If
+one of them keeps its own hardcoded 7, the card still renders and simply reports the
+wrong period, silently.
+
+The chart also *groups* longer ranges into blocks (5 days per bar for a month, so 30
+days is six bars rather than a picket fence). That is where numbers get quietly lost: a
+bucketing that drops or double-counts a day still draws a perfectly plausible chart. So
+the blocks are asserted to cover every day of the range exactly once and to total what
+the range itself totals — the bars and the card can never disagree.
+
+Covers: the three ranges and their day counts, the picker cycling and wrapping, each
+range summing only its own days with the previous period stepping back a full span (and
+older days never leaking in), bucket arithmetic for all three, single-day blocks labelled
+by weekday and wider ones by date, the rendered screen actually changing with the range,
+`EQ.cycleRange()` being wired in place of the old "coming soon" toast, an empty history
+reading zero instead of `NaN`, and the range resetting to the week on leaving the
+grown-up area.
+
+See `EQT.RANGES` / `EQT.buckets()` in [js/tracking.js](../js/tracking.js).
+

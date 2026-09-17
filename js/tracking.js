@@ -155,12 +155,66 @@ const EQT = {
 
   minutes(d) { return d ? Math.round((d.secs || 0) / 60) : 0; },
 
+  /* ── the ranges the dashboard offers ──
+     Every one is a whole number of days ending today, and each is compared against the
+     same span immediately before it, so "vs the period before" always means a like-for-
+     like window. 30 days is the longest offered because day buckets are pruned at 70
+     (see day()), which leaves a 30-day range room for its own comparison period. */
+  RANGES: [
+    { key: 'week', days: 7, group: 1 },
+    { key: 'fort', days: 14, group: 2 },
+    { key: 'month', days: 30, group: 5 }
+  ],
+
+  range(key) {
+    return this.RANGES.filter(r => r.key === key)[0] || this.RANGES[0];
+  },
+
+  /* the range after this one, wrapping — the picker is a cycle, not a menu */
+  nextRange(key) {
+    const i = this.RANGES.indexOf(this.range(key));
+    return this.RANGES[(i + 1) % this.RANGES.length].key;
+  },
+
+  /* minutes over one whole range; `back` counts ranges backwards (1 = the period before) */
+  rangeMins(key, back) {
+    const n = this.range(key).days;
+    return this.lastDays(n, (back || 0) * n).reduce((t, x) => t + this.minutes(x.d), 0);
+  },
+
   weekMins(weeksBack) {
     return this.lastDays(7, (weeksBack || 0) * 7).reduce((t, x) => t + this.minutes(x.d), 0);
   },
 
   sumDays(n, field) {
     return this.lastDays(n).reduce((t, x) => t + ((x.d && x.d[field]) || 0), 0);
+  },
+
+  /* ── chart buckets ──
+     A 30-day chart drawn as 30 bars is a picket fence on a phone, so longer ranges are
+     grouped into equal blocks of days (5 for a month → 6 bars). The last block always
+     ends today; a one-day block keeps the weekday letter, a wider one gets a date span. */
+  buckets(key) {
+    const r = this.range(key);
+    const days = this.lastDays(r.days);
+    if (r.group <= 1) return days.map(x => ({ mins: this.minutes(x.d), date: x.date, k: x.k, span: 1 }));
+    const out = [];
+    for (let i = 0; i < days.length; i += r.group) {
+      const block = days.slice(i, i + r.group);
+      out.push({
+        mins: block.reduce((t, x) => t + this.minutes(x.d), 0),
+        date: block[block.length - 1].date,
+        from: block[0].date,
+        k: block[block.length - 1].k,
+        span: block.length
+      });
+    }
+    return out;
+  },
+
+  /* the label under one bar: a weekday letter for a single day, else the block's end date */
+  bucketLabel(b) {
+    return b.span > 1 ? String(b.date.getDate()) : this.dayLetter(b.date);
   },
 
   subjStats(n) {
