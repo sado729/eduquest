@@ -363,6 +363,9 @@ EQS.screens.levelup = function (s) {
 /* 14 · Reward chest — contents shown before opening */
 EQS.meta.chest = { light: true };
 EQS.screens.chest = function (s) {
+  /* the screen's own promise is "you always see what's inside before you open it", so the
+     sticker slot shows the sticker this chest will really hand over, by name */
+  const nextSticker = EQD.nextSticker(s.stickerIds);
   return `<div class="scr" style="background:#241A3F">
     <div style="position:absolute;inset:0;background:radial-gradient(300px 280px at 50% 34%, rgba(255,194,75,0.30), rgba(36,26,63,0) 70%)"></div>
     <div class="press" onclick="EQ.go('map')" style="position:absolute;top:62px;left:16px;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;z-index:5">${EQC.xIcon('#fff', 17)}</div>
@@ -385,21 +388,21 @@ EQS.screens.chest = function (s) {
     </div>
     <div style="position:absolute;top:430px;left:20px;right:20px">
       <div style="font:800 11px Nunito;color:#A896E0;letter-spacing:2px;text-align:center">${TX({ az: 'BU SANDIĞIN İÇİNDƏ', en: 'INSIDE THIS CHEST', ru: 'ВНУТРИ ЭТОГО СУНДУКА' })}</div>
-      <div style="display:flex;gap:12px;margin-top:16px">
-        <div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
+      <div style="display:flex;gap:12px;margin-top:16px;align-items:stretch">
+        <div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px 14px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
           ${EQC.coin(40)}
-          <div style="font:800 17px 'Baloo 2';color:#fff;margin-top:6px">100</div>
+          <div style="font:800 17px 'Baloo 2';color:#fff;margin-top:6px;min-height:38px;display:flex;align-items:center;justify-content:center">100</div>
           <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'MACƏRA SİKKƏSİ', en: 'QUEST COINS', ru: 'МОНЕТ КВЕСТА' })}</div>
         </div>
         <div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
           <svg width="40" height="40" viewBox="0 0 36 36"><ellipse cx="18" cy="26" rx="15" ry="4" fill="#8A6BE0"></ellipse><path d="M18 4 L30 22 H6 Z" fill="#7B5CFF"></path><path d="M18 12 l2.6 5.4 5.4 2.6 -5.4 2 -2.6 5 -2.6-5 -5.4-2 5.4-2.6 Z" fill="#FFE9A8"></path></svg>
-          <div style="font:800 17px 'Baloo 2';color:#fff;margin-top:6px">${TX({ az: 'Sehrbaz Papağı', en: 'Wizard Hat', ru: 'Шляпа Волшебника' })}</div>
+          <div style="font:800 15px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${TX({ az: 'Sehrbaz Papağı', en: 'Wizard Hat', ru: 'Шляпа Волшебника' })}</div>
           <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'QARDEROB', en: 'WARDROBE', ru: 'ГАРДЕРОБ' })}</div>
         </div>
         <div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
-          <svg width="40" height="40" viewBox="0 0 36 36"><rect x="5" y="7" width="26" height="22" rx="6" fill="#5CE39B"></rect><path d="M11 20 q7-9 14 0" stroke="#0B3D25" stroke-width="2.6" fill="none" stroke-linecap="round"></path><circle cx="13" cy="14" r="2" fill="#0B3D25"></circle><circle cx="23" cy="14" r="2" fill="#0B3D25"></circle></svg>
-          <div style="font:800 17px 'Baloo 2';color:#fff;margin-top:6px">${TX({ az: 'Stiker', en: 'Sticker', ru: 'Наклейка' })}</div>
-          <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'OTAĞIN ÜÇÜN', en: 'FOR YOUR ROOM', ru: 'ДЛЯ ТВОЕЙ КОМНАТЫ' })}</div>
+          <svg width="40" height="40" viewBox="0 0 36 36">${nextSticker ? nextSticker.art : '<rect x="5" y="7" width="26" height="22" rx="6" fill="#5CE39B"></rect><path d="M11 20 q7-9 14 0" stroke="#0B3D25" stroke-width="2.6" fill="none" stroke-linecap="round"></path><circle cx="13" cy="14" r="2" fill="#0B3D25"></circle><circle cx="23" cy="14" r="2" fill="#0B3D25"></circle>'}</svg>
+          <div style="font:800 ${nextSticker && TX(nextSticker.name).length > 14 ? '12' : (nextSticker && TX(nextSticker.name).length > 10 ? '14' : '17')}px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${nextSticker ? TX(nextSticker.name) : TX({ az: 'Stiker', en: 'Sticker', ru: 'Наклейка' })}</div>
+          <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'ALBOMUN ÜÇÜN', en: 'FOR YOUR ALBUM', ru: 'ДЛЯ ТВОЕГО АЛЬБОМА' })}</div>
         </div>
       </div>
     </div>

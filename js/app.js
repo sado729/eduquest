@@ -5,10 +5,10 @@
 /* ── rest screen (daily limit + bedtime pause) ──
    Screens the pause never takes over: the grown-up area, the first-run flow, and the
    reward beats a child has already earned — they finish the moment, then Questy rests. */
-const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest'];
+const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest', 'sticker'];
 /* calm screens where the heartbeat may bring the rest screen up on its own
    (never mid-question: a challenge already started is always allowed to finish) */
-const EQ_REST_NUDGE = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'wardrobe', 'unlock', 'welcomeback'];
+const EQ_REST_NUDGE = ['map', 'quest', 'details', 'story', 'home', 'awards', 'bag', 'album', 'wardrobe', 'unlock', 'welcomeback'];
 const EQ_REST_MORNING = 5 * 60; /* the bedtime window closes at 05:00 */
 
 const EQ_DEFAULTS = {
@@ -22,7 +22,7 @@ const EQ_DEFAULTS = {
   bossHits: 0, bossBeaten: false,
   chestReady: false, chestOpened: false,
   wizardHatOwned: false, crownOwned: false,
-  mathSolved: 0, hintSparks: 0, stickers: 0, trophiesEarned: 0,
+  mathSolved: 0, hintSparks: 0, stickers: 0, stickerIds: [], trophiesEarned: 0,
   trophyPlaced: false, pendingLevelUp: false,
   lastVisit: null,
   lastDay: null, questDay: 0, playedDays: [], bestStreak: 1,
@@ -58,7 +58,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
+  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
 
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
   pron() { return 'their'; },
@@ -170,6 +170,8 @@ const EQ = {
     this.s = Object.assign({}, EQ_DEFAULTS, s || {});
     this.s.hero = Object.assign({}, EQ_DEFAULTS.hero, (s && s.hero) || {});
     this.s.settings = Object.assign({}, EQ_DEFAULTS.settings, (s && s.settings) || {});
+    this.s.stickerIds = this.cleanStickers(s && s.stickerIds, this.s.stickers);
+    this.s.stickers = this.s.stickerIds.length;
     EQT.init(this.s);
   },
   save() {
@@ -180,6 +182,7 @@ const EQ = {
   /* ── router ── */
   go(name) {
     EQT.tick(); /* attribute elapsed time to the screen being left */
+    if (this.current === 'album' && name !== 'album') this.leaveAlbum();
     if (this.restGuard(name)) name = 'restday'; /* limit reached / bedtime — Questy takes over */
     if (name === 'challenge' && this.s.challengesDone >= 5) name = 'boss';
     if (name === 'challenge') {
@@ -399,12 +402,73 @@ const EQ = {
   openChest() {
     this.s.coins += 100; this.s.coinsToday += 100;
     this.s.wizardHatOwned = true;
-    this.s.stickers = Math.min(24, this.s.stickers + 1);
+    const got = this.awardSticker();
     this.s.chestOpened = true; this.s.chestReady = false;
     this.save();
     SFX.fanfare();
     if (this.s.pendingLevelUp) { this.session.afterLevel = 'map'; this.go('levelup'); }
+    else if (got) { this.session.newSticker = got.id; this.go('sticker'); }
     else { this.go('map'); this.toast(TX({ az: '+100 sikkə · Sehrbaz Papağı qarderobuna əlavə olundu!', en: '+100 coins · Wizard Hat added to your wardrobe!', ru: '+100 монет · Шляпа Волшебника добавлена в гардероб!' })); }
+  },
+
+  /* ── sticker album ──
+     The album remembers *which* stickers a child owns; `s.stickers` is only ever the
+     length of that list. A save from before the album existed carries a count and no
+     ids, so the first `n` stickers of the album are handed over — the child keeps
+     everything they earned, and the counter they have been watching does not move. */
+  cleanStickers(ids, count) {
+    const out = [];
+    (Array.isArray(ids) ? ids : []).forEach(id => {
+      if (EQD.STICKER_BY_ID[id] && out.indexOf(id) < 0) out.push(id);
+    });
+    if (!out.length) {
+      const n = Math.max(0, Math.min(EQD.STICKERS.length, Math.floor(count) || 0));
+      for (let i = 0; i < n; i++) out.push(EQD.STICKERS[i].id);
+    }
+    return out;
+  },
+  hasSticker(id) { return (this.s.stickerIds || []).indexOf(id) >= 0; },
+  /* give the next sticker in album order; returns it, or null when the album is full */
+  awardSticker(id) {
+    const st = id ? EQD.STICKER_BY_ID[id] : EQD.nextSticker(this.s.stickerIds);
+    if (!st || this.hasSticker(st.id)) return null;
+    this.s.stickerIds.push(st.id);
+    this.s.stickers = this.s.stickerIds.length;
+    return st;
+  },
+  /* open the album on the page a sticker lives on (the reveal screen links here).
+     The sticker just earned is flagged so the album opens with it badged — otherwise
+     arriving from the reveal screen looks no different from opening the album cold. */
+  openAlbum(setId) {
+    SFX.tap();
+    if (setId) this.session.albumSet = setId;
+    this.session.justAdded = this.session.newSticker || null;
+    this.session.newSticker = null;
+    this.go('album');
+  },
+  albumSet(setId) {
+    if (this.session.albumSet === setId) return;
+    SFX.tap();
+    this.session.albumSet = setId;
+    this.render();
+  },
+  /* the "NEW" badge belongs to the trip in from the chest, so it does not survive
+     leaving the album — the next visit is an ordinary one */
+  leaveAlbum() { this.session.justAdded = null; },
+  /* a locked slot says what to do instead of nothing at all */
+  stickerPeek(id) {
+    const st = EQD.STICKER_BY_ID[id];
+    if (!st) return;
+    SFX.tap();
+    if (this.hasSticker(id)) this.toast(TX(st.name) + ' · ' + TX({ az: 'sənindir!', en: 'yours!', ru: 'твоя!' }));
+    else this.toast(TX({ az: 'Hələ bağlıdır — ', en: 'Still locked — ', ru: 'Пока закрыта — ' }) + TX(st.how));
+  },
+  /* from the reveal screen back into the adventure */
+  afterSticker() {
+    SFX.tap();
+    this.session.newSticker = null;
+    this.go('map');
+    this.toast(TX({ az: '+100 sikkə · Sehrbaz Papağı qarderobuna əlavə olundu!', en: '+100 coins · Wizard Hat added to your wardrobe!', ru: '+100 монет · Шляпа Волшебника добавлена в гардероб!' }));
   },
 
   /* ── tutor ── */
@@ -773,6 +837,7 @@ const EQ = {
       } else if (this.current === 'success') this.continueAfterSuccess();
       else if (this.current === 'victory') this.go('chest');
       else if (this.current === 'chest') this.openChest();
+      else if (this.current === 'sticker') this.afterSticker();
       else if (this.current === 'levelup') { document.title = 'AUTOTEST-DONE level=' + (this.s.level + 1) + ' xp=' + this.s.xp + ' coins=' + this.s.coins; clearInterval(this.autoTimer); return; }
       else if (this.current === 'map') { document.title = 'AUTOTEST-DONE-MAP xp=' + this.s.xp; clearInterval(this.autoTimer); return; }
     };

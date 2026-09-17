@@ -122,14 +122,17 @@ EQS.screens.wardrobe = function (s) {
 /* 16 · Inventory (My bag) */
 EQS.meta.bag = { light: true };
 EQS.screens.bag = function (s) {
-  const stickerCells = `
-    <div style="aspect-ratio:1;border-radius:16px;background:#FFE1E6;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 20 C6 16 3 13 3 9.8 A4.8 4.8 0 0 1 12 7 a4.8 4.8 0 0 1 9 2.8 C21 13 18 16 12 20 Z" fill="#FF5D73"></path></svg></div>
-    <div style="aspect-ratio:1;border-radius:16px;background:#E4F6FF;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#45C6F0"></circle></svg></div>
-    <div style="aspect-ratio:1;border-radius:16px;background:#FFF3D6;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 3 l2.6 6.6 7 0.4 -5.4 4.6 1.8 6.8 -6-3.8 -6 3.8 1.8-6.8 -5.4-4.6 7-0.4 Z" fill="#FFC24B"></path></svg></div>
-    <div style="aspect-ratio:1;border-radius:16px;background:#E8FBF1;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 4 q6 6 6 10 a6 6 0 0 1 -12 0 q0-4 6-10 Z" fill="#3DBE6E"></path></svg></div>
-    <div style="aspect-ratio:1;border-radius:16px;background:#EFE7FF;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 18 L12 5 L19 18 Z" fill="#7B5CFF"></path></svg></div>
-    ${s.stickers > 5 ? `<div style="aspect-ratio:1;border-radius:16px;background:#E8FBF1;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 36 36"><rect x="5" y="7" width="26" height="22" rx="6" fill="#5CE39B"></rect><path d="M11 20 q7-9 14 0" stroke="#0B3D25" stroke-width="2.6" fill="none" stroke-linecap="round"></path><circle cx="13" cy="14" r="2" fill="#0B3D25"></circle><circle cx="23" cy="14" r="2" fill="#0B3D25"></circle></svg></div>` : ''}
-    <div style="aspect-ratio:1;border-radius:16px;background:rgba(42,31,69,0.06);display:flex;align-items:center;justify-content:center;font:800 13px 'Baloo 2';color:#A197BC">+${24 - s.stickers}</div>`;
+  /* the first five slots of the album, then the door into it — the counter is no
+     longer a dead end: everything it counts has a face and a place to be looked at */
+  const owned = s.stickerIds || [];
+  const total = EQD.STICKERS.length;
+  const stickerCells = EQD.STICKERS.slice(0, 5).map(st => {
+    const mine = owned.indexOf(st.id) >= 0;
+    const bg = (EQD.STICKER_SETS.filter(g => g.id === st.set)[0] || {}).bg || '#E8FBF1';
+    return `<div class="press" onclick="EQ.openAlbum('${st.set}')" style="aspect-ratio:1;border-radius:16px;background:${mine ? bg : 'rgba(42,31,69,0.06)'};display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 36 36"${mine ? '' : ' style="opacity:0.22"'}>${st.art}</svg></div>`;
+  }).join('') +
+    `<div class="press" onclick="EQ.openAlbum()" style="aspect-ratio:1;border-radius:16px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2';color:#fff">${owned.length >= total ? '★' : '+' + (total - owned.length)}</div>`;
+
   return `<div class="scr" style="background:#FFF7EA">
     <div style="position:absolute;top:0;left:0;right:0;height:250px;background:#2C1F52;border-radius:0 0 36px 36px;overflow:hidden">
       <div style="position:absolute;inset:0;background:radial-gradient(220px 200px at 74% 60%, rgba(92,227,155,0.35), rgba(44,31,82,0) 72%)"></div>
@@ -170,7 +173,11 @@ EQS.screens.bag = function (s) {
     </div>
 
     <div style="position:absolute;top:608px;left:16px;right:16px">
-      <div style="font:800 11px Nunito;color:#A08A5E;letter-spacing:1.6px">${TX({ az: `OTAĞIN ÜÇÜN STİKERLƏR · 24-DƏN ${s.stickers}`, en: `STICKERS FOR YOUR ROOM · ${s.stickers} OF 24`, ru: `НАКЛЕЙКИ ДЛЯ КОМНАТЫ · ${s.stickers} ИЗ 24` })}</div>
+      <div class="press" onclick="EQ.openAlbum()" style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;font:800 11px Nunito;color:#A08A5E;letter-spacing:1.6px">${TX({ az: `STİKER ALBOMU · ${total}-DƏN ${owned.length}`, en: `STICKER ALBUM · ${owned.length} OF ${total}`, ru: `АЛЬБОМ НАКЛЕЕК · ${owned.length} ИЗ ${total}` })}</div>
+        <div style="font:800 11px 'Baloo 2';color:#7B5CFF">${TX({ az: 'Aç', en: 'Open', ru: 'Открыть' })}</div>
+        ${EQC.chevR('#7B5CFF', 14)}
+      </div>
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-top:12px">${stickerCells}</div>
     </div>
     ${EQC.nav('bag')}
@@ -180,6 +187,17 @@ EQS.screens.bag = function (s) {
 /* 17 · My home */
 EQS.meta.home = { light: false };
 EQS.screens.home = function (s) {
+  /* the stickers on the wall: the room is what the album is *for*, so the six most
+     recent ones hang here, and the whole strip is a door into the album */
+  const mine = (s.stickerIds || []).slice(-6).map(id => EQD.STICKER_BY_ID[id]).filter(Boolean);
+  const wallStickers = `<div class="press" onclick="EQ.openAlbum()" style="position:absolute;top:212px;left:176px;right:20px;display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end">
+    ${mine.map(st => {
+      const bg = (EQD.STICKER_SETS.filter(g => g.id === st.set)[0] || {}).bg || '#E8FBF1';
+      return `<div style="width:44px;height:44px;border-radius:15px;background:${bg};box-shadow:0 3px 0 rgba(42,31,69,0.14);display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 36 36">${st.art}</svg></div>`;
+    }).join('')}
+    ${mine.length ? '' : `<div style="padding:8px 12px;border-radius:15px;background:rgba(255,247,234,0.75);font:700 10.5px Nunito;color:#8B7A55;text-align:center;line-height:1.3">${TX({ az: 'Divar stiker gözləyir', en: 'This wall is waiting for stickers', ru: 'Стена ждёт наклеек' })}</div>`}
+  </div>`;
+
   const shelfTrophy = s.trophyPlaced
     ? `<div class="pop" style="position:absolute;bottom:56px;left:64px">${EQC.trophy('#7B5CFF', 34)}</div>`
     : '';
@@ -217,6 +235,8 @@ EQS.screens.home = function (s) {
       <div style="position:absolute;bottom:56px;left:20px;right:20px;display:flex;gap:8px;align-items:flex-end"><div style="flex:1;height:34px;border-radius:6px;background:#FFF7EA;display:flex;align-items:center;justify-content:center;font:800 9px Nunito;color:#8B7A55;text-align:center;line-height:1.1">${TX({ az: 'RİYAZİYYAT<br>USTASI', en: 'MATH<br>MASTER', ru: 'МАСТЕР<br>МАТЕМАТИКИ' })}</div><div style="flex:1;height:30px;border-radius:6px;background:#EFE7FF"></div><div style="flex:1;height:38px;border-radius:6px;background:#E8FBF1"></div></div>
       ${shelfTrophy}
     </div>
+
+    ${wallStickers}
 
     <div style="position:absolute;top:392px;left:24px;width:130px;height:96px;border-radius:12px;background:#FFF7EA;box-shadow:0 5px 0 #D8BC92;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px">
       <svg width="34" height="34" viewBox="0 0 36 36"><path d="M6 8 q9-4 12 2 q3-6 12-2 v20 q-9-4 -12 2 q-3-6 -12-2 Z" fill="#45C6F0"></path></svg>
@@ -327,5 +347,124 @@ EQS.screens.awards = function (s) {
       </div>
     </div>
     ${EQC.nav('awards')}
+  </div>`;
+};
+
+/* 18b · Sticker album — the collection screen the counter in the bag points at.
+   A sticker a child cannot look at is not a collection, so every one of the 24 has a
+   slot here from the first day: the owned ones in colour, the locked ones as a soft
+   silhouette with the one thing to do to earn them. */
+EQS.meta.album = { light: true };
+EQS.screens.album = function (s) {
+  const owned = s.stickerIds || [];
+  const setId = EQ.session.albumSet || EQD.STICKER_SETS[0].id;
+  const set = EQD.STICKER_SETS.filter(x => x.id === setId)[0] || EQD.STICKER_SETS[0];
+  const total = EQD.STICKERS.length;
+  const justGot = EQ.session.justAdded; /* badged only on the trip in from the chest */
+
+  const pageTab = (g) => {
+    const mine = EQD.STICKERS.filter(x => x.set === g.id);
+    const have = mine.filter(x => owned.indexOf(x.id) >= 0).length;
+    const on = g.id === set.id;
+    return `<div class="press" onclick="EQ.albumSet('${g.id}')" style="flex:none;padding:0 14px;height:46px;border-radius:16px;background:${on ? '#7B5CFF' : '#FBE9CC'};box-shadow:0 4px 0 ${on ? '#5B3FD6' : '#E8D0A8'};display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div style="font:800 12.5px 'Baloo 2';color:${on ? '#fff' : '#7A6438'}">${TX(g.name)}</div>
+      <div style="font:800 9.5px Nunito;color:${on ? '#D9CEFF' : '#A08A5E'}">${have}/${mine.length}</div>
+    </div>`;
+  };
+
+  const cell = (st) => {
+    const mine = owned.indexOf(st.id) >= 0;
+    const isNew = st.id === justGot;
+    if (mine) return `<div class="press ${isNew ? 'pop' : ''}" onclick="EQ.stickerPeek('${st.id}')" style="border-radius:22px;background:#fff;box-shadow:0 5px 0 #E0C79A${isNew ? ', 0 0 0 3px #3DBE6E inset' : ''};padding:10px 6px 8px;text-align:center;position:relative">
+      ${isNew ? `<div style="position:absolute;top:-7px;right:-5px;padding:0 7px;height:20px;border-radius:10px;background:#3DBE6E;box-shadow:0 3px 0 #2A9455;display:flex;align-items:center;font:800 9px Nunito;color:#fff;letter-spacing:0.4px">${TX({ az: 'YENİ', en: 'NEW', ru: 'НОВОЕ' })}</div>` : ''}
+      <div style="width:52px;height:52px;margin:0 auto;border-radius:18px;background:${set.bg};display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 36 36">${st.art}</svg></div>
+      <div style="font:800 11.5px 'Baloo 2';color:#2A1F45;margin-top:6px;line-height:1.2">${TX(st.name)}</div>
+      <div style="font:800 9px Nunito;color:${set.ink};margin-top:2px">#${st.no}</div>
+    </div>`;
+    return `<div class="press" onclick="EQ.stickerPeek('${st.id}')" style="border-radius:22px;background:rgba(42,31,69,0.06);padding:10px 6px 8px;text-align:center">
+      <div style="width:52px;height:52px;margin:0 auto;border-radius:18px;background:rgba(42,31,69,0.06);display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 36 36" style="opacity:0.22">${st.art}</svg></div>
+      <div style="font:800 11.5px 'Baloo 2';color:#8878A8;margin-top:6px;line-height:1.2">${TX({ az: 'Hələ gizlidir', en: 'Still hidden', ru: 'Ещё скрыта' })}</div>
+      <div style="font:700 9px Nunito;color:#A197BC;margin-top:2px;line-height:1.25">${TX(st.how)}</div>
+    </div>`;
+  };
+
+  const grid = EQD.STICKERS.filter(x => x.set === set.id).map(cell).join('');
+  const pct = Math.round(owned.length / total * 100);
+  const line = owned.length === 0
+    ? TX({ az: 'Albomun boşdur — ilk stikerin növbəti sandıqda səni gözləyir!', en: 'Your album is empty — your first sticker is waiting in the next chest!', ru: 'Твой альбом пуст — первая наклейка ждёт в следующем сундуке!' })
+    : owned.length >= total
+      ? TX({ az: '24-ün 24-ü! Albom tamamdır — sən əsl kolleksiyaçısan!', en: 'All 24! The album is full — you are a true collector!', ru: 'Все 24! Альбом полон — ты настоящий коллекционер!' })
+      : TX({
+        az: `Daha ${total - owned.length} stiker qaldı. Hər sandıq bir dənə gətirir!`,
+        en: `${total - owned.length} sticker${total - owned.length === 1 ? '' : 's'} to go. Every chest brings one!`,
+        ru: `Осталось ${total - owned.length} ${RUP(total - owned.length, 'наклейка', 'наклейки', 'наклеек')}. Каждый сундук приносит одну!`
+      });
+
+  return `<div class="scr" style="background:#FFF7EA">
+    <div style="position:absolute;top:0;left:0;right:0;height:250px;background:#2C1F52;border-radius:0 0 36px 36px;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(230px 200px at 72% 46%, rgba(255,194,75,0.30), rgba(44,31,82,0) 72%)"></div>
+      <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
+        <div class="press" onclick="EQ.go('bag')" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#fff', 19)}</div>
+        <div style="flex:1">
+          <div style="font:800 21px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Stiker Albomu', en: 'Sticker Album', ru: 'Альбом Наклеек' })}</div>
+          <div style="font:700 11px Nunito;color:#A896E0">${TX({ az: `${total}-dən ${owned.length}-i yığılıb`, en: `${owned.length} of ${total} collected`, ru: `Собрано ${owned.length} из ${total}` })}</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:22px;left:16px;right:16px;background:rgba(255,255,255,0.08);border-radius:24px;padding:16px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <span style="font:800 13px 'Baloo 2';color:#fff">${TX(set.name)}</span>
+          <span style="font:800 12px 'Baloo 2';color:#FFD98A">${owned.length}/${total}</span>
+        </div>
+        <div style="height:10px;border-radius:5px;background:rgba(255,255,255,0.14);margin-top:10px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#FFC24B;border-radius:5px"></div></div>
+        <div style="font:700 11.5px Nunito;color:#BFF0D3;margin-top:11px;line-height:1.45">${line}</div>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:268px;left:16px;right:16px;display:flex;gap:8px;overflow-x:auto" class="vscroll">
+      ${EQD.STICKER_SETS.map(pageTab).join('')}
+    </div>
+
+    <div style="position:absolute;top:328px;left:16px;right:16px;bottom:110px;display:grid;grid-template-columns:repeat(3,1fr);gap:11px;align-content:start" class="vscroll">
+      ${grid}
+    </div>
+    ${EQC.nav('bag')}
+  </div>`;
+};
+
+/* 18c · One sticker, just earned — the beat between the chest and the map */
+EQS.meta.sticker = { light: false };
+EQS.screens.sticker = function (s) {
+  const st = EQD.STICKER_BY_ID[EQ.session.newSticker] || EQD.STICKERS[0];
+  const set = EQD.STICKER_SETS.filter(x => x.id === st.set)[0] || EQD.STICKER_SETS[0];
+  const owned = (s.stickerIds || []).length;
+  const total = EQD.STICKERS.length;
+  return `<div class="scr" style="background:#1E1338">
+    <div style="position:absolute;inset:0;background:radial-gradient(300px 280px at 50% 34%, rgba(255,194,75,0.32), rgba(30,19,56,0) 70%)"></div>
+    <div style="position:absolute;top:96px;left:20px;right:20px;text-align:center">
+      <div style="font:800 11px Nunito;color:#FFD98A;letter-spacing:2.4px">${TX({ az: 'ALBOMUNA YENİ STİKER', en: 'NEW STICKER FOR YOUR ALBUM', ru: 'НОВАЯ НАКЛЕЙКА В АЛЬБОМ' })}</div>
+    </div>
+    <div class="pop" style="position:absolute;top:168px;left:0;right:0;display:flex;justify-content:center">
+      <div style="width:196px;height:196px;border-radius:52px;background:#fff;box-shadow:0 10px 0 rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:center;position:relative">
+        <div style="position:absolute;inset:14px;border-radius:40px;background:${set.bg}"></div>
+        <svg width="112" height="112" viewBox="0 0 36 36" style="position:relative">${st.art}</svg>
+      </div>
+    </div>
+    <div style="position:absolute;top:396px;left:20px;right:20px;text-align:center">
+      <div style="font:800 26px 'Baloo 2', system-ui;color:#fff">${TX(st.name)}</div>
+      <div style="font:700 12.5px Nunito;color:#A896E0;margin-top:6px">${TX(set.name)} · #${st.no}</div>
+      <div style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:8px 16px;border-radius:18px;background:rgba(255,255,255,0.08)">
+        <span style="font:800 13px 'Baloo 2';color:#FFD98A">${owned}/${total}</span>
+        <span style="font:700 11.5px Nunito;color:#A896E0">${TX({ az: 'albomunda', en: 'in your album', ru: 'в твоём альбоме' })}</span>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:196px;left:20px;right:20px">
+      ${EQC.bubble('excited', TX({
+        az: 'Bunu albomuna yapışdırdım! İstədiyin vaxt çantandan baxa bilərsən.',
+        en: 'I stuck it in your album! You can look at it any time from your bag.',
+        ru: 'Я вклеил её в твой альбом! Можешь посмотреть в любой момент из сумки.'
+      }), { dark: true, w: 68 })}
+    </div>
+    <div class="press" onclick="EQ.openAlbum('${st.set}')" style="position:absolute;bottom:126px;left:20px;right:20px;height:60px;border-radius:22px;background:#FFC24B;box-shadow:0 6px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 19px 'Baloo 2', system-ui;color:#4A3208">${TX({ az: 'Albomuma bax', en: 'See my album', ru: 'Открыть альбом' })}</div>
+    <div class="press" onclick="EQ.afterSticker()" style="position:absolute;bottom:56px;left:20px;right:20px;height:56px;border-radius:22px;background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:center;font:800 17px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Macəraya davam', en: 'Back to the adventure', ru: 'Дальше в приключение' })}</div>
   </div>`;
 };

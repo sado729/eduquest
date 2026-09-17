@@ -35,6 +35,22 @@ const EQX = {
   esc(t) { return encodeURIComponent(String(t == null ? '' : t)).replace(/[._~-]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase()); },
   unesc(t) { try { return decodeURIComponent(t); } catch (e) { return ''; } },
 
+  /* the album is 24 known stickers, so which ones a child owns packs into one bitmask
+     — five base-36 characters instead of a list of names, and order never matters */
+  stickerMask(ids) {
+    let m = 0;
+    (ids || []).forEach(id => {
+      const i = EQD.STICKERS.findIndex(x => x.id === id);
+      if (i >= 0 && i < 31) m |= (1 << i);
+    });
+    return m;
+  },
+  stickerIds(mask) {
+    const out = [];
+    EQD.STICKERS.forEach((st, i) => { if (i < 31 && (mask & (1 << i))) out.push(st.id); });
+    return out;
+  },
+
   /* the day's quest title is one of the fixed themes — store which, not the three strings */
   themeNo(title) {
     if (!title || !title.en) return 0;
@@ -88,7 +104,8 @@ const EQX = {
         this.b(Math.max(0, this.HAIR.indexOf(h.hair))), this.b(Math.max(0, this.HAT.indexOf(h.hat)))].join('.'),
       hx(s.questyFur) + '.' + hx(s.questyFurDark),
       [s.xp, s.level, s.coins, s.streak, s.bestStreak, s.xpToday, s.coinsToday, s.challengesDone,
-        s.bossHits, s.mathSolved, s.hintSparks, s.stickers, s.trophiesEarned, s.questDay].map(v => this.b(v)).join('.'),
+        s.bossHits, s.mathSolved, s.hintSparks, s.stickers, s.trophiesEarned, s.questDay,
+        this.stickerMask(s.stickerIds)].map(v => this.b(v)).join('.'),
       this.b(flags),
       [this.b(sflags), this.b(st.limit), this.b(st.bedMin), this.b(Math.max(0, this.LANGS.indexOf(st.lang))), this.b(st.bonusMins)].join('.'),
       [this.b(base), off(start), off(last), off(bonus)].join('.'),
@@ -119,6 +136,7 @@ const EQX = {
       xp: f4[0], level: f4[1], coins: f4[2], streak: f4[3], bestStreak: f4[4],
       xpToday: f4[5], coinsToday: f4[6], challengesDone: f4[7], bossHits: f4[8],
       mathSolved: f4[9], hintSparks: f4[10], stickers: f4[11], trophiesEarned: f4[12], questDay: f4[13],
+      stickerIds: g[4].split('.').length > 14 ? this.stickerIds(f4[14]) : null,
       onboarded: !!(flags & 1), bossBeaten: !!(flags & 2), chestReady: !!(flags & 4), chestOpened: !!(flags & 8),
       wizardHatOwned: !!(flags & 16), crownOwned: !!(flags & 32), trophyPlaced: !!(flags & 64), pendingLevelUp: !!(flags & 128),
       settings: {
@@ -186,6 +204,9 @@ const EQX = {
     out.mathSolved = int(r.mathSolved, 0, 9e6, 0);
     out.hintSparks = int(r.hintSparks, 0, 9e6, 0);
     out.stickers = int(r.stickers, 0, 9e6, 0);
+    /* the same cleaner the loader uses: unknown ids dropped, a bare count expanded */
+    out.stickerIds = EQ.cleanStickers(r.stickerIds, out.stickers);
+    out.stickers = out.stickerIds.length;
     out.trophiesEarned = int(r.trophiesEarned, 0, 9e6, 0);
     out.questDay = int(r.questDay, 0, 99999, 0);
     ['onboarded', 'bossBeaten', 'chestReady', 'chestOpened', 'wizardHatOwned', 'crownOwned', 'trophyPlaced', 'pendingLevelUp']

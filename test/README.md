@@ -4,12 +4,13 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all five suites
+npm test              # all six suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
 npm run test:profiles
 npm run test:ranges
+npm run test:album
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -134,3 +135,43 @@ grown-up area.
 
 See `EQT.RANGES` / `EQT.buckets()` in [js/tracking.js](../js/tracking.js).
 
+
+## album.js — the sticker album
+
+Guards a collection, which is the one kind of feature that fails without ever looking
+broken. The bag used to carry a counter — `STICKERS FOR YOUR ROOM · 3 OF 24` — over five
+fixed drawings, and nothing behind it: `s.stickers` was a number, and *which* stickers a
+child owned was recorded nowhere. The screen rendered perfectly while being, to a
+seven-year-old, a lie. There is now a real album of 24 named stickers with its own screen,
+and `s.stickerIds` underneath it.
+
+Three things break silently here:
+
+1. **The identity.** `s.stickers` must never be anything other than `s.stickerIds.length`.
+   Let the two drift and the bag header counts one thing while the album shows another —
+   both perfectly plausible, one of them wrong, and no error anywhere.
+2. **The migration.** Children are already playing with a count and no ids. Those saves
+   have to become real stickers on load, or the album opens empty on a child who has been
+   earning them for weeks — which reads exactly like their collection was taken away. The
+   same cleaner runs over an imported transfer code, including one written by a version
+   that had no album at all.
+3. **The carry.** A transfer moves an adventure to another phone. If the ids do not ride
+   along, the album arrives empty while the counter arrives full. They pack as a single
+   base-36 bitmask, so a full album costs a QR code a handful of characters rather than a
+   list of names — asserted here, because a QR that stops scanning is a support call.
+
+Also covered: the shape of the album data (24 unique ids, every one in a real set, every
+one with a drawing, a trilingual name, and the line that tells a child what to do to earn
+it — a locked slot that says nothing is exactly what this feature replaces); a chest
+handing over a *named* sticker and never the same one twice; the chest screen keeping its
+own promise ("you always see what's inside before you open it") by naming and drawing the
+sticker it is about to give; the album filling to 24 and refusing a 25th; all four pages
+and all four screens rendering in az/en/ru at every stage of filling; the bag, the room
+and the reveal screen all opening the album; the "NEW" badge appearing on the trip in from
+the chest and not surviving the way out; and the rest screen still governing it — the
+album can be paused into, a sticker already earned never interrupted.
+
+The album screen is design-shaped but the store beneath it is hand-written, so a re-sync
+can bring back the visuals and drop the awarding. If this suite goes red after a re-sync,
+that is what happened — see `EQ.awardSticker` / `EQ.cleanStickers` in [js/app.js](../js/app.js)
+and `EQD.STICKERS` in [js/data.js](../js/data.js).

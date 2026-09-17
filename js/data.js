@@ -987,3 +987,112 @@ EQD.questSet = function (day) {
   }
   return EQD.genDay(day);
 };
+
+/* ── sticker album (24 stickers) ─────────────────────────────
+   Every sticker has a stable id, because the album remembers *which* ones a child
+   owns — `s.stickerIds` — not just how many. The counter `s.stickers` stays the
+   length of that list, so everything already reading the count keeps working.
+
+   `set` groups a page of the album; `how` is the one line a child reads on a still
+   locked slot, and it has to name something they can actually go and do today. */
+EQD.STICKER_SETS = [
+  { id: 'forest', name: { az: 'Meşə Dostları', en: 'Forest Friends', ru: 'Лесные Друзья' }, bg: '#E8FBF1', ink: '#2A9455' },
+  { id: 'brave', name: { az: 'Cəsarət Nişanları', en: 'Badges of Courage', ru: 'Знаки Отваги' }, bg: '#FFE1E6', ink: '#D63A52' },
+  { id: 'sky', name: { az: 'Səma Xəzinələri', en: 'Sky Treasures', ru: 'Небесные Сокровища' }, bg: '#E4F6FF', ink: '#2196C9' },
+  { id: 'magic', name: { az: 'Sehrli Şeylər', en: 'Magic Things', ru: 'Волшебные Вещи' }, bg: '#EFE7FF', ink: '#5B3FD6' }
+];
+
+/* svg bodies are drawn inside a 0 0 36 36 box so one helper can size them all */
+EQD.STICKERS = [
+  /* — Meşə Dostları — */
+  { id: 'leaf', set: 'forest', name: { az: 'Xoşbəxt Yarpaq', en: 'Happy Leaf', ru: 'Счастливый Листок' },
+    how: { az: 'İlk sandığını aç', en: 'Open your first chest', ru: 'Открой свой первый сундук' },
+    art: '<path d="M18 4 q12 8 12 16 a12 12 0 0 1 -24 0 q0-8 12-16 Z" fill="#3DBE6E"></path><path d="M18 8 V30" stroke="#2A9455" stroke-width="2.2"></path><circle cx="14" cy="18" r="1.8" fill="#0B3D25"></circle><circle cx="22" cy="18" r="1.8" fill="#0B3D25"></circle><path d="M14 23 q4 3 8 0" stroke="#0B3D25" stroke-width="2" fill="none" stroke-linecap="round"></path>' },
+  { id: 'acorn', set: 'forest', name: { az: 'Palıd Qozası', en: 'Little Acorn', ru: 'Жёлудь' },
+    how: { az: 'Bir sınaq həll et', en: 'Solve one challenge', ru: 'Реши одно испытание' },
+    art: '<path d="M10 16 q8 18 16 0 Z" fill="#C9762F"></path><rect x="8" y="9" width="20" height="8" rx="4" fill="#8A5A0A"></rect><path d="M18 5 v4" stroke="#8A5A0A" stroke-width="2.4" stroke-linecap="round"></path>' },
+  { id: 'mushroom', set: 'forest', name: { az: 'Nöqtəli Göbələk', en: 'Spotty Mushroom', ru: 'Гриб в Крапинку' },
+    how: { az: 'Bir mərhələni bitir', en: 'Finish one stage', ru: 'Заверши один этап' },
+    art: '<rect x="14" y="19" width="8" height="12" rx="4" fill="#FBE9CC"></rect><path d="M5 20 q1-13 13-13 q12 0 13 13 Z" fill="#FF5D73"></path><circle cx="12" cy="15" r="2.4" fill="#FFF7EA"></circle><circle cx="23" cy="13" r="2" fill="#FFF7EA"></circle>' },
+  { id: 'fox', set: 'forest', name: { az: 'Tülkü Balası', en: 'Fox Cub', ru: 'Лисёнок' },
+    how: { az: 'Dalbadal 2 gün oyna', en: 'Play 2 days in a row', ru: 'Играй 2 дня подряд' },
+    art: '<path d="M7 12 L10 22 L7 22 Z M29 12 L26 22 L29 22 Z" fill="#E06327"></path><path d="M18 9 q11 2 11 11 q0 10 -11 10 q-11 0 -11-10 q0-9 11-11 Z" fill="#FF8A4C"></path><path d="M18 22 q-7 0 -8-5 q4 3 8 3 q4 0 8-3 q-1 5 -8 5 Z" fill="#FFF7EA"></path><circle cx="13" cy="19" r="1.9" fill="#3B2410"></circle><circle cx="23" cy="19" r="1.9" fill="#3B2410"></circle><circle cx="18" cy="24" r="2.1" fill="#3B2410"></circle>' },
+  { id: 'owl', set: 'forest', name: { az: 'Müdrik Bayquş', en: 'Wise Owl', ru: 'Мудрая Сова' },
+    how: { az: 'İpucu olmadan 5 sual həll et', en: 'Solve 5 questions with no hint', ru: 'Реши 5 вопросов без подсказки' },
+    art: '<path d="M8 14 q10-8 20 0 q3 16 -10 17 q-13-1 -10-17 Z" fill="#8A6BE0"></path><circle cx="13.5" cy="17" r="5" fill="#FFF7EA"></circle><circle cx="22.5" cy="17" r="5" fill="#FFF7EA"></circle><circle cx="13.5" cy="17" r="2.2" fill="#2A1F45"></circle><circle cx="22.5" cy="17" r="2.2" fill="#2A1F45"></circle><path d="M18 21 l-3 3 h6 Z" fill="#FFC24B"></path>' },
+  { id: 'tree', set: 'forest', name: { az: 'Böyük Ağac', en: 'Great Tree', ru: 'Большое Дерево' },
+    how: { az: '3-cü səviyyəyə çat', en: 'Reach level 3', ru: 'Достигни 3 уровня' },
+    art: '<rect x="15" y="20" width="6" height="12" rx="2" fill="#8A5A0A"></rect><circle cx="18" cy="13" r="9" fill="#3DBE6E"></circle><circle cx="11" cy="18" r="6" fill="#54D083"></circle><circle cx="25" cy="18" r="6" fill="#2A9455"></circle>' },
+
+  /* — Cəsarət Nişanları — */
+  { id: 'shield', set: 'brave', name: { az: 'Cəsarət Qalxanı', en: 'Brave Shield', ru: 'Щит Отваги' },
+    how: { az: 'Bir bossla üzləş', en: 'Face one boss', ru: 'Сразись с одним боссом' },
+    art: '<path d="M18 4 L30 8 v10 q0 10 -12 14 q-12-4 -12-14 V8 Z" fill="#FF5D73"></path><path d="M12 18 l4 4 8-9" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>' },
+  { id: 'dragon', set: 'brave', name: { az: 'Dost Əjdaha', en: 'Friendly Dragon', ru: 'Дружелюбный Дракон' },
+    how: { az: 'Riyaziyyat Əjdahası ilə dost ol', en: 'Befriend the Math Dragon', ru: 'Подружись с Драконом Математики' },
+    art: '<path d="M6 22 q4-14 14-14 q10 0 10 9 q0 10 -10 11 q-10 1 -14-6 Z" fill="#FF8A4C"></path><path d="M13 9 L11 3 L17 7 Z M23 8 L25 2 L27 9 Z" fill="#E06327"></path><circle cx="24" cy="16" r="2.2" fill="#2A1F45"></circle><path d="M6 22 q-3 4 1 7 q3-3 5-4 Z" fill="#E06327"></path>' },
+  { id: 'crystal', set: 'brave', name: { az: 'Bilik Kristalı', en: 'Knowledge Crystal', ru: 'Кристалл Знаний' },
+    how: { az: 'Fəslin finalını bitir', en: 'Clear a chapter finale', ru: 'Пройди финал главы' },
+    art: '<path d="M18 3 L28 14 L22 33 H14 L8 14 Z" fill="#7FE0AE"></path><path d="M18 3 L28 14 L18 18 Z" fill="#C8FFE4"></path><path d="M18 18 L22 33 H14 Z" fill="#5CE39B"></path>' },
+  { id: 'sword', set: 'brave', name: { az: 'Bilik Qılıncı', en: 'Sword of Knowing', ru: 'Меч Знания' },
+    how: { az: 'Bir bossu məğlub et', en: 'Defeat one boss', ru: 'Победи одного босса' },
+    art: '<path d="M17 3 h2 l2 18 h-6 Z" fill="#C9BCA6"></path><rect x="9" y="21" width="18" height="4" rx="2" fill="#8A5A0A"></rect><rect x="15" y="25" width="6" height="9" rx="3" fill="#C9762F"></rect>' },
+  { id: 'flame', set: 'brave', name: { az: 'Seriya Alovu', en: 'Streak Flame', ru: 'Огонь Серии' },
+    how: { az: 'Dalbadal 3 gün oyna', en: 'Play 3 days in a row', ru: 'Играй 3 дня подряд' },
+    art: '<path d="M18 3 q10 10 10 18 a10 10 0 0 1 -20 0 q0-8 10-18 Z" fill="#FF8A4C"></path><path d="M18 15 q5 6 5 10 a5 5 0 0 1 -10 0 q0-4 5-10 Z" fill="#FFC24B"></path>' },
+  { id: 'medal', set: 'brave', name: { az: 'Qızıl Medal', en: 'Gold Medal', ru: 'Золотая Медаль' },
+    how: { az: 'Bir mərhələni səhvsiz bitir', en: 'Finish a stage with no mistakes', ru: 'Пройди этап без ошибок' },
+    art: '<path d="M12 3 L16 15 h4 L24 3 Z" fill="#45C6F0"></path><circle cx="18" cy="23" r="10" fill="#FFC24B"></circle><circle cx="18" cy="23" r="6.5" fill="#E39B1C"></circle><path d="M18 18 l1.6 3.4 3.6 0.4 -2.8 2.4 0.8 3.6 -3.2-2 -3.2 2 0.8-3.6 -2.8-2.4 3.6-0.4 Z" fill="#FFF3D6"></path>' },
+
+  /* — Səma Xəzinələri — */
+  { id: 'star', set: 'sky', name: { az: 'Parlaq Ulduz', en: 'Bright Star', ru: 'Яркая Звезда' },
+    how: { az: '500 XP topla', en: 'Collect 500 XP', ru: 'Собери 500 XP' },
+    art: '<path d="M18 3 l4 11 11.5 0.6 -9 7.4 3 11.4 -9.5-6.4 -9.5 6.4 3-11.4 -9-7.4 11.5-0.6 Z" fill="#FFC24B"></path>' },
+  { id: 'moon', set: 'sky', name: { az: 'Yuxulu Ay', en: 'Sleepy Moon', ru: 'Сонная Луна' },
+    how: { az: 'Questy dincəlməyi deyəndə fasilə ver', en: 'Take a break when Questy asks', ru: 'Сделай перерыв, когда Квести попросит' },
+    art: '<path d="M25 4 a14 14 0 1 0 7 22 a12 12 0 0 1 -7-22 Z" fill="#FFE9A8"></path><circle cx="20" cy="14" r="1.8" fill="#E39B1C"></circle><circle cx="16" cy="22" r="1.4" fill="#E39B1C"></circle>' },
+  { id: 'rainbow', set: 'sky', name: { az: 'Göy Qurşağı', en: 'Rainbow', ru: 'Радуга' },
+    how: { az: 'Bir səviyyə qaldır', en: 'Gain one level', ru: 'Поднимись на один уровень' },
+    art: '<path d="M4 28 a14 14 0 0 1 28 0" fill="none" stroke="#FF5D73" stroke-width="4"></path><path d="M8 28 a10 10 0 0 1 20 0" fill="none" stroke="#FFC24B" stroke-width="4"></path><path d="M12 28 a6 6 0 0 1 12 0" fill="none" stroke="#45C6F0" stroke-width="4"></path>' },
+  { id: 'cloud', set: 'sky', name: { az: 'Yumşaq Bulud', en: 'Soft Cloud', ru: 'Мягкое Облако' },
+    how: { az: 'Bir tapşırıq gününü tamamla', en: 'Complete one quest day', ru: 'Заверши один день квеста' },
+    art: '<path d="M10 25 a6 6 0 0 1 0.6-12 a8 8 0 0 1 15 -1 a6 6 0 0 1 1.4 13 Z" fill="#E4F6FF" stroke="#8FD8F5" stroke-width="2"></path>' },
+  { id: 'rocket', set: 'sky', name: { az: 'Kiçik Raket', en: 'Little Rocket', ru: 'Маленькая Ракета' },
+    how: { az: '5-ci səviyyəyə çat', en: 'Reach level 5', ru: 'Достигни 5 уровня' },
+    art: '<path d="M18 3 q7 8 7 17 h-14 q0-9 7-17 Z" fill="#FFF7EA" stroke="#C9BCA6" stroke-width="1.6"></path><circle cx="18" cy="13" r="3.4" fill="#45C6F0"></circle><path d="M11 20 L6 27 h5 Z M25 20 L30 27 h-5 Z" fill="#FF5D73"></path><path d="M15 21 q3 8 3 12 q0-4 3-12 Z" fill="#FF8A4C"></path>' },
+  { id: 'comet', set: 'sky', name: { az: 'Quyruqlu Ulduz', en: 'Comet', ru: 'Комета' },
+    how: { az: 'Bir gündə 3 sınaq həll et', en: 'Solve 3 challenges in one day', ru: 'Реши 3 испытания за один день' },
+    art: '<path d="M4 30 L20 14 l4 4 Z" fill="#8FD8F5"></path><circle cx="25" cy="11" r="7" fill="#FFE9A8"></circle><circle cx="25" cy="11" r="3.4" fill="#FFC24B"></circle>' },
+
+  /* — Sehrli Şeylər — */
+  { id: 'wand', set: 'magic', name: { az: 'Sehrli Çubuq', en: 'Magic Wand', ru: 'Волшебная Палочка' },
+    how: { az: 'İpucu qığılcımı qazan', en: 'Earn a hint spark', ru: 'Получи искру-подсказку' },
+    art: '<rect x="8" y="26" width="22" height="4" rx="2" transform="rotate(-40 19 28)" fill="#5B3FD6"></rect><path d="M25 4 l2.6 5.4 5.4 2.6 -5.4 2.6 -2.6 5.4 -2.6-5.4 -5.4-2.6 5.4-2.6 Z" fill="#FFE9A8"></path>' },
+  { id: 'potion', set: 'magic', name: { az: 'Fikir İksiri', en: 'Idea Potion', ru: 'Зелье Идей' },
+    how: { az: 'Bir çətin sualı asanı ilə həll et', en: 'Use an easier one to get unstuck', ru: 'Пройди трудный вопрос через лёгкий' },
+    art: '<rect x="14" y="3" width="8" height="7" rx="2" fill="#C9BCA6"></rect><path d="M14 9 h8 l5 11 a9 9 0 0 1 -18 0 Z" fill="#E4F6FF" stroke="#8FD8F5" stroke-width="1.6"></path><path d="M11 19 h14 a9 9 0 0 1 -14 0 Z" fill="#7B5CFF"></path>' },
+  { id: 'key', set: 'magic', name: { az: 'Qədim Açar', en: 'Ancient Key', ru: 'Древний Ключ' },
+    how: { az: 'Qədim Qapını aç', en: 'Open the Ancient Gate', ru: 'Открой Древние Врата' },
+    art: '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#FFC24B" stroke-width="4"></circle><path d="M17 17 L30 30 M25 26 l3-3 M21 22 l3-3" stroke="#FFC24B" stroke-width="4" stroke-linecap="round"></path>' },
+  { id: 'book', set: 'magic', name: { az: 'Söz Kitabı', en: 'Book of Words', ru: 'Книга Слов' },
+    how: { az: 'Bir hekayəni sona qədər oxu', en: 'Read one story to the end', ru: 'Прочитай одну историю до конца' },
+    art: '<path d="M5 7 q9-4 13 2 q4-6 13-2 v21 q-9-4 -13 2 q-4-6 -13-2 Z" fill="#FBE9CC" stroke="#C9762F" stroke-width="1.8"></path><path d="M18 9 V30" stroke="#C9762F" stroke-width="1.8"></path>' },
+  { id: 'lantern', set: 'magic', name: { az: 'Yol Fənəri', en: 'Path Lantern', ru: 'Фонарь Пути' },
+    how: { az: 'Yeni bir fəsil aç', en: 'Open a new chapter', ru: 'Открой новую главу' },
+    art: '<path d="M18 2 v4" stroke="#8A5A0A" stroke-width="2.2" stroke-linecap="round"></path><rect x="9" y="6" width="18" height="4" rx="2" fill="#8A5A0A"></rect><path d="M11 10 h14 v16 a7 7 0 0 1 -14 0 Z" fill="#FFE9A8" stroke="#E39B1C" stroke-width="1.8"></path><circle cx="18" cy="19" r="4" fill="#FFC24B"></circle>' },
+  { id: 'questy', set: 'magic', name: { az: 'Questy!', en: 'Questy!', ru: 'Квести!' },
+    how: { az: 'Albomun qalanını doldur', en: 'Fill the rest of the album', ru: 'Заполни остальной альбом' },
+    art: '<rect x="4" y="7" width="28" height="23" rx="7" fill="#5CE39B"></rect><path d="M11 21 q7-9 14 0" stroke="#0B3D25" stroke-width="2.8" fill="none" stroke-linecap="round"></path><circle cx="13" cy="15" r="2.2" fill="#0B3D25"></circle><circle cx="23" cy="15" r="2.2" fill="#0B3D25"></circle>' }
+];
+
+EQD.STICKER_BY_ID = {};
+EQD.STICKERS.forEach((st, i) => { st.no = i + 1; EQD.STICKER_BY_ID[st.id] = st; });
+
+/* the next sticker a child has not got yet, in album order — what a chest hands over */
+EQD.nextSticker = function (owned) {
+  const have = owned || [];
+  for (let i = 0; i < EQD.STICKERS.length; i++) {
+    if (have.indexOf(EQD.STICKERS[i].id) < 0) return EQD.STICKERS[i];
+  }
+  return null;
+};
