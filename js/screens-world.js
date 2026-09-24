@@ -43,38 +43,10 @@ EQS.screens.map = function (s) {
       <g fill="#FFFFFF" opacity="0.8"><ellipse cx="336" cy="150" rx="34" ry="15"></ellipse><ellipse cx="304" cy="146" rx="24" ry="13"></ellipse></g>
     </svg>
 
-    <div class="press" onclick="EQ.toast(TX({az:'Kosmik Stansiya 15-ci səviyyədə açılır — kəşfə davam! 🚀',en:'Space Station opens at Level 15 — keep exploring! 🚀',ru:'Космическая станция откроется на 15-м уровне — продолжай исследовать! 🚀'}))" style="position:absolute;left:244px;top:170px;width:86px;display:flex;flex-direction:column;align-items:center;gap:5px">
-      <div style="position:relative;width:66px;height:66px;border-radius:24px;background:rgba(36,26,63,0.62);box-shadow:0 0 0 2px rgba(255,255,255,0.2) inset;display:flex;align-items:center;justify-content:center">
-        <svg width="34" height="34" viewBox="0 0 34 34"><path d="M17 3 l4 8 h-8 Z" fill="#2A1F45"></path><rect x="12" y="10" width="10" height="16" rx="5" fill="#2A1F45"></rect><path d="M12 16 l-6 8 h6 Z M22 16 l6 8 h-6 Z" fill="#2A1F45"></path></svg>
-        <div style="position:absolute;right:-6px;bottom:-6px;width:26px;height:26px;border-radius:13px;background:#241A3F;box-shadow:0 0 0 2px rgba(255,255,255,0.22) inset;display:flex;align-items:center;justify-content:center">${EQC.lock('#C6B9EE', 13)}</div>
-      </div>
-      <div style="padding:3px 9px;border-radius:9px;background:rgba(36,26,63,0.78);font:800 9.5px Nunito;color:#C6B9EE;white-space:nowrap">${TX({ az: 'Kosmik Stansiya · Səv 15', en: 'Space Station · Lv 15', ru: 'Космостанция · Ур 15' })}</div>
-    </div>
-
-    <div class="press" onclick="EQ.toast(TX({az:'Sirli Qala 20-ci səviyyədə açılır — hələ uzun yol var! 🏰',en:'Mystery Castle opens at Level 20 — a long journey away! 🏰',ru:'Таинственный замок откроется на 20-м уровне — путь ещё долгий! 🏰'}))" style="position:absolute;left:54px;top:222px;width:86px;display:flex;flex-direction:column;align-items:center;gap:5px">
-      <div style="position:relative;width:68px;height:68px;border-radius:24px;background:rgba(36,26,63,0.55);box-shadow:0 0 0 2px rgba(255,255,255,0.2) inset;display:flex;align-items:center;justify-content:center">
-        <svg width="36" height="36" viewBox="0 0 36 36"><path d="M6 32 V14 h5 V9 h4 v5 h4 V9 h4 v5 h5 v18 Z" fill="#2A1F45"></path><path d="M15 24 h6 v8 h-6 Z" fill="#5B3FD6"></path></svg>
-        <div style="position:absolute;right:-6px;bottom:-6px;width:26px;height:26px;border-radius:13px;background:#241A3F;box-shadow:0 0 0 2px rgba(255,255,255,0.22) inset;display:flex;align-items:center;justify-content:center">${EQC.lock('#C6B9EE', 13)}</div>
-      </div>
-      <div style="padding:3px 9px;border-radius:9px;background:rgba(36,26,63,0.78);font:800 9.5px Nunito;color:#C6B9EE;white-space:nowrap">${TX({ az: 'Sirli Qala · Səv 20', en: 'Mystery Castle · Lv 20', ru: 'Замок Тайн · Ур 20' })}</div>
-    </div>
-
-    <div class="press" onclick="EQ.go('unlock')" style="position:absolute;left:252px;top:322px;width:88px;display:flex;flex-direction:column;align-items:center;gap:5px">
-      <div style="position:relative;width:72px;height:72px;border-radius:26px;background:rgba(255,247,234,0.28);box-shadow:0 0 0 2px rgba(255,255,255,0.5) inset;display:flex;align-items:center;justify-content:center">
-        <div style="position:absolute;inset:-8px;border-radius:32px;background:rgba(69,198,240,0.35);animation:eqPulse 2.8s ease-in-out infinite"></div>
-        <svg width="38" height="38" viewBox="0 0 36 36" style="position:relative"><path d="M14 6 h8 v7 l7 14 a3 3 0 0 1 -2.6 4.4 H9.6 A3 3 0 0 1 7 27 l7-14 Z" fill="#EAF7FF" stroke="#2A1F45" stroke-width="2"></path><path d="M10.4 22 h15.2 l3 6 a3 3 0 0 1 -2.6 4 H10 a3 3 0 0 1 -2.6-4 Z" fill="#45C6F0"></path><circle cx="15" cy="27" r="2" fill="#EAF7FF"></circle><circle cx="21" cy="29" r="1.6" fill="#EAF7FF"></circle></svg>
-        <div style="position:absolute;right:-7px;bottom:-7px;width:28px;height:28px;border-radius:14px;background:#FFC24B;box-shadow:0 3px 0 #E39B1C;display:flex;align-items:center;justify-content:center">${EQC.lock('#4A3208', 14)}</div>
-      </div>
-      <div style="padding:4px 10px;border-radius:10px;background:rgba(36,26,63,0.86);font:800 10px Nunito;color:#FFD98A;white-space:nowrap">${TX({ az: 'Elm Adası · Səv 10', en: 'Science Island · Lv 10', ru: 'Остров Науки · Ур 10' })}</div>
-    </div>
-
-    <div class="press" onclick="EQ.toast(TX({az:'Söz Vadisi bugünkü macəradan sonra açılır! 📖',en:'Word Valley opens after today’s adventure! 📖',ru:'Долина Слов откроется после сегодняшнего приключения! 📖'}))" style="position:absolute;left:74px;top:440px;width:92px;display:flex;flex-direction:column;align-items:center;gap:5px">
-      <div style="position:relative;width:74px;height:74px;border-radius:26px;background:#FFF7EA;box-shadow:0 6px 0 #E0C79A, 0 12px 20px -8px rgba(20,10,40,0.4);display:flex;align-items:center;justify-content:center">
-        <svg width="38" height="38" viewBox="0 0 36 36"><path d="M5 9 q7-3 13 2 v20 q-6-5 -13-2 Z" fill="#45C6F0"></path><path d="M31 9 q-7-3 -13 2 v20 q6-5 13-2 Z" fill="#7B5CFF"></path><path d="M18 11 v20" stroke="#2A1F45" stroke-width="1.8"></path></svg>
-        <div style="position:absolute;right:-8px;top:-8px;min-width:26px;height:26px;padding:0 6px;border-radius:13px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff">2</div>
-      </div>
-      <div style="padding:4px 10px;border-radius:10px;background:rgba(36,26,63,0.86);font:800 10px Nunito;color:#fff;white-space:nowrap">${TX({ az: 'Söz Vadisi', en: 'Word Valley', ru: 'Долина Слов' })}</div>
-    </div>
+    ${EQS.regionPin(s, 'station', 244, 170, 66)}
+    ${EQS.regionPin(s, 'castle', 54, 222, 68)}
+    ${EQS.regionPin(s, 'island', 252, 322, 72)}
+    ${EQS.regionPin(s, 'valley', 74, 440, 74)}
 
     <div class="press" onclick="EQ.go('details')" style="position:absolute;left:230px;top:520px;width:100px;display:flex;flex-direction:column;align-items:center;gap:5px">
       <div style="position:relative;width:82px;height:82px;border-radius:28px;background:#FFF7EA;box-shadow:0 7px 0 #E0C79A, 0 14px 24px -8px rgba(20,10,40,0.45);display:flex;align-items:center;justify-content:center">
@@ -132,6 +104,54 @@ EQS.screens.map = function (s) {
       <div style="width:58px;height:58px;border-radius:22px;background:#3DBE6E;box-shadow:0 5px 0 #2A9455;display:flex;align-items:center;justify-content:center;flex:none">${EQC.playIcon('#fff', 24)}</div>
     </div>
     ${EQC.nav('world')}
+  </div>`;
+};
+
+/* ── the four region pins on the map ──
+   An open region is a bright bubble with today's questions left on its badge (a tick
+   once the round is done). A closed one is dark with a lock, and says what opens it —
+   except the nearest one still closed, which pulses: it is the child's next goal, and
+   the only locked pin worth drawing the eye to. */
+EQS.regionIcon = function (r, on, size) {
+  const z = size || 36;
+  if (r === 'valley') return `<svg width="${z}" height="${z}" viewBox="0 0 36 36"><path d="M5 9 q7-3 13 2 v20 q-6-5 -13-2 Z" fill="${on ? '#45C6F0' : '#2A1F45'}"></path><path d="M31 9 q-7-3 -13 2 v20 q6-5 13-2 Z" fill="${on ? '#7B5CFF' : '#2A1F45'}"></path><path d="M18 11 v20" stroke="${on ? '#2A1F45' : '#5B4A8E'}" stroke-width="1.8"></path></svg>`;
+  if (r === 'island') return `<svg width="${z}" height="${z}" viewBox="0 0 36 36"><path d="M14 6 h8 v7 l7 14 a3 3 0 0 1 -2.6 4.4 H9.6 A3 3 0 0 1 7 27 l7-14 Z" fill="#EAF7FF" stroke="#2A1F45" stroke-width="2"></path><path d="M10.4 22 h15.2 l3 6 a3 3 0 0 1 -2.6 4 H10 a3 3 0 0 1 -2.6-4 Z" fill="#45C6F0"></path><circle cx="15" cy="27" r="2" fill="#EAF7FF"></circle><circle cx="21" cy="29" r="1.6" fill="#EAF7FF"></circle></svg>`;
+  if (r === 'station') return on
+    ? `<svg width="${z}" height="${z}" viewBox="0 0 34 34"><path d="M17 3 l4 8 h-8 Z" fill="#FF5D73"></path><rect x="12" y="10" width="10" height="16" rx="5" fill="#EAF7FF" stroke="#2A1F45" stroke-width="1.6"></rect><circle cx="17" cy="17" r="2.6" fill="#45C6F0"></circle><path d="M12 16 l-6 8 h6 Z M22 16 l6 8 h-6 Z" fill="#7B5CFF"></path><path d="M14 27 l3 5 3-5 Z" fill="#FFC24B"></path></svg>`
+    : `<svg width="${z}" height="${z}" viewBox="0 0 34 34"><path d="M17 3 l4 8 h-8 Z" fill="#2A1F45"></path><rect x="12" y="10" width="10" height="16" rx="5" fill="#2A1F45"></rect><path d="M12 16 l-6 8 h6 Z M22 16 l6 8 h-6 Z" fill="#2A1F45"></path></svg>`;
+  return `<svg width="${z}" height="${z}" viewBox="0 0 36 36"><path d="M6 32 V14 h5 V9 h4 v5 h4 V9 h4 v5 h5 v18 Z" fill="${on ? '#7B5CFF' : '#2A1F45'}"></path><path d="M15 24 h6 v8 h-6 Z" fill="${on ? '#FFC24B' : '#5B3FD6'}"></path></svg>`;
+};
+
+EQS.regionPin = function (s, r, x, y, box) {
+  const R = EQD.REGIONS[r];
+  const open = EQ.regionOpen(r);
+  const name = TX(R.name);
+  const w = box + 20;
+  if (open) {
+    const t = EQ.regionPeek(r);
+    const left = Math.max(0, EQD.REGION_LEN - t.n);
+    const badge = left > 0
+      ? `<div style="position:absolute;right:-8px;top:-8px;min-width:26px;height:26px;padding:0 6px;border-radius:13px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff">${left}</div>`
+      : `<div style="position:absolute;right:-8px;top:-8px;width:26px;height:26px;border-radius:13px;background:#3DBE6E;box-shadow:0 3px 0 #2A9455;display:flex;align-items:center;justify-content:center">${EQC.check('#fff', 13, 3.6)}</div>`;
+    return `<div class="press" onclick="EQ.openRegion('${r}')" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;display:flex;flex-direction:column;align-items:center;gap:5px">
+      <div style="position:relative;width:${box}px;height:${box}px;border-radius:26px;background:#FFF7EA;box-shadow:0 6px 0 #E0C79A, 0 12px 20px -8px rgba(20,10,40,0.4);display:flex;align-items:center;justify-content:center">
+        ${left > 0 ? `<div style="position:absolute;inset:-8px;border-radius:32px;background:${R.accent};opacity:0.3;animation:eqPulse 2.8s ease-in-out infinite"></div>` : ''}
+        <div style="position:relative;display:flex">${EQS.regionIcon(r, true, 38)}</div>
+        ${badge}
+      </div>
+      <div style="padding:4px 10px;border-radius:10px;background:rgba(36,26,63,0.86);font:800 10px Nunito;color:#fff;white-space:nowrap">${name}</div>
+    </div>`;
+  }
+  /* the next region the child will reach is the one goal the map points at */
+  const next = EQD.REGION_ORDER.filter(k => !EQ.regionOpen(k))[0] === r;
+  const tail = R.trophy ? '' : ` · ${TX({ az: 'Səv', en: 'Lv', ru: 'Ур' })} ${R.level}`;
+  return `<div class="press" onclick="EQ.openRegion('${r}')" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;display:flex;flex-direction:column;align-items:center;gap:5px">
+    <div style="position:relative;width:${box}px;height:${box}px;border-radius:24px;background:${next ? 'rgba(255,247,234,0.28)' : 'rgba(36,26,63,0.58)'};box-shadow:0 0 0 2px rgba(255,255,255,${next ? 0.5 : 0.2}) inset;display:flex;align-items:center;justify-content:center">
+      ${next ? `<div style="position:absolute;inset:-8px;border-radius:32px;background:rgba(69,198,240,0.35);animation:eqPulse 2.8s ease-in-out infinite"></div>` : ''}
+      <div style="position:relative;display:flex">${EQS.regionIcon(r, next, 36)}</div>
+      <div style="position:absolute;right:-7px;bottom:-7px;width:28px;height:28px;border-radius:14px;background:${next ? '#FFC24B' : '#241A3F'};box-shadow:${next ? '0 3px 0 #E39B1C' : '0 0 0 2px rgba(255,255,255,0.22) inset'};display:flex;align-items:center;justify-content:center">${EQC.lock(next ? '#4A3208' : '#C6B9EE', 14)}</div>
+    </div>
+    <div style="padding:3px 9px;border-radius:9px;background:rgba(36,26,63,${next ? 0.86 : 0.78});font:800 ${next ? 10 : 9.5}px Nunito;color:${next ? '#FFD98A' : '#C6B9EE'};white-space:nowrap">${name}${tail}</div>
   </div>`;
 };
 
@@ -342,6 +362,86 @@ EQS.screens.mission = function (s) {
   </div>`;
 };
 
+/* 06c · A region round —
+   the inside of an open region: which of its topics there are and how the child is
+   doing in each, today's five questions, and the button that plays the next one. When
+   the round is done it says so, pays nothing more for replaying, and offers another. */
+EQS.meta.region = { light: false };
+EQS.screens.region = function (s) {
+  const r = EQ.regionCur();
+  if (!r) return EQS.screens.map(s);
+  const R = EQD.REGIONS[r];
+  const e = EQ.region(r);
+  const done = e.n >= EQD.REGION_LEN;
+  const subj = EQT.SUBJECTS[R.subj];
+  const m = EQT.mastery();
+  const pct = Math.round(e.n / EQD.REGION_LEN * 100);
+  const pips = [];
+  for (let i = 0; i < EQD.REGION_LEN; i++) pips.push(`<div style="flex:1;height:10px;border-radius:5px;background:${i < e.n ? '#5CE39B' : 'rgba(255,255,255,0.18)'}"></div>`);
+  /* three dots per topic: none yet, then one to three as it settles */
+  const dots = k => {
+    const sc = m[k] && m[k].score;
+    const n = sc == null ? 0 : sc >= EQT.SOLID_AT ? 3 : sc > EQT.WEAK_AT ? 2 : 1;
+    return [0, 1, 2].map(i => `<div style="width:7px;height:7px;border-radius:4px;background:${i < n ? '#FFC24B' : 'rgba(255,255,255,0.22)'}"></div>`).join('');
+  };
+  const topics = R.topics.map(k => `<div style="border-radius:16px;background:rgba(255,255,255,0.08);padding:10px 12px;display:flex;align-items:center;gap:8px">
+      <div style="flex:1;min-width:0;font:800 12.5px Nunito;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${TX(EQT.TOPICS[k].name)}</div>
+      <div style="display:flex;gap:3px;flex:none">${dots(k)}</div>
+    </div>`).join('');
+  const round = TX({ az: `RAUND ${e.round + 1}`, en: `ROUND ${e.round + 1}`, ru: `РАУНД ${e.round + 1}` });
+  const say = done
+    ? (e.round === 0
+      ? TX({ az: `Bu günün raundu bitdi — +${EQD.REGION_BONUS} sikkə bonus səninlədir! İstəsən, bir raund da oynaya bilərik.`, en: `Today’s round is done — the +${EQD.REGION_BONUS} coin bonus is yours! We can play another round if you like.`, ru: `Раунд на сегодня пройден — бонус +${EQD.REGION_BONUS} монет твой! Если хочешь, сыграем ещё раунд.` })
+      : TX({ az: 'Daha bir raund bitdi! Hər yeni raund yeni suallardır.', en: 'Another round done! Every new round is new questions.', ru: 'Ещё один раунд пройден! Каждый новый раунд — новые вопросы.' }))
+    : e.n > 0
+      ? TX({ az: `Qaldığın yerdən davam edirik — ${EQD.REGION_LEN - e.n} sual qalıb.`, en: `We pick up where you left off — ${EQD.REGION_LEN - e.n} question${EQD.REGION_LEN - e.n === 1 ? '' : 's'} to go.`, ru: `Продолжаем с того места, где остановились — осталось ${EQD.REGION_LEN - e.n} ${RUP(EQD.REGION_LEN - e.n, 'вопрос', 'вопроса', 'вопросов')}.` })
+      : TX(R.hello);
+  const bonus = e.paid
+    ? `<div style="font:800 15px 'Baloo 2';color:#8FE0B6">${EQC.check('#8FE0B6', 14, 3.6)}</div><div><div style="font:800 13px 'Baloo 2';color:#fff">${TX({ az: 'Bonus', en: 'Bonus', ru: 'Бонус' })}</div><div style="font:700 9px Nunito;color:${R.soft};letter-spacing:0.6px">${TX({ az: 'BU GÜN ALINDI', en: 'TAKEN TODAY', ru: 'ПОЛУЧЕН СЕГОДНЯ' })}</div></div>`
+    : `${EQC.coin(20)}<div><div style="font:800 15px 'Baloo 2';color:#fff">+${EQD.REGION_BONUS}</div><div style="font:700 9px Nunito;color:${R.soft};letter-spacing:0.6px">${TX({ az: 'RAUNDUN SONUNDA', en: 'AT ROUND END', ru: 'В КОНЦЕ РАУНДА' })}</div></div>`;
+  const cta = done
+    ? `<div style="position:absolute;bottom:52px;left:20px;right:20px;display:flex;flex-direction:column;gap:10px">
+        <div class="press rise" onclick="EQ.regionAgain()" style="height:66px;border-radius:24px;background:${R.accent};box-shadow:0 6px 0 rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;gap:10px;font:800 20px 'Baloo 2', system-ui;color:${R.ink}">${TX({ az: 'Bir raund da', en: 'Play another round', ru: 'Ещё раунд' })}${EQC.arrowR(R.ink, 20)}</div>
+        <div class="press" onclick="EQ.leaveRegion()" style="height:54px;border-radius:20px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font:800 16px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Xəritəyə qayıt', en: 'Back to the map', ru: 'Назад к карте' })}</div>
+      </div>`
+    : `<div class="press rise" onclick="EQ.startRegionQuestion()" style="position:absolute;bottom:52px;left:20px;right:20px;height:70px;border-radius:24px;background:${R.accent};box-shadow:0 6px 0 rgba(0,0,0,0.28), 0 16px 26px -12px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;gap:10px;font:800 21px 'Baloo 2', system-ui;color:${R.ink}">${e.n > 0 ? TX({ az: 'Davam et', en: 'Keep going', ru: 'Продолжить' }) : TX({ az: 'Başla', en: 'Start', ru: 'Начать' })}${EQC.arrowR(R.ink, 20)}</div>`;
+
+  return `<div class="scr" style="background:${R.dark}">
+    <div style="position:absolute;top:0;left:0;right:0;height:320px;overflow:hidden">
+      <div style="position:absolute;width:340px;height:340px;border-radius:50%;background:${R.accent};opacity:0.28;left:-60px;top:-110px"></div>
+      <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:${R.accent};opacity:0.14;right:-40px;top:50px"></div>
+      <div style="position:absolute;right:26px;top:118px;opacity:0.9">${EQS.regionIcon(r, true, 64)}</div>
+    </div>
+    <div style="position:absolute;top:62px;left:20px;right:20px;display:flex;align-items:center;gap:12px">
+      <div class="press" onclick="EQ.leaveRegion()" style="width:42px;height:42px;border-radius:15px;background:rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#fff', 19)}</div>
+      <div><div style="font:700 10px Nunito;color:${R.soft};letter-spacing:1.6px">${UPC(TX(subj.name))} · ${round}</div><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;line-height:1.2">${TX(R.name)}</div></div>
+    </div>
+
+    <div style="position:absolute;top:196px;left:20px;right:20px;display:flex;gap:14px;align-items:flex-end">
+      ${EQC.questy(done ? 'celebrating' : 'excited', 'width:88px;flex:none', s.questyFur, s.questyFurDark)}
+      <div style="flex:1;background:rgba(255,255,255,0.10);border-radius:24px;border-bottom-left-radius:8px;padding:14px 16px">
+        <div style="font:700 13.5px Nunito;color:#fff;line-height:1.55">${say}</div>
+      </div>
+    </div>
+
+    <div style="position:absolute;top:338px;left:20px;right:20px;border-radius:26px;background:rgba(255,255,255,0.08);padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <span style="font:800 11px Nunito;color:#fff">${TX({ az: `${e.n} / ${EQD.REGION_LEN} sual`, en: `${e.n} / ${EQD.REGION_LEN} questions`, ru: `${e.n} / ${EQD.REGION_LEN} вопросов` })}</span>
+        <span style="font:700 11px Nunito;color:${R.soft}">${pct}%</span>
+      </div>
+      <div style="display:flex;gap:5px">${pips.join('')}</div>
+      <div style="font:700 10px Nunito;color:${R.soft};letter-spacing:1.2px;margin:16px 0 8px">${TX({ az: 'MÖVZULAR', en: 'TOPICS', ru: 'ТЕМЫ' })}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${topics}</div>
+    </div>
+
+    <div style="position:absolute;top:${R.topics.length > 3 ? 580 : 540}px;left:20px;right:20px;display:flex;gap:12px">
+      <div style="flex:1;height:60px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2.6 l2.6 6.4 6.8 0.6 -5.2 4.6 1.6 6.8 -5.8-3.6 -5.8 3.6 1.6-6.8 -5.2-4.6 6.8-0.6 Z" fill="#5CE39B"></path></svg><div><div style="font:800 15px 'Baloo 2';color:#fff">+25</div><div style="font:700 9px Nunito;color:${R.soft};letter-spacing:0.6px">${TX({ az: 'HƏR SUAL', en: 'EACH', ru: 'ЗА ВОПРОС' })}</div></div></div>
+      <div style="flex:1;height:60px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;gap:8px">${bonus}</div>
+    </div>
+    ${cta}
+  </div>`;
+};
+
 /* 07 · Quest details / story */
 EQS.meta.details = { light: true };
 EQS.screens.details = function (s) {
@@ -451,42 +551,55 @@ EQS.screens.story = function (s) {
   </div>`;
 };
 
-/* 19 · World unlock (Science Island) */
+/* 19 · World unlock — any region still closed (Science Island is the one the design drew).
+   Tapping a closed pin on the map lands here: what the region is, what is inside it, and
+   exactly what opens it. Once it is open, the same button walks straight in. */
 EQS.meta.unlock = { light: true };
 EQS.screens.unlock = function (s) {
-  const ready = s.level >= 10;
+  const r = EQD.REGIONS[EQ.session.unlockRegion] ? EQ.session.unlockRegion : 'island';
+  const R = EQD.REGIONS[r];
+  const ready = EQ.regionOpen(r);
+  const name = TX(R.name);
+  const lvl = R.level;
   const ctaText = ready
-    ? TX({ az: 'Adaya üz', en: 'Sail to the island', ru: 'Плыви к острову' })
-    : TX({ az: `Səviyyə 10-da açılır — sən hələ Səviyyə ${s.level}`, en: `Opens at Level 10 — you're Level ${s.level}`, ru: `Откроется на 10-м уровне — у тебя ${s.level}-й` });
+    ? TX(R.go)
+    : R.trophy
+      ? TX({ az: 'İlk bossu məğlub et', en: 'Beat your first boss', ru: 'Победи первого босса' })
+      : TX({ az: `Səviyyə ${lvl}-da açılır — sən hələ Səviyyə ${s.level}`, en: `Opens at Level ${lvl} — you're Level ${s.level}`, ru: `Откроется на ${lvl}-м уровне — у тебя ${s.level}-й` });
   const chirp = ready
-    ? TX({ az: 'Səviyyə 10-a çatdın — bərə hazır olanda yola düşürük.', en: 'You reached Level 10 — the ferry is ready when you are.', ru: 'Ты на 10-м уровне — паром готов, когда будешь готов ты.' })
-    : TX({ az: 'Səviyyə 10-a çat, bərə dalımızca gələcək. Az qalıb!', en: `Reach Level 10 and the ferry will come for us. You're close!`, ru: 'Дойди до 10-го уровня — и паром приплывёт за нами. Уже близко!' });
-  return `<div class="scr" style="background:#0E2A38">
-    <div style="position:absolute;inset:0;background:radial-gradient(320px 300px at 50% 30%, rgba(69,198,240,0.45), rgba(14,42,56,0) 72%)"></div>
+    ? TX({ az: `${name} açıqdır — hazır olanda yola düşürük!`, en: `${name} is open — off we go whenever you're ready!`, ru: `${name}: путь открыт — отправляемся, когда будешь готов!` })
+    : R.trophy
+      ? TX(R.lock)
+      : TX({ az: `Səviyyə ${lvl}-a çat, yol açılacaq. Hər sınaq XP qazandırır!`, en: `Reach Level ${lvl} and the way opens. Every challenge earns XP!`, ru: `Дойди до ${lvl}-го уровня — и путь откроется. Каждое испытание даёт XP!` });
+  const notYet = R.trophy
+    ? `EQ.toast(TX({az:'Bilik Meşəsində 5 sınağı həll et və bossu məğlub et!',en:'Solve the 5 challenges in Knowledge Forest and beat the boss!',ru:'Реши 5 испытаний в Лесу Знаний и победи босса!'}))`
+    : `EQ.toast(TX({az:'Davam et — hər sınaq Səviyyə ${lvl}-a doğru XP qazandırır!',en:'Keep questing — every challenge earns XP toward Level ${lvl}!',ru:'Продолжай — каждое испытание даёт XP на пути к ${lvl}-му уровню!'}))`;
+  return `<div class="scr" style="background:${R.dark}">
+    <div style="position:absolute;inset:0;background:radial-gradient(320px 300px at 50% 30%, ${R.accent}73, rgba(0,0,0,0) 72%)"></div>
     <div class="press" onclick="EQ.go('map')" style="position:absolute;top:62px;left:16px;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;z-index:5">${EQC.xIcon('#fff', 17)}</div>
     <div style="position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center">
       <div style="position:relative;width:250px;height:290px">
-        <div style="position:absolute;inset:0;border-radius:125px 125px 30px 30px;background:radial-gradient(circle at 50% 44%, rgba(255,255,255,0.9), rgba(69,198,240,0.7) 42%, rgba(14,42,56,0) 76%)"></div>
+        <div style="position:absolute;inset:0;border-radius:125px 125px 30px 30px;background:radial-gradient(circle at 50% 44%, rgba(255,255,255,0.9), ${R.accent}B3 42%, rgba(0,0,0,0) 76%)"></div>
         <svg width="250" height="290" viewBox="0 0 250 290" style="position:absolute;inset:0"><path d="M125 40 a86 86 0 0 1 86 86 v150 h-172 V126 a86 86 0 0 1 86-86 Z" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="6"></path><path d="M125 66 a62 62 0 0 1 62 62 v148 h-124 V128 a62 62 0 0 1 62-62 Z" fill="rgba(255,255,255,0.14)"></path></svg>
-        <div class="float" style="position:absolute;left:50%;top:120px;transform:translateX(-50%)"><svg width="96" height="96" viewBox="0 0 36 36"><path d="M14 6 h8 v7 l7 14 a3 3 0 0 1 -2.6 4.4 H9.6 A3 3 0 0 1 7 27 l7-14 Z" fill="#EAF7FF"></path><path d="M10.4 22 h15.2 l3 6 a3 3 0 0 1 -2.6 4 H10 a3 3 0 0 1 -2.6-4 Z" fill="#45C6F0"></path><circle cx="15" cy="27" r="2" fill="#EAF7FF"></circle><circle cx="21" cy="29" r="1.6" fill="#EAF7FF"></circle></svg></div>
+        <div style="position:absolute;left:0;right:0;top:120px;display:flex;justify-content:center"><div class="float">${EQS.regionIcon(r, true, 96)}</div></div>
       </div>
     </div>
     <div style="position:absolute;top:70px;left:0;right:0;text-align:center">
-      <div style="font:800 13px Nunito;color:#8FDCF7;letter-spacing:3px">${ready ? TX({ az: 'YENİ DÜNYA AÇILIR', en: 'A NEW WORLD OPENS', ru: 'ОТКРЫВАЕТСЯ НОВЫЙ МИР' }) : TX({ az: 'ZƏHMƏTƏ DƏYƏN DÜNYA', en: 'A WORLD WORTH THE CLIMB', ru: 'МИР, РАДИ КОТОРОГО СТОИТ РАСТИ' })}</div>
+      <div style="font:800 13px Nunito;color:${R.soft};letter-spacing:3px">${ready ? TX({ az: 'YENİ DÜNYA AÇILIR', en: 'A NEW WORLD OPENS', ru: 'ОТКРЫВАЕТСЯ НОВЫЙ МИР' }) : TX({ az: 'ZƏHMƏTƏ DƏYƏN DÜNYA', en: 'A WORLD WORTH THE CLIMB', ru: 'МИР, РАДИ КОТОРОГО СТОИТ РАСТИ' })}</div>
     </div>
     <div style="position:absolute;top:474px;left:20px;right:20px;text-align:center">
-      <div style="font:800 40px 'Baloo 2', system-ui;color:#fff;line-height:1.1">${TX({ az: 'Elm Adası', en: 'Science Island', ru: 'Остров Науки' })}</div>
-      <div style="font:700 15px Nunito;color:#A5DCF0;margin-top:10px;line-height:1.55">${TX({ az: 'Qaynayan iksirlər, maraqlı heyvanlar və yalnız sən tapanda işləyən maşınlar.', en: 'Bubbling potions, curious animals and machines that only work when you figure them out.', ru: 'Бурлящие зелья, любопытные звери и машины, которые работают, только когда ты их разгадаешь.' })}</div>
+      <div style="font:800 40px 'Baloo 2', system-ui;color:#fff;line-height:1.1">${name}</div>
+      <div style="font:700 15px Nunito;color:${R.soft};margin-top:10px;line-height:1.55">${TX(R.blurb)}</div>
     </div>
     <div style="position:absolute;top:592px;left:20px;right:20px;display:flex;gap:10px">
-      <div style="flex:1;border-radius:20px;background:rgba(255,255,255,0.10);padding:14px 10px;text-align:center"><div style="font:800 16px 'Baloo 2';color:#fff">12</div><div style="font:700 10px Nunito;color:#8FDCF7;letter-spacing:0.8px">${TX({ az: 'TAPŞIRIQ', en: 'QUESTS', ru: 'ЗАДАНИЙ' })}</div></div>
-      <div style="flex:1;border-radius:20px;background:rgba(255,255,255,0.10);padding:14px 10px;text-align:center"><div style="font:800 16px 'Baloo 2';color:#fff">${TX({ az: 'Elm', en: 'Science', ru: 'Наука' })}</div><div style="font:700 10px Nunito;color:#8FDCF7;letter-spacing:0.8px">${TX({ az: '+ MƏNTİQ', en: '+ LOGIC', ru: '+ ЛОГИКА' })}</div></div>
-      <div style="flex:1;border-radius:20px;background:rgba(255,255,255,0.10);padding:14px 10px;text-align:center"><div style="font:800 16px 'Baloo 2';color:#fff">1</div><div style="font:700 10px Nunito;color:#8FDCF7;letter-spacing:0.8px">${TX({ az: 'YENİ BOSS', en: 'NEW BOSS', ru: 'НОВЫЙ БОСС' })}</div></div>
+      <div style="flex:1;border-radius:20px;background:rgba(255,255,255,0.10);padding:14px 10px;text-align:center"><div style="font:800 16px 'Baloo 2';color:#fff">${R.topics.length}</div><div style="font:700 10px Nunito;color:${R.soft};letter-spacing:0.8px">${TX({ az: 'MÖVZU', en: 'TOPICS', ru: 'ТЕМЫ' })}</div></div>
+      <div style="flex:1;border-radius:20px;background:rgba(255,255,255,0.10);padding:14px 10px;text-align:center"><div style="font:800 16px 'Baloo 2';color:#fff">${TX(EQT.SUBJECTS[R.subj].name)}</div><div style="font:700 10px Nunito;color:${R.soft};letter-spacing:0.8px">${TX({ az: 'FƏNN', en: 'SUBJECT', ru: 'ПРЕДМЕТ' })}</div></div>
+      <div style="flex:1;border-radius:20px;background:rgba(255,255,255,0.10);padding:14px 10px;text-align:center"><div style="font:800 16px 'Baloo 2';color:#fff">${EQD.REGION_LEN}</div><div style="font:700 10px Nunito;color:${R.soft};letter-spacing:0.8px">${TX({ az: 'SUAL · RAUND', en: 'PER ROUND', ru: 'В РАУНДЕ' })}</div></div>
     </div>
-    <div style="position:absolute;bottom:146px;left:20px;right:20px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.08);border-radius:22px;padding:12px 16px">
+    <div style="position:absolute;bottom:130px;left:20px;right:20px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.08);border-radius:22px;padding:10px 16px">
       <div style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;flex:none">${EQC.questy('excited', 'width:40px', s.questyFur, s.questyFurDark)}</div>
-      <div style="font:700 13.5px Nunito;color:#CFEFFA;line-height:1.5">${chirp}</div>
+      <div style="font:700 13px Nunito;color:#fff;line-height:1.45">${chirp}</div>
     </div>
-    <div class="press" onclick="${ready ? `EQ.toast(TX({az:'Bərə növbəti fəsildə yola düşür! ⛵',en:'The ferry sets sail in the next chapter! ⛵',ru:'Паром отплывает в следующей главе! ⛵'}))` : `EQ.toast(TX({az:'Davam et — hər sınaq Səviyyə 10-a doğru XP qazandırır!',en:'Keep questing — every challenge earns XP toward Level 10!',ru:'Продолжай — каждое испытание даёт XP на пути к 10-му уровню!'}))`}" style="position:absolute;bottom:44px;left:20px;right:20px;height:70px;border-radius:24px;background:${ready ? '#45C6F0' : 'rgba(69,198,240,0.5)'};box-shadow:0 6px 0 #2196C9, 0 16px 26px -12px rgba(33,150,201,0.6);display:flex;align-items:center;justify-content:center;gap:10px;font:800 ${ready ? 23 : 18}px 'Baloo 2', system-ui;color:#06303F">${ctaText}${EQC.arrowR('#06303F', 20)}</div>
+    <div class="press" onclick="${ready ? `EQ.openRegion('${r}')` : notYet}" style="position:absolute;bottom:44px;left:20px;right:20px;height:70px;border-radius:24px;background:${R.accent};opacity:${ready ? 1 : 0.6};box-shadow:0 6px 0 rgba(0,0,0,0.3), 0 16px 26px -12px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;gap:10px;font:800 ${ready ? 23 : 17}px 'Baloo 2', system-ui;color:${R.ink}">${ctaText}${EQC.arrowR(R.ink, 20)}</div>
   </div>`;
 };

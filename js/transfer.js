@@ -17,7 +17,11 @@ const EQX = {
   HAT: ['none', 'explorer', 'wizard', 'crown'],
   LANGS: ['az', 'en', 'ru'],
   SUBJ: ['math', 'logic', 'reading', 'science'],
-  TOPIC: ['add', 'pattern', 'groups', 'take', 'double'],
+  /* append-only: a topic's position is its number inside a code, so a new topic goes on
+     the end and an old code still reads — the region topics came after the first five */
+  TOPIC: ['add', 'pattern', 'groups', 'take', 'double',
+    'letter', 'word', 'missing', 'build', 'animals', 'body', 'nature', 'matter',
+    'planets', 'sky', 'astro', 'odd', 'riddle', 'seq'],
 
   /* ── small helpers ── */
   b(n) { return Math.max(0, Math.round(Number(n) || 0)).toString(36); },
@@ -253,6 +257,8 @@ const EQX = {
       : [];
     out.careTotal = Math.max(out.careGiven.length, int(r.careTotal, 0, 9e6, 0));
     out.questDay = int(r.questDay, 0, 99999, 0);
+    /* region rounds and lifetime counts (a file carries them; a code does not) */
+    out.regions = EQ.cleanRegions(r.regions);
     ['onboarded', 'bossBeaten', 'chestReady', 'chestOpened', 'wizardHatOwned', 'crownOwned', 'trophyPlaced', 'pendingLevelUp']
       .forEach(k => { out[k] = !!r[k]; });
 

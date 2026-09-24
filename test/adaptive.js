@@ -66,7 +66,7 @@ sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 
-const FILES = ['i18n.js', 'components.js', 'data.js', 'tracking.js', 'profiles.js', 'qr.js',
+const FILES = ['i18n.js', 'components.js', 'data.js', 'regions.js', 'tracking.js', 'profiles.js', 'qr.js',
   'transfer.js', 'interact.js', 'screens-onboarding.js', 'screens-world.js', 'screens-play.js',
   'screens-collect.js', 'parent.js', 'app.js'];
 for (const f of FILES) vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox, { filename: f });
@@ -74,7 +74,9 @@ vm.runInContext('this.EQ = EQ; this.EQD = EQD; this.EQS = EQS; this.EQT = EQT; t
 const { EQ, EQD, EQT, EQX, EQ_DEFAULTS, EQI } = sandbox;
 
 const realGo = EQ.go;
-const TOPICS = Object.keys(EQT.TOPICS);
+/* the daily set plans over the forest's topics only; the regions (js/regions.js) plan
+   their own rounds from their own topics, so they are not part of "every topic" here */
+const TOPICS = EQT.topicsIn('forest');
 
 const fresh = () => {
   EQ.s = JSON.parse(JSON.stringify(EQ_DEFAULTS));

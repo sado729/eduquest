@@ -203,8 +203,9 @@ EQI_FMT.pair = {
   },
 
   render(q, st) {
+    /* a cell may be a number, a picture or a word in three languages (reading pairs) */
     const col = (side, items) => items.map((it, i) =>
-      `<div class="eqi-p" id="eqi-${side}${i}" data-side="${side}" data-i="${i}" style="height:52px;border-radius:16px;background:#fff;box-shadow:0 4px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2';color:#2A1F45">${it}</div>`
+      `<div class="eqi-p" id="eqi-${side}${i}" data-side="${side}" data-i="${i}" style="height:52px;border-radius:16px;background:#fff;box-shadow:0 4px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2';color:#2A1F45">${TX(it)}</div>`
     ).join('');
     return `<div style="margin-top:14px">
       <div style="font:700 12px Nunito;color:#A08A5E;margin-bottom:10px">${TX(q.pair.label)}</div>
@@ -285,8 +286,10 @@ EQI_FMT.pair = {
    a nearly-right answer is genuinely common (two tiles swapped), so the hint for these
    questions talks about the comparison, not the arithmetic. */
 EQI_FMT.order = {
+  /* tiles may be numbers or, for building a word, letters that differ per language —
+     so both rows are resolved for the language on screen */
   init(q) {
-    return { cur: q.order.shown.slice(), sel: -1 };
+    return { cur: TX(q.order.shown).slice(), sel: -1 };
   },
 
   render(q, st) {
@@ -333,7 +336,7 @@ EQI_FMT.order = {
     const done = EQIX.el('done');
     if (done) done.onclick = () => {
       if (EQIX.done) return;
-      const want = q.order.sorted;
+      const want = TX(q.order.sorted);
       const ok = st.cur.length === want.length && st.cur.every((v, i) => v === want[i]);
       EQIX.commit(q, ok, () => {
         const ts = row.querySelectorAll('.eqi-t');
@@ -347,5 +350,5 @@ EQI_FMT.order = {
     };
   },
 
-  solve(q) { return q.order.sorted; }
+  solve(q) { return TX(q.order.sorted); }
 };

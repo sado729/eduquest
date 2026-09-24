@@ -17,7 +17,23 @@ const EQT = {
     pattern: { subj: 'logic', name: { az: 'Naxışlar', en: 'Patterns', ru: 'Узоры' } },
     groups:  { subj: 'math',  name: { az: 'Qruplarla sayma', en: 'Groups of', ru: 'Счёт группами' } },
     take:    { subj: 'math',  name: { az: 'Çıxma', en: 'Taking away', ru: 'Вычитание' } },
-    double:  { subj: 'math',  name: { az: 'Qoşalar', en: 'Doubles', ru: 'Двойные' } }
+    double:  { subj: 'math',  name: { az: 'Qoşalar', en: 'Doubles', ru: 'Двойные' } },
+    /* the regions beyond the forest (js/regions.js) — `region` keeps them out of the
+       forest's daily plan and off the grown-up's suggestions until the child is there */
+    letter:  { subj: 'reading', region: 'valley', name: { az: 'İlk hərf', en: 'First letters', ru: 'Первая буква' } },
+    word:    { subj: 'reading', region: 'valley', name: { az: 'Sözü oxumaq', en: 'Reading words', ru: 'Чтение слов' } },
+    missing: { subj: 'reading', region: 'valley', name: { az: 'Əskik hərf', en: 'Missing letters', ru: 'Пропущенная буква' } },
+    build:   { subj: 'reading', region: 'valley', name: { az: 'Söz qurmaq', en: 'Building words', ru: 'Составление слов' } },
+    animals: { subj: 'science', region: 'island', name: { az: 'Heyvanlar', en: 'Animals', ru: 'Животные' } },
+    body:    { subj: 'science', region: 'island', name: { az: 'Bədən və hisslər', en: 'Body and senses', ru: 'Тело и чувства' } },
+    nature:  { subj: 'science', region: 'island', name: { az: 'Təbiət və fəsillər', en: 'Nature and seasons', ru: 'Природа и времена года' } },
+    matter:  { subj: 'science', region: 'island', name: { az: 'Maddələr', en: 'Materials', ru: 'Вещества' } },
+    planets: { subj: 'science', region: 'station', name: { az: 'Planetlər', en: 'Planets', ru: 'Планеты' } },
+    sky:     { subj: 'science', region: 'station', name: { az: 'Gündüz və gecə', en: 'Day and night', ru: 'День и ночь' } },
+    astro:   { subj: 'science', region: 'station', name: { az: 'Kosmonavtlar', en: 'Astronauts', ru: 'Космонавты' } },
+    odd:     { subj: 'logic', region: 'castle', name: { az: 'Artığı tap', en: 'Odd one out', ru: 'Найди лишнее' } },
+    riddle:  { subj: 'logic', region: 'castle', name: { az: 'Tapmacalar', en: 'Riddles', ru: 'Загадки' } },
+    seq:     { subj: 'logic', region: 'castle', name: { az: 'Şəkil naxışları', en: 'Picture patterns', ru: 'Узоры из картинок' } }
   },
 
   /* one generated practice mission per topic (parent approves it on screen 26) */
@@ -41,11 +57,69 @@ const EQT = {
     double: {
       name: { az: 'Əkiz Fənərləri yandır', en: 'Light the Twin Lanterns', ru: 'Зажги Парные Фонари' },
       detail: { az: 'Hər fənərin qoşasını tap · 8 sınaq', en: 'Find the double of every lantern · 8 challenges', ru: 'Найди двойник каждого фонаря · 8 испытаний' }
+    },
+    letter: {
+      name: { az: 'Hərf Bulağını oyat', en: 'Wake the Letter Spring', ru: 'Разбуди Буквенный Родник' },
+      detail: { az: 'Şəkillərin ilk hərfini tap · 8 sınaq', en: 'Find the first letter of each picture · 8 challenges', ru: 'Найди первую букву каждой картинки · 8 испытаний' }
+    },
+    word: {
+      name: { az: 'Söz Kartlarını oxu', en: 'Read the Word Cards', ru: 'Прочитай Карточки со Словами' },
+      detail: { az: 'Sözü oxu və şəklini tap · 8 sınaq', en: 'Read each word and find its picture · 8 challenges', ru: 'Прочитай слово и найди картинку · 8 испытаний' }
+    },
+    missing: {
+      name: { az: 'İtmiş Hərfləri qaytar', en: 'Bring Back the Lost Letters', ru: 'Верни Потерянные Буквы' },
+      detail: { az: 'Sözlərdəki boşluqları doldur · 8 sınaq', en: 'Fill the gaps in the words · 8 challenges', ru: 'Заполни пропуски в словах · 8 испытаний' }
+    },
+    build: {
+      name: { az: 'Söz Körpüsünü qur', en: 'Build the Word Bridge', ru: 'Построй Мост из Слов' },
+      detail: { az: 'Dağılmış hərflərdən söz düz · 8 sınaq', en: 'Put scattered letters into words · 8 challenges', ru: 'Собери слова из рассыпанных букв · 8 испытаний' }
+    },
+    animals: {
+      name: { az: 'Adanın Heyvanlarını tanı', en: 'Meet the Island Animals', ru: 'Познакомься с Животными Острова' },
+      detail: { az: 'Heyvanlar harada yaşayır, nə yeyir · 8 sınaq', en: 'Where animals live and what they eat · 8 challenges', ru: 'Где живут и что едят животные · 8 испытаний' }
+    },
+    body: {
+      name: { az: 'Hisslər Laboratoriyası', en: 'The Senses Lab', ru: 'Лаборатория Чувств' },
+      detail: { az: 'Bədənimiz necə işləyir · 8 sınaq', en: 'How our bodies work · 8 challenges', ru: 'Как устроено наше тело · 8 испытаний' }
+    },
+    nature: {
+      name: { az: 'Fəsillər Bağını sula', en: 'Water the Garden of Seasons', ru: 'Полей Сад Времён Года' },
+      detail: { az: 'Hava, bitkilər və fəsillər · 8 sınaq', en: 'Weather, plants and seasons · 8 challenges', ru: 'Погода, растения и времена года · 8 испытаний' }
+    },
+    matter: {
+      name: { az: 'İksir Masasında təcrübə', en: 'Experiments at the Potion Table', ru: 'Опыты за Столом Зелий' },
+      detail: { az: 'Buz, su, maqnit və od · 8 sınaq', en: 'Ice, water, magnets and fire · 8 challenges', ru: 'Лёд, вода, магниты и огонь · 8 испытаний' }
+    },
+    planets: {
+      name: { az: 'Planetlər Xəritəsini tamamla', en: 'Complete the Planet Map', ru: 'Дополни Карту Планет' },
+      detail: { az: 'Günəş sisteminin sirləri · 8 sınaq', en: 'Secrets of the solar system · 8 challenges', ru: 'Тайны Солнечной системы · 8 испытаний' }
+    },
+    sky: {
+      name: { az: 'Rəsədxananın növbətçisi', en: 'Night Shift at the Observatory', ru: 'Дежурство в Обсерватории' },
+      detail: { az: 'Günəş, Ay və ulduzlar · 8 sınaq', en: 'The Sun, the Moon and the stars · 8 challenges', ru: 'Солнце, Луна и звёзды · 8 испытаний' }
+    },
+    astro: {
+      name: { az: 'Kosmonavt Məktəbi', en: 'Astronaut School', ru: 'Школа Космонавтов' },
+      detail: { az: 'Raketlər, skafandrlar və peyklər · 8 sınaq', en: 'Rockets, spacesuits and satellites · 8 challenges', ru: 'Ракеты, скафандры и спутники · 8 испытаний' }
+    },
+    odd: {
+      name: { az: 'Yad Qonağı tap', en: 'Spot the Stranger', ru: 'Найди Чужака' },
+      detail: { az: 'Hər dəstədə artığı tap · 8 sınaq', en: 'Find the odd one in every group · 8 challenges', ru: 'Найди лишнее в каждой группе · 8 испытаний' }
+    },
+    riddle: {
+      name: { az: 'Qapı Tapmacaları', en: 'The Door Riddles', ru: 'Загадки Дверей' },
+      detail: { az: 'İpucularını birləşdir, tapmacanı aç · 8 sınaq', en: 'Put the clues together to solve riddles · 8 challenges', ru: 'Соедини подсказки и разгадай загадки · 8 испытаний' }
+    },
+    seq: {
+      name: { az: 'Naxışlı Kilidləri aç', en: 'Open the Pattern Locks', ru: 'Открой Узорные Замки' },
+      detail: { az: 'Şəkil naxışını davam etdir · 8 sınaq', en: 'Continue each picture pattern · 8 challenges', ru: 'Продолжи узор из картинок · 8 испытаний' }
     }
   },
 
-  /* stable topic key from a question's tag (tags are the 5 fixed topic labels in data.js) */
+  /* stable topic key for a question: a region question names its topic outright
+     (js/regions.js); the forest questions are still filed by their fixed tag label */
   topicKey(q) {
+    if (q && q.topic && this.TOPICS[q.topic]) return q.topic;
     const t = (q && q.tag && q.tag.en) || '';
     if (t.indexOf('ADDING') >= 0) return 'add';
     if (t.indexOf('PATTERN') >= 0) return 'pattern';
@@ -53,6 +127,20 @@ const EQT = {
     if (t.indexOf('TAKING') >= 0) return 'take';
     if (t.indexOf('DOUBLE') >= 0) return 'double';
     return null;
+  },
+
+  /* the topics that belong to one place on the map ('forest' = the daily adventure) */
+  topicsIn(region) {
+    const r = region || 'forest';
+    return Object.keys(this.TOPICS).filter(k => (this.TOPICS[k].region || 'forest') === r);
+  },
+
+  /* can the child reach this topic yet? Forest topics always; a region's once it opens */
+  topicOpen(k) {
+    const t = this.TOPICS[k];
+    if (!t) return false;
+    if (!t.region) return true;
+    return !!(typeof EQ !== 'undefined' && EQ.regionOpen && EQ.s && EQ.regionOpen(t.region));
   },
 
   /* ── state ──
@@ -485,9 +573,10 @@ const EQT = {
 
      Deterministic for a given day and a given history, so re-entering the quest does
      not reshuffle the questions underneath the child. */
-  plan(day, n) {
+  plan(day, n, only) {
     const size = n || 5;
-    const keys = Object.keys(this.TOPICS);
+    /* the forest's daily set by default; a region passes its own topics (EQ.regionPlan) */
+    const keys = (only && only.length ? only : this.topicsIn('forest')).filter(k => this.TOPICS[k]);
     if (!keys.length) return [];
     const m = this.mastery();
     const ranked = keys
@@ -534,8 +623,9 @@ const EQT = {
     const d = day == null ? (s.questDay || 0) : day;
     const cur = s.track.plan;
     if (cur && cur.day === d && Array.isArray(cur.topics) && cur.topics.length) {
-      /* a stored plan naming a topic that no longer exists is rebuilt, not trusted */
-      if (cur.topics.every(t => this.TOPICS[t])) return cur.topics.slice();
+      /* a stored plan naming a topic that no longer exists (or that belongs to a
+         region rather than the forest) is rebuilt, not trusted */
+      if (cur.topics.every(t => this.TOPICS[t] && !this.TOPICS[t].region)) return cur.topics.slice();
     }
     const topics = this.plan(d, 5);
     s.track.plan = { day: d, topics: topics.slice() };
@@ -600,8 +690,10 @@ const EQT = {
   recommend() {
     const stats = this.topicStats(42);
     const skips = (EQ.session && EQ.session.recSkips) || [];
+    /* a region the child has not reached yet is not something to practise: suggesting
+       "Planets" to a Level 3 child sends them to a door they cannot open */
     const list = Object.keys(this.TOPICS)
-      .filter(k => skips.indexOf(k) === -1)
+      .filter(k => skips.indexOf(k) === -1 && this.topicOpen(k))
       .map(k => {
         const st = stats[k] || { a: 0, c: 0, h: 0 };
         const rough = (st.a - st.c) + st.h;

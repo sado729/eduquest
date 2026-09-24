@@ -340,17 +340,41 @@ EQS.screens.awards = function (s) {
         <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX({ az: 'Riyaziyyat Ustası', en: 'Math Master', ru: 'Мастер Математики' })}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX({ az: '100 riyaziyyat sınağı həll et', en: 'Solve 100 math challenges', ru: 'Реши 100 математических испытаний' })}</div><div style="height:9px;border-radius:5px;background:#EAD9BC;margin-top:7px;overflow:hidden"><div style="width:${mathPct}%;height:100%;background:#7B5CFF;border-radius:5px"></div></div></div>
         <div style="font:800 13px 'Baloo 2';color:#5B3FD6;flex:none">${s.mathSolved}/100</div>
       </div>
-      <div style="border-radius:24px;background:rgba(42,31,69,0.06);padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:rgba(42,31,69,0.08);display:flex;align-items:center;justify-content:center;flex:none">${EQC.lock('#A197BC', 24)}</div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#8878A8">${TX({ az: 'Kitab Kaşifi', en: 'Book Explorer', ru: 'Книжный Исследователь' })}</div><div style="font:700 12px Nunito;color:#A197BC">${TX({ az: '20 oxu tapşırığı bitir · Söz Vadisi', en: 'Finish 20 reading quests · Word Valley', ru: 'Пройди 20 квестов чтения · Долина Слов' })}</div></div>
-      </div>
-      <div style="border-radius:24px;background:rgba(42,31,69,0.06);padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:rgba(42,31,69,0.08);display:flex;align-items:center;justify-content:center;flex:none"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="#A197BC" stroke-width="2.2"></circle><path d="M3.4 12 h17.2 M12 3.4 q4 8.6 0 17.2 q-4-8.6 0-17.2" stroke="#A197BC" stroke-width="2.2" fill="none"></path></svg></div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#8878A8">${TX({ az: 'Dünya Kaşifi', en: 'World Explorer', ru: 'Исследователь Миров' })}</div><div style="font:700 12px Nunito;color:#A197BC">${TX({ az: '3 dünya aç · 3-dən 2-si', en: 'Unlock 3 worlds · 2 of 3', ru: 'Открой 3 мира · 2 из 3' })}</div></div>
-      </div>
+      ${EQS.goalCard(
+        { az: 'Kitab Kaşifi', en: 'Book Explorer', ru: 'Книжный Исследователь' },
+        EQ.regionOpen('valley')
+          ? { az: 'Söz Vadisində 20 oxu sualı həll et', en: 'Solve 20 reading questions in Word Valley', ru: 'Реши 20 вопросов чтения в Долине Слов' }
+          : { az: '20 oxu sualı həll et · Söz Vadisi ilk bossdan sonra açılır', en: 'Solve 20 reading questions · Word Valley opens after your first boss', ru: 'Реши 20 вопросов чтения · Долина Слов откроется после первого босса' },
+        (s.regions && s.regions.valley && s.regions.valley.total) || 0, 20, EQ.regionOpen('valley'),
+        '#E4F6FF', '#2196C9', '#45C6F0',
+        `<svg width="30" height="30" viewBox="0 0 36 36"><path d="M5 9 q7-3 13 2 v20 q-6-5 -13-2 Z" fill="#45C6F0"></path><path d="M31 9 q-7-3 -13 2 v20 q6-5 13-2 Z" fill="#7B5CFF"></path></svg>`)}
+      ${EQS.goalCard(
+        { az: 'Dünya Kaşifi', en: 'World Explorer', ru: 'Исследователь Миров' },
+        { az: 'Meşədən kənarda 3 dünya aç', en: 'Open 3 worlds beyond the forest', ru: 'Открой 3 мира за пределами леса' },
+        EQ.regionsOpen().length, 3, EQ.regionsOpen().length > 0,
+        '#EFE7FF', '#5B3FD6', '#7B5CFF',
+        `<svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="#7B5CFF" stroke-width="2.2"></circle><path d="M3.4 12 h17.2 M12 3.4 q4 8.6 0 17.2 q-4-8.6 0-17.2" stroke="#7B5CFF" stroke-width="2.2" fill="none"></path></svg>`)}
     </div>
     ${EQC.nav('awards')}
   </div>`;
+};
+
+/* a trophy with a counter: greyed with a lock until it can be worked on at all, then a
+   progress bar, then a tick once the goal is met */
+EQS.goalCard = function (title, sub, have, need, live, bg, ink, bar, icon) {
+  const got = Math.min(have, need);
+  if (!live) return `<div style="border-radius:24px;background:rgba(42,31,69,0.06);padding:14px;display:flex;align-items:center;gap:13px">
+      <div style="width:54px;height:54px;border-radius:20px;background:rgba(42,31,69,0.08);display:flex;align-items:center;justify-content:center;flex:none">${EQC.lock('#A197BC', 24)}</div>
+      <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#8878A8">${TX(title)}</div><div style="font:700 12px Nunito;color:#A197BC">${TX(sub)}</div></div>
+    </div>`;
+  const end = have >= need
+    ? `<div style="width:30px;height:30px;border-radius:15px;background:#3DBE6E;display:flex;align-items:center;justify-content:center;flex:none">${EQC.check('#fff', 15, 3.6)}</div>`
+    : `<div style="font:800 13px 'Baloo 2';color:${ink};flex:none">${got}/${need}</div>`;
+  return `<div style="border-radius:24px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:13px">
+      <div style="width:54px;height:54px;border-radius:20px;background:${bg};display:flex;align-items:center;justify-content:center;flex:none">${icon}</div>
+      <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX(title)}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX(sub)}</div><div style="height:9px;border-radius:5px;background:#EAD9BC;margin-top:7px;overflow:hidden"><div style="width:${Math.round(got / need * 100)}%;height:100%;background:${bar};border-radius:5px"></div></div></div>
+      ${end}
+    </div>`;
 };
 
 /* 18b · Sticker album — the collection screen the counter in the bag points at.

@@ -40,19 +40,32 @@ EQS.progressPips = function (s, activeIdx, total) {
   }).join('');
 };
 
+/* the style of one answer button's label: a picture, a number or a letter is drawn big;
+   a word or two (a planet's name, "Earth turns") steps down so it fits and may wrap */
+EQS.ansFont = function (a, big) {
+  const letters = String(a).match(/\p{L}/gu);
+  const n = letters ? letters.length : 0;
+  if (n <= 2) return `font:800 ${big}px 'Baloo 2', system-ui`;
+  if (n <= 6) return `font:800 ${Math.round(big * 0.66)}px 'Baloo 2', system-ui`;
+  if (n <= 10) return `font:800 ${Math.round(big * 0.5)}px 'Baloo 2', system-ui;padding:0 6px;text-align:center`;
+  return `font:800 ${Math.round(big * 0.42)}px 'Baloo 2', system-ui;padding:0 8px;text-align:center;line-height:1.15`;
+};
+
 /* 08 · Educational challenge */
 EQS.meta.challenge = { light: false };
 EQS.screens.challenge = function (s) {
   const q = EQ.session.q;
-  /* the same screen serves the daily quest and a parent-approved mission; only the
-     counter, the exit and the badge above the question change */
-  const mis = EQ.session.ctx === 'mission' ? EQ.missionEntry() : null;
-  const total = mis ? EQD.MISSION_LEN : 5;
-  const idx = mis ? mis.n : s.challengesDone;
-  const exitTo = mis ? 'mission' : 'quest';
-  const counter = mis
+  /* the same screen serves the daily quest, a parent-approved mission and a region
+     round; only the counter, the exit and the badge above the question change */
+  const pos = EQ.playPos();
+  const total = pos.total;
+  const idx = pos.idx;
+  const exitTo = pos.exit;
+  const counter = pos.exit === 'mission'
     ? TX({ az: `Missiya ${Math.min(total, idx + 1)} / ${total}`, en: `Mission ${Math.min(total, idx + 1)} of ${total}`, ru: `Миссия ${Math.min(total, idx + 1)} из ${total}` })
-    : TX({ az: `Sınaq ${Math.min(5, s.challengesDone + 1)} / 5`, en: `Challenge ${Math.min(5, s.challengesDone + 1)} of 5`, ru: `Испытание ${Math.min(5, s.challengesDone + 1)} из 5` });
+    : pos.region
+      ? `${TX(EQD.REGIONS[pos.region].name)} · ${Math.min(total, idx + 1)} / ${total}`
+      : TX({ az: `Sınaq ${Math.min(5, s.challengesDone + 1)} / 5`, en: `Challenge ${Math.min(5, s.challengesDone + 1)} of 5`, ru: `Испытание ${Math.min(5, s.challengesDone + 1)} из 5` });
   /* a hands-on question owns the whole answer area: its panel goes inside the card,
      where the child can see the question and what they are moving at the same time,
      and the three buttons below are simply not drawn */
@@ -62,8 +75,8 @@ EQS.screens.challenge = function (s) {
      it Questy's tip moves into the card — drawn at the bottom it sat on top of the
      Done button, and the child could not finish the question */
   const tip = q.tip ? TX(q.tip) : TX({ az: 'Tələsmə — mən burada gözləyirəm.', en: 'Take your time — I’ll wait right here.', ru: 'Не спеши — я подожду здесь.' });
-  const answers = hands ? '' : q.answers.map((a, i) => `
-    <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 38px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
+  const answers = hands ? '' : EQD.qa(q).answers.map((a, i) => `
+    <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;min-width:0;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;${EQS.ansFont(a, 38)};color:#2A1F45">${a}</div>`).join('');
   return `<div class="scr" style="background:#BFE9FB">
     ${EQS.dragonScene()}
     ${EQC.hero(s.hero, 'position:absolute;left:34px;top:196px;width:78px')}
@@ -104,11 +117,16 @@ EQS.screens.success = function (s) {
      to read the context rather than the fixed +50 / +10 of the adventure */
   const mis = EQ.session.ctx === 'mission' ? EQ.missionEntry() : null;
   const misDone = EQ.session.ctx === 'mission' && !mis;
-  const gainXP = (mis || misDone) ? 25 : 50;
-  const gainCoins = (mis || misDone) ? 5 : 10;
+  /* a region round pays like a mission, and its last question also shows the bonus */
+  const reg = EQ.session.ctx === 'region' ? EQ.regionCur() : null;
+  const regE = reg ? EQ.region(reg) : null;
+  const regDone = !!(regE && regE.n >= EQD.REGION_LEN);
+  const gainXP = (mis || misDone || reg) ? 25 : 50;
+  const gainCoins = (mis || misDone || reg) ? 5 : 10;
   let ctaText = TX({ az: 'Növbəti sınaq', en: 'Next challenge', ru: 'Следующее испытание' }), cta = "EQ.continueAfterSuccess()";
   if (EQ.session.ctx === 'boss') ctaText = s.bossHits >= EQ.bossHitsNeeded() ? TX({ az: 'Qələbəni götür', en: 'Claim your victory', ru: 'Забери свою победу' }) : TX({ az: 'Davam et', en: 'Keep going', ru: 'Продолжай' });
   else if (misDone) ctaText = TX({ az: 'Missiyanı bitir', en: 'Finish the mission', ru: 'Завершить миссию' });
+  else if (reg) ctaText = regDone ? TX({ az: 'Raundu bitir', en: 'Finish the round', ru: 'Завершить раунд' }) : TX({ az: 'Növbəti sual', en: 'Next question', ru: 'Следующий вопрос' });
   else if (mis) ctaText = TX({ az: 'Növbəti sual', en: 'Next question', ru: 'Следующий вопрос' });
   else if (s.challengesDone >= 5) ctaText = TX(EQ.boss().face);
   return `<div class="scr" style="background:#BFE9FB">
@@ -135,7 +153,7 @@ EQS.screens.success = function (s) {
       <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px Nunito;color:#8B7A55;letter-spacing:1.2px">${TX({ az: `SƏVİYYƏ ${s.level} · ${UPC(EQ.rank(s.level))}`, en: `LEVEL ${s.level} · ${UPC(EQ.rank(s.level))}`, ru: `УРОВЕНЬ ${s.level} · ${UPC(EQ.rank(s.level))}` })}</span><span style="font:800 13px Nunito;color:#2A9455">${EQC.fmt(s.xp)} / ${EQC.fmt(1500)}</span></div>
       <div style="height:16px;border-radius:8px;background:#EAD9BC;margin-top:10px;overflow:hidden;position:relative"><div style="width:${pct}%;height:100%;border-radius:8px;background:#5CE39B"></div><div style="position:absolute;left:${Math.max(0, pct - 8)}%;top:0;bottom:0;width:8%;background:rgba(255,255,255,0.55)"></div></div>
       <div style="display:flex;gap:10px;margin-top:16px">
-        <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${(mis || misDone) ? `${misDone ? EQD.MISSION_LEN : mis.n}/${EQD.MISSION_LEN}` : `${Math.min(5, s.challengesDone)}/5`}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${(mis || misDone) ? TX({ az: 'MİSSİYA', en: 'MISSION', ru: 'МИССИЯ' }) : TX({ az: 'AÇILAN MÖHÜR', en: 'SEALS OPEN', ru: 'ПЕЧАТЕЙ СНЯТО' })}</div></div>
+        <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${reg ? `${regE.n}/${EQD.REGION_LEN}` : (mis || misDone) ? `${misDone ? EQD.MISSION_LEN : mis.n}/${EQD.MISSION_LEN}` : `${Math.min(5, s.challengesDone)}/5`}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${reg ? UPC(TX(EQD.REGIONS[reg].name)) : (mis || misDone) ? TX({ az: 'MİSSİYA', en: 'MISSION', ru: 'МИССИЯ' }) : TX({ az: 'AÇILAN MÖHÜR', en: 'SEALS OPEN', ru: 'ПЕЧАТЕЙ СНЯТО' })}</div></div>
         <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${Math.max(0, 1500 - s.xp)}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${TX({ az: `SƏVİYYƏ ${s.level + 1}-Ə QALAN XP`, en: `XP TO LEVEL ${s.level + 1}`, ru: `XP ДО УРОВНЯ ${s.level + 1}` })}</div></div>
       </div>
     </div>
@@ -163,7 +181,7 @@ EQS.screens.hint = function (s) {
     </div>
     <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
       <div class="press" onclick="EQ.go('${backTo}')" style="width:44px;height:44px;border-radius:16px;background:rgba(30,21,54,0.82);display:flex;align-items:center;justify-content:center;flex:none">${EQC.xIcon('#fff', 17)}</div>
-      <div style="flex:1;display:flex;gap:5px;align-items:center">${EQS.progressPips(s, Math.min(4, s.challengesDone))}</div>
+      <div style="flex:1;display:flex;gap:5px;align-items:center">${(p => EQS.progressPips(s, Math.min(p.total - 1, p.idx), p.total))(EQ.playPos())}</div>
       <div style="padding:0 12px;height:44px;border-radius:16px;background:rgba(92,227,155,0.22);display:flex;align-items:center;font:800 11px Nunito;color:#BFF0D3">${TX({ az: 'İpucular pulsuzdur', en: 'Hints are free', ru: 'Подсказки бесплатные' })}</div>
     </div>
     <div style="position:absolute;top:210px;left:20px;right:20px;display:flex;gap:12px;align-items:flex-start">
@@ -246,8 +264,8 @@ EQS.screens.boss = function (s) {
      assumes, so a hands-on boss question would render instead of drawing dead buttons */
   const hands = !!(typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q));
   const panel = hands ? EQIX.render(q, s) : '';
-  const answers = hands ? '' : q.answers.map((a, i) => `
-    <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:84px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 34px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
+  const answers = hands ? '' : EQD.qa(q).answers.map((a, i) => `
+    <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;min-width:0;height:84px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;${EQS.ansFont(a, 34)};color:#2A1F45">${a}</div>`).join('');
   const beam = EQ.session.bossBeam ? `
     <div class="pop" style="position:absolute;top:308px;left:18px;width:150px;height:80px">
       <div style="position:absolute;left:0;top:28px;right:0;height:18px;border-radius:9px;background:linear-gradient(90deg, rgba(92,227,155,0) 0%, rgba(92,227,155,0.9) 100%);box-shadow:0 0 22px rgba(92,227,155,0.8)"></div>

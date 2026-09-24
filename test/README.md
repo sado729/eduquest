@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all nine suites
+npm test              # all eleven suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -14,6 +14,8 @@ npm run test:album
 npm run test:missions
 npm run test:adaptive
 npm run test:care
+npm run test:formats
+npm run test:regions
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -281,3 +283,39 @@ chirp and coins with nowhere to go. If this suite goes red after a re-sync, that
 happened — see `EQ.careGive` / `EQ.careToday` in [js/app.js](../js/app.js), `EQD.CARE`
 in [js/data.js](../js/data.js) and `EQS.screens.care` in
 [js/screens-collect.js](../js/screens-collect.js).
+
+## regions.js — the four regions beyond the forest
+
+Söz Vadisi (reading), Elm Adası (science), Kosmik Stansiya (space) and Sirli Qala
+(riddles and patterns) used to be pictures on the map with nothing behind them, and Söz
+Vadisi promised to open "after today's adventure" without ever doing so. They are real
+now — [js/regions.js](../js/regions.js) — and the ways they can break are all quiet:
+
+1. **An unanswerable question.** Reading answers depend on the language (🍎 starts with
+   A in az/en and Я in ru), so `answers`/`correct` may be `{az,en,ru}` and are resolved
+   through `EQD.qa`. The suite builds ~2,000 questions across all fourteen topics, easy
+   and hard, tap and hands-on, with their step-downs, and checks every one in every
+   language: the right answer is among the choices, the choices are distinct, and no
+   `undefined` leaks into what the child reads.
+2. **A picture the phone cannot draw.** An emoji newer than the device shows as an empty
+   box — as a quiz answer, an unreadable choice. The region content is held to Unicode 11.
+3. **The doors.** Söz Vadisi after the first boss, then Levels 10 / 15 / 20 — checked on
+   the rule, on the map pins and on the unlock screen.
+4. **The separation.** A region round borrows the challenge/hint/tutor/success screens;
+   it must never move the daily 5/5, leak a region question into the forest, or lose its
+   place across a hint, the tutor's gentler question, a level-up or leaving mid-round.
+5. **The grown-up side.** Region topics are suggested only once the child can reach
+   them, every one builds as an eight-question mission, and reading/science answers show
+   up under Oxu/Elm in the analytics.
+
+Also covered: the first round of a day paying the bonus once, further rounds paying per
+question only; a new calendar day starting a fresh round while the lifetime count stays;
+the Book Explorer and World Explorer trophies counting real progress; region progress
+surviving a file transfer, hostile values being clamped, and region topic stats riding a
+packed QR code with the original five topics still at their old numbers.
+
+The region screens are hand-written; a design re-sync would restore the locked pictures
+and the false promise. If this suite goes red after a re-sync, that is what happened —
+see `EQD.REGIONS` / `EQD.regionSet` in [js/regions.js](../js/regions.js), `EQ.regionOpen`
+/ `EQ.regionAdvance` in [js/app.js](../js/app.js) and `EQS.screens.region` /
+`EQS.regionPin` in [js/screens-world.js](../js/screens-world.js).

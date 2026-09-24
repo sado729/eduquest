@@ -8,7 +8,7 @@
 const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest', 'sticker'];
 /* calm screens where the heartbeat may bring the rest screen up on its own
    (never mid-question: a challenge already started is always allowed to finish) */
-const EQ_REST_NUDGE = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcomeback'];
+const EQ_REST_NUDGE = ['map', 'quest', 'mission', 'region', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcomeback'];
 const EQ_REST_MORNING = 5 * 60; /* the bedtime window closes at 05:00 */
 
 const EQ_DEFAULTS = {
@@ -25,6 +25,8 @@ const EQ_DEFAULTS = {
   mathSolved: 0, hintSparks: 0, stickers: 0, stickerIds: [], trophiesEarned: 0,
   /* Questy'nin qulluğu: bugünkü verilmiş qulluqlar və ümumi say (bax: EQ.careGive) */
   careDay: null, careGiven: [], careTotal: 0,
+  /* the regions beyond the forest: today's round in each, plus a lifetime count (see EQ.region) */
+  regions: {},
   trophyPlaced: false, pendingLevelUp: false,
   lastVisit: null,
   lastDay: null, questDay: 0, playedDays: [], bestStreak: 1,
@@ -60,7 +62,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, ctx: 'daily', mission: null, tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
+  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
 
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
   pron() { return 'their'; },
@@ -116,7 +118,7 @@ const EQ = {
   checkNewDay(fromResume) {
     const today = this.dayKey();
     if (!this.s || !this.s.lastDay || this.s.lastDay === today) return false;
-    const safe = ['map', 'quest', 'mission', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
+    const safe = ['map', 'quest', 'mission', 'region', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcome', 'welcomeback', 'splash', 'restday'];
     if (!fromResume && safe.indexOf(this.current) === -1) return false;
     this.newDay(today);
     this.session.q = null; this.session.qIdx = -1;
@@ -176,6 +178,7 @@ const EQ = {
     this.s.settings = Object.assign({}, EQ_DEFAULTS.settings, (s && s.settings) || {});
     this.s.stickerIds = this.cleanStickers(s && s.stickerIds, this.s.stickers);
     this.s.stickers = this.s.stickerIds.length;
+    this.s.regions = this.cleanRegions(s && s.regions);
     EQT.init(this.s);
   },
   save() {
@@ -201,6 +204,22 @@ const EQ = {
           this.session.attempted = false; this.session.hinted = false;
         }
       }
+    } else if (name === 'challenge' && this.session.ctx === 'region' && this.regionCur()) {
+      /* a region round owns the challenge screen the same way a mission does. The key
+         names the exact question (region, day, round, slot), so the gentler question
+         from the tutor survives this redirect — it keeps the key of the one it replaced */
+      const r = this.regionCur();
+      const e = this.region(r);
+      if (e.n >= EQD.REGION_LEN) name = 'region';
+      else {
+        const key = r + '|' + e.day + '#' + e.round + '|' + e.n;
+        if (this.session.qKey !== key || !this.session.q) {
+          this.session.q = this.regionSet(r).questions[e.n];
+          this.session.qIdx = e.n;
+          this.session.qKey = key;
+          this.session.attempted = false; this.session.hinted = false;
+        }
+      }
     } else if (name === 'challenge') {
       if (this.s.challengesDone >= 5) name = 'boss';
       else {
@@ -214,11 +233,18 @@ const EQ = {
     }
     /* leaving the mission for anywhere that isn't part of playing it drops the pointer,
        so the daily quest never inherits a mission's context or its question */
-    if (name !== 'challenge' && name !== 'mission' && name !== 'hint' && name !== 'tutor'
-      && name !== 'success' && name !== 'restday' && this.session.ctx === 'mission') {
+    /* the level-up beat belongs to the play too: a level earned on a mission or region
+       question returns to that question's context afterwards, not to the daily quest */
+    const playing = ['challenge', 'hint', 'tutor', 'success', 'restday', 'levelup'];
+    if (playing.indexOf(name) < 0 && name !== 'mission' && this.session.ctx === 'mission') {
       this.session.ctx = 'daily';
       this.session.mission = null;
       this.session.q = null; this.session.qIdx = -1;
+    }
+    if (playing.indexOf(name) < 0 && name !== 'region' && this.session.ctx === 'region') {
+      this.session.ctx = 'daily';
+      this.session.region = null;
+      this.session.q = null; this.session.qIdx = -1; this.session.qKey = null;
     }
     if (name === 'boss') {
       if (this.s.bossBeaten) name = 'victory';
@@ -234,6 +260,12 @@ const EQ = {
         const m = this.missionEntry();
         this.session.q = this.missionSet().questions[Math.min(EQD.MISSION_LEN - 1, m.n)];
         this.session.qIdx = m.n;
+      } else if (this.session.ctx === 'region' && this.regionCur()) {
+        const r = this.regionCur(), e = this.region(r);
+        const i = Math.min(EQD.REGION_LEN - 1, e.n);
+        this.session.q = this.regionSet(r).questions[i];
+        this.session.qIdx = i;
+        this.session.qKey = r + '|' + e.day + '#' + e.round + '|' + i;
       } else {
         this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)] || this.qset().questions[3];
         this.session.qIdx = this.s.challengesDone;
@@ -407,6 +439,135 @@ const EQ = {
     this.go('quest');
   },
 
+  /* ── the regions beyond the forest (js/regions.js) ──
+     Söz Vadisi opens after the first boss, the others at Levels 10 / 15 / 20. A region
+     is played in rounds of five questions on its own topics — same challenge, hint,
+     tutor and success screens as the forest, no boss. The first finished round of a
+     day pays a coin bonus; more rounds are welcome, they just pay per question. Like a
+     mission, a region never touches the daily 5/5: it is beside the adventure. */
+  regionOpen(r) {
+    const R = EQD.REGIONS[r];
+    if (!R || !this.s) return false;
+    if (R.trophy && (this.s.trophiesEarned || 0) < R.trophy) return false;
+    return (this.s.level || 1) >= R.level;
+  },
+  regionsOpen() { return EQD.REGION_ORDER.filter(r => this.regionOpen(r)); },
+  /* today's progress in a region, read without creating anything (for the map pins) */
+  regionPeek(r) {
+    const e = this.s.regions && this.s.regions[r];
+    return e && e.day === this.dayKey() ? { n: e.n || 0, round: e.round || 0, paid: !!e.paid } : { n: 0, round: 0, paid: false };
+  },
+  /* the region the session is playing, if it is still a real, open region */
+  regionCur() {
+    const r = this.session.region;
+    return r && this.regionOpen(r) ? r : null;
+  },
+  /* today's entry for a region — a new calendar day starts a fresh round 0 */
+  region(r) {
+    if (!this.s.regions || typeof this.s.regions !== 'object') this.s.regions = {};
+    const today = this.dayKey();
+    let e = this.s.regions[r];
+    if (!e) e = this.s.regions[r] = { day: today, round: 0, n: 0, plan: null, paid: false, total: 0 };
+    if (e.day !== today) { e.day = today; e.round = 0; e.n = 0; e.plan = null; e.paid = false; }
+    return e;
+  },
+  /* the round's five topics, chosen once by the adaptive plan and then frozen, so an
+     answer mid-round cannot reshuffle the questions still to come */
+  regionPlan(r) {
+    const e = this.region(r);
+    const R = EQD.REGIONS[r];
+    const good = Array.isArray(e.plan) && e.plan.length === EQD.REGION_LEN && e.plan.every(t => R.topics.indexOf(t) >= 0);
+    if (!good) e.plan = EQT.plan(e.round, EQD.REGION_LEN, R.topics);
+    return e.plan;
+  },
+  regionSet(r) {
+    const e = this.region(r);
+    return EQD.regionSet(r, e.day + '#' + e.round, this.regionPlan(r));
+  },
+  /* the map pin: into the region if it is open, otherwise to its unlock screen */
+  openRegion(r) {
+    if (!EQD.REGIONS[r]) return;
+    SFX.tap();
+    if (!this.regionOpen(r)) { this.session.unlockRegion = r; this.go('unlock'); return; }
+    this.region(r);
+    this.session.region = r;
+    this.session.ctx = 'region';
+    this.session.q = null; this.session.qIdx = -1; this.session.qKey = null;
+    this.save();
+    this.go('region');
+  },
+  startRegionQuestion() {
+    const r = this.regionCur();
+    if (!r || this.region(r).n >= EQD.REGION_LEN) return;
+    SFX.tap();
+    this.session.ctx = 'region';
+    this.go('challenge');
+  },
+  /* one region question answered correctly */
+  regionAdvance() {
+    const r = this.regionCur();
+    if (!r) return;
+    const e = this.region(r);
+    e.n = Math.min(EQD.REGION_LEN, (e.n || 0) + 1);
+    e.total = (e.total || 0) + 1;
+    this.grant(25, 5);
+    if (e.n >= EQD.REGION_LEN && !e.paid) {
+      e.paid = true;
+      this.s.coins += EQD.REGION_BONUS; this.s.coinsToday += EQD.REGION_BONUS;
+    }
+    this.save();
+  },
+  continueRegion() {
+    const r = this.regionCur();
+    const next = r && this.region(r).n < EQD.REGION_LEN ? 'challenge' : 'region';
+    if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
+    else this.go(next);
+  },
+  /* another round the same day: new five questions, planned from what just happened */
+  regionAgain() {
+    const r = this.regionCur();
+    if (!r) return;
+    const e = this.region(r);
+    if (e.n < EQD.REGION_LEN) return;
+    SFX.tap();
+    e.round++; e.n = 0; e.plan = null;
+    this.session.q = null; this.session.qIdx = -1; this.session.qKey = null;
+    this.save();
+    this.go('challenge');
+  },
+  leaveRegion() { SFX.tap(); this.go('map'); },
+  /* rebuilt field by field on load and on import: the screens write these into markup */
+  cleanRegions(raw) {
+    const out = {};
+    const src = raw && typeof raw === 'object' ? raw : {};
+    const int = (v, lo, hi) => { const n = Math.round(Number(v)); return isNaN(n) ? lo : Math.min(hi, Math.max(lo, n)); };
+    EQD.REGION_ORDER.forEach(r => {
+      const e = src[r];
+      if (!e || typeof e !== 'object') return;
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(String(e.day)) ? String(e.day) : null;
+      const topics = EQD.REGIONS[r].topics;
+      const plan = Array.isArray(e.plan) && e.plan.length === EQD.REGION_LEN && e.plan.every(t => topics.indexOf(t) >= 0) ? e.plan.slice() : null;
+      out[r] = {
+        day: day || '1970-01-01', round: day ? int(e.round, 0, 999) : 0, n: day ? int(e.n, 0, EQD.REGION_LEN) : 0,
+        plan: day ? plan : null, paid: !!(day && e.paid), total: int(e.total, 0, 9e6)
+      };
+    });
+    return out;
+  },
+  /* where the child is inside whatever they are playing: slot, length, exit screen */
+  playPos() {
+    const ctx = this.session.ctx;
+    if (ctx === 'mission') {
+      const m = this.missionEntry();
+      if (m) return { idx: m.n, total: EQD.MISSION_LEN, exit: 'mission' };
+    }
+    if (ctx === 'region') {
+      const r = this.regionCur();
+      if (r) return { idx: this.region(r).n, total: EQD.REGION_LEN, exit: 'region', region: r };
+    }
+    return { idx: this.s.challengesDone, total: 5, exit: 'quest' };
+  },
+
   /* ── quest flow ── */
   startChallenge() { SFX.tap(); this.go('challenge'); },
   /* the set is fully done (boss beaten, chest opened) → the next one opens right away,
@@ -450,16 +611,19 @@ const EQ = {
   answer(i) {
     if (this.session.answering) return;
     const q = this.session.q;
-    const correct = q.answers[i] === q.correct;
+    /* a reading question's letters depend on the language, so the choices are resolved
+       for the language on screen before the tap is judged (EQD.qa, js/regions.js) */
+    const { answers, correct: want } = EQD.qa(q);
+    const correct = answers[i] === want;
     this.resolve(correct, () => {
       const el = document.getElementById('ans-' + i);
       if (!el) return;
       if (correct) {
         el.classList.add('good');
-        el.innerHTML = `${q.answers[i]} ${EQC.check('#fff', 26, 3.4)}`;
+        el.innerHTML = `${answers[i]} ${EQC.check('#fff', 26, 3.4)}`;
       } else {
         el.classList.add('warm');
-        el.innerHTML = `${q.answers[i]}<span style="font:800 13px Nunito;margin-left:8px">${TX({ az: 'bir də yoxla', en: 'try again', ru: 'ещё раз' })}</span>`;
+        el.innerHTML = `${answers[i]}<span style="font:800 13px Nunito;margin-left:8px">${TX({ az: 'bir də yoxla', en: 'try again', ru: 'ещё раз' })}</span>`;
       }
     });
   },
@@ -516,6 +680,10 @@ const EQ = {
           EQT.done(q, this.session.hinted);
           this.missionAdvance();
           this.go('success');
+        } else if (this.session.ctx === 'region') {
+          EQT.done(q, this.session.hinted);
+          this.regionAdvance();
+          this.go('success');
         } else {
           if (q.subj === 'math') this.s.mathSolved = Math.min(100, this.s.mathSolved + 1);
           this.grant(50, 10);
@@ -533,6 +701,7 @@ const EQ = {
   },
   continueAfterSuccess() {
     if (this.session.ctx === 'mission') return this.continueMission();
+    if (this.session.ctx === 'region') return this.continueRegion();
     const next = this.s.challengesDone >= 5 ? 'boss' : 'challenge';
     if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
     else this.go(next);
@@ -1038,7 +1207,7 @@ const EQ = {
            correct answer straight to resolve() rather than trying to fake a drag */
         if (this.session.answering || !q) return;
         if (typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q)) EQIX.commit(q, true);
-        else this.answer(q.answers.indexOf(q.correct));
+        else { const x = EQD.qa(q); this.answer(x.answers.indexOf(x.correct)); }
       } else if (this.current === 'success') this.continueAfterSuccess();
       else if (this.current === 'victory') this.go('chest');
       else if (this.current === 'chest') this.openChest();
