@@ -78,6 +78,7 @@ const EQ = {
     if (EQI.langs.indexOf(l) === -1 || l === EQI.lang) return;
     SFX.tap();
     this.s.settings.lang = l;
+    if (typeof EQV !== 'undefined') EQV.stop(); /* never finish a sentence in the old language */
     EQI.set(l);
     this.save();
     if (this.current) this.render();
@@ -189,6 +190,7 @@ const EQ = {
   /* ── router ── */
   go(name) {
     EQT.tick(); /* attribute elapsed time to the screen being left */
+    const from = this.current;
     if (this.current === 'album' && name !== 'album') this.leaveAlbum();
     if (this.restGuard(name)) name = 'restday'; /* limit reached / bedtime — Questy takes over */
     /* a mission in progress owns the challenge screen: its own eight questions, its
@@ -279,6 +281,9 @@ const EQ = {
     if (this.current === 'tutor' && name !== 'tutor') this.session.tutorWhy = false;
     this.current = name;
     this.render();
+    /* Questy's voice: every navigation silences the last screen (the rest screen too),
+       and a question screen reads its question as it opens (js/speech.js) */
+    if (typeof EQV !== 'undefined') EQV.route(from, name);
   },
   nav(tab) {
     SFX.tap();
@@ -640,6 +645,7 @@ const EQ = {
   resolve(correct, paint) {
     if (this.session.answering) return;
     const q = this.session.q;
+    if (typeof EQV !== 'undefined') EQV.stop(); /* the child has answered — stop reading the question */
     /* the first try is the one that counts, both for the stats and for the spacing:
        a topic recalled unaided moves out to a longer gap, a miss brings it straight
        back. Later tries on the same question are practice, not evidence. */
@@ -928,6 +934,13 @@ const EQ = {
     this.save();
     this.applyCalm();
     this.render();
+    /* switched off: silent now, not after the sentence. Switched on: the grown-up hears
+       exactly what the child will — or, with no voice for this language, nothing, which
+       the subtitle under the switch now says plainly */
+    if (key === 'readAloud' && typeof EQV !== 'undefined') {
+      if (this.s.settings.readAloud) EQV.sample();
+      else EQV.stop();
+    }
   },
   cycleLimit() {
     SFX.tap();
@@ -1133,6 +1146,7 @@ const EQ = {
     this.load();
     EQI.set(this.s.settings.lang || 'az');
     this.applyCalm();
+    if (typeof EQV !== 'undefined') EQV.init();
     this.fit();
     window.addEventListener('resize', () => this.fit());
     EQT._t = Date.now();
@@ -1146,11 +1160,12 @@ const EQ = {
     /* app resumed after being backgrounded — roll the day if it changed */
     document.addEventListener('visibilitychange', () => {
       EQT.tick();
+      if (document.hidden && typeof EQV !== 'undefined') EQV.stop(); /* never talk from a hidden tab */
       if (document.hidden) this.save();
       else if (!this.checkNewDay(true)) this.restNudge();
     });
     window.addEventListener('focus', () => { if (!this.checkNewDay(true)) this.restNudge(); });
-    window.addEventListener('pagehide', () => { EQT.tick(); this.save(); });
+    window.addEventListener('pagehide', () => { EQT.tick(); this.save(); if (typeof EQV !== 'undefined') EQV.stop(); });
 
     const params = new URLSearchParams(location.search);
 

@@ -89,6 +89,7 @@ EQS.screens.challenge = function (s) {
       <div style="display:flex;align-items:center;gap:8px">
         <div style="padding:4px 10px;border-radius:10px;background:#E4F6FF;font:800 10px Nunito;color:#2196C9;letter-spacing:1.2px">${TX(q.tag)}</div>
         <div style="font:700 11px Nunito;color:#A08A5E">${counter}</div>
+        ${typeof EQV !== 'undefined' ? EQV.btn() : ''}
       </div>
       <div style="font:800 21px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.25">${TX(q.title)}</div>
       ${hands ? `<div style="font:700 12px Nunito;color:#8A7550;margin-top:6px;line-height:1.4">${tip}</div>` : ''}
@@ -187,7 +188,7 @@ EQS.screens.hint = function (s) {
     <div style="position:absolute;top:210px;left:20px;right:20px;display:flex;gap:12px;align-items:flex-start">
       <div style="width:82px;flex:none">${EQC.questy('encouraging', 'width:82px', s.questyFur, s.questyFurDark)}</div>
       <div class="rise" style="flex:1;background:#FFF7EA;border-radius:24px;border-bottom-left-radius:8px;padding:16px 18px;box-shadow:0 6px 0 rgba(20,10,40,0.35)">
-        <div style="font:800 18px 'Baloo 2', system-ui;color:#2A1F45">${TX(h.heading)}</div>
+        <div style="display:flex;align-items:flex-start;gap:8px"><div style="font:800 18px 'Baloo 2', system-ui;color:#2A1F45">${TX(h.heading)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
         <div style="font:700 14px Nunito;color:#5C4E7E;margin-top:6px;line-height:1.5">${TX(h.sub)}</div>
       </div>
     </div>
@@ -233,7 +234,7 @@ EQS.screens.tutor = function (s) {
     <div class="float" style="position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center">${EQC.questy('hint', 'width:170px', s.questyFur, s.questyFurDark)}</div>
     <div class="rise" id="tutor-card" style="position:absolute;top:346px;left:20px;right:20px;background:#FFF7EA;border-radius:28px;padding:18px;box-shadow:0 7px 0 rgba(0,0,0,0.28)">
       <div style="position:absolute;top:-11px;left:52px;width:24px;height:24px;background:#FFF7EA;border-radius:6px;transform:rotate(45deg)"></div>
-      <div style="font:800 19px 'Baloo 2', system-ui;color:#2A1F45;position:relative">${TX(ex.title)}</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;position:relative"><div style="font:800 19px 'Baloo 2', system-ui;color:#2A1F45">${TX(ex.title)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
       <div style="font:700 14.5px Nunito;color:#5C4E7E;margin-top:8px;line-height:1.55;position:relative">${TX(ex.text)}</div>
       ${whyBlock}
     </div>
@@ -324,7 +325,7 @@ EQS.screens.boss = function (s) {
     <div style="position:absolute;top:196px;right:6px">${creature}</div>
     ${beam}
     <div class="rise" style="position:absolute;top:400px;left:16px;right:16px;background:#FFF7EA;border-radius:30px;padding:16px;box-shadow:0 7px 0 #C9BCA6, 0 20px 34px -16px rgba(0,0,0,0.5)">
-      <div style="display:flex;align-items:center;gap:8px"><div style="padding:4px 10px;border-radius:10px;background:#EFE7FF;font:800 10px Nunito;color:#5B3FD6;letter-spacing:1.2px">${TX(q.tag)}</div><div style="font:700 11px Nunito;color:#A08A5E">${TX(q.meta)}</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="padding:4px 10px;border-radius:10px;background:#EFE7FF;font:800 10px Nunito;color:#5B3FD6;letter-spacing:1.2px">${TX(q.tag)}</div><div style="font:700 11px Nunito;color:#A08A5E">${TX(q.meta)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
       <div style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.3">${TX(q.title)}</div>
       ${q.visual()}
       ${panel}

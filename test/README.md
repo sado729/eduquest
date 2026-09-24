@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all eleven suites
+npm test              # all twelve suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -16,6 +16,7 @@ npm run test:adaptive
 npm run test:care
 npm run test:formats
 npm run test:regions
+npm run test:speech
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -319,3 +320,40 @@ and the false promise. If this suite goes red after a re-sync, that is what happ
 see `EQD.REGIONS` / `EQD.regionSet` in [js/regions.js](../js/regions.js), `EQ.regionOpen`
 / `EQ.regionAdvance` in [js/app.js](../js/app.js) and `EQS.screens.region` /
 `EQS.regionPin` in [js/screens-world.js](../js/screens-world.js).
+
+## speech.js — Questy reading the questions aloud
+
+The parent settings had a "Read questions aloud" switch, on by default, and nothing
+behind it: it was saved, it rode in the transfer code, and no line of code ever spoke.
+[js/speech.js](../js/speech.js) is the voice behind it now (the browser's own
+`speechSynthesis`, no server, no audio files), and each way it can break is silent on
+screen. `speechSynthesis` is stubbed with a fake engine that records every utterance and
+every `cancel()`, over a voice list the test controls; timers are queued, so the test
+can change screens between a start and its delayed speak.
+
+1. **The switch.** Off: nothing is read and no speaker is drawn. On: the question is
+   read once as the challenge/boss screen opens — also for missions, every region round
+   and the hands-on formats — and what is read is the question, cleaned, with the answer
+   choices never appended. Switching off cancels at once; switching on plays a sample.
+2. **The voice never outlives its screen.** Leaving the question, the rest screen, an
+   answer, a language switch and a hidden tab all cancel; a start still queued when the
+   screen changes never speaks; a redraw of the same question does not restart it.
+3. **The right voice or none.** Only a voice of the game's language is used — az with
+   only tr-TR/en-US installed stays silent rather than reading Azerbaijani with Turkish
+   or English sounds. Android's `az_AZ` tags are recognised, offline voices beat network
+   ones, and an empty first list (Chrome fills it asynchronously) is "loading", not a
+   false "no voice".
+4. **Söz Vadisi never hears its answer.** ~2,000 reading questions × three languages ×
+   challenge/hint/tutor: the voice never says the word on the card or the words on a
+   pairing board (worked out in the test from what is drawn, not from `q.hush`), the
+   tutor never reads a reading explanation (each one states the answer), and every
+   question still has its question read.
+5. **The grown-up is told the truth.** The subtitle under the switch says "bu cihazda
+   Azərbaycan səsi yoxdur" (and its en/ru twins) when there is no voice, and "this
+   browser cannot read aloud" without the API.
+
+Also covered: `<br>`, entities and emoji (ZWJ, flags, keycaps) cleaned out, capital
+words lowered so BALIQ is read rather than spelled (with az `İ`→`i`), calm mode slower
+and softer, an engine that throws swallowed, every `EQV` call in app.js behind a
+`typeof` guard (the other suites load app.js without speech.js), and speech.js being in
+index.html and the sw.js precache.

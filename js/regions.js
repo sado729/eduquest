@@ -373,6 +373,8 @@ EQD._qWord = function (ri, hard, alt, noEasier) {
     cardTitle: { az: 'Sözü oxu', en: 'Read the word', ru: 'Прочитай слово' },
     title: { az: 'Sözü oxu. Hansı şəkildir?', en: 'Read the word. Which picture is it?', ru: 'Прочитай слово. Какая это картинка?' },
     visual: () => EQD.vWord(TX(W)),
+    /* the word is the question: Questy's voice must never say it (js/speech.js) */
+    hush: [W],
     answers: answers, correct: it.e,
     tip: {
       az: 'Hərfləri bir-bir səslə, sonra birləşdir.',
@@ -433,6 +435,7 @@ EQD._qWordPair = function (ri, hard) {
       ru: 'Соедини каждое слово с картинкой.<br>Нажми на слово, потом на картинку.'
     },
     visual: () => '',
+    hush: words, /* never read aloud — reading them is the task (js/speech.js) */
     pair: { left: words, rightShown: rightShown, match: match, label: { az: 'Söz — şəkil', en: 'Word — picture', ru: 'Слово — картинка' } },
     answers: EQD._shuffleAns(ri, items.map(x => x.e)), correct: first.e,
     tip: {
