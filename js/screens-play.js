@@ -58,6 +58,10 @@ EQS.screens.challenge = function (s) {
      and the three buttons below are simply not drawn */
   const hands = !!(typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q));
   const panel = hands ? EQIX.render(q, s) : '';
+  /* a panel is taller than three buttons and reaches the bottom of the screen, so for
+     it Questy's tip moves into the card — drawn at the bottom it sat on top of the
+     Done button, and the child could not finish the question */
+  const tip = q.tip ? TX(q.tip) : TX({ az: 'Tələsmə — mən burada gözləyirəm.', en: 'Take your time — I’ll wait right here.', ru: 'Не спеши — я подожду здесь.' });
   const answers = hands ? '' : q.answers.map((a, i) => `
     <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 38px 'Baloo 2', system-ui;color:#2A1F45">${a}</div>`).join('');
   return `<div class="scr" style="background:#BFE9FB">
@@ -68,22 +72,23 @@ EQS.screens.challenge = function (s) {
       <div style="flex:1;display:flex;gap:5px;align-items:center">${EQS.progressPips(s, idx, total)}</div>
       <div class="press" onclick="EQ.go('hint')" style="width:44px;height:44px;border-radius:16px;background:#FFC24B;box-shadow:0 4px 0 #E39B1C;display:flex;align-items:center;justify-content:center;flex:none">${EQC.bulb('#4A3208', 20)}</div>
     </div>
-    <div class="rise" style="position:absolute;top:352px;left:16px;right:16px;background:#FFF7EA;border-radius:30px;padding:20px;box-shadow:0 7px 0 #E0C79A, 0 20px 34px -16px rgba(20,10,40,0.45)">
+    <div class="rise" style="position:absolute;top:${hands ? 300 : 352}px;left:16px;right:16px;${hands ? 'max-height:540px;overflow-y:auto;' : ''}background:#FFF7EA;border-radius:30px;padding:20px;box-shadow:0 7px 0 #E0C79A, 0 20px 34px -16px rgba(20,10,40,0.45)">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="padding:4px 10px;border-radius:10px;background:#E4F6FF;font:800 10px Nunito;color:#2196C9;letter-spacing:1.2px">${TX(q.tag)}</div>
         <div style="font:700 11px Nunito;color:#A08A5E">${counter}</div>
       </div>
       <div style="font:800 21px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.25">${TX(q.title)}</div>
+      ${hands ? `<div style="font:700 12px Nunito;color:#8A7550;margin-top:6px;line-height:1.4">${tip}</div>` : ''}
       ${q.visual()}
       ${panel}
     </div>
     <div style="position:absolute;top:640px;left:16px;right:16px;display:flex;gap:12px">${answers}</div>
-    <div style="position:absolute;bottom:44px;left:16px;right:16px;display:flex;align-items:flex-end;gap:10px">
+    ${hands ? '' : `<div style="position:absolute;bottom:44px;left:16px;right:16px;display:flex;align-items:flex-end;gap:10px">
       ${EQC.questy('thinking', 'width:76px', s.questyFur, s.questyFurDark)}
       <div style="flex:1;background:rgba(30,21,54,0.9);border-radius:22px;border-bottom-left-radius:8px;padding:14px 16px">
-        <div style="font:700 14px Nunito;color:#fff;line-height:1.5">${q.tip ? TX(q.tip) : TX({ az: 'Tələsmə — mən burada gözləyirəm.', en: 'Take your time — I’ll wait right here.', ru: 'Не спеши — я подожду здесь.' })}</div>
+        <div style="font:700 14px Nunito;color:#fff;line-height:1.5">${tip}</div>
       </div>
-    </div>
+    </div>`}
   </div>`;
 };
 

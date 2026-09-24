@@ -91,15 +91,15 @@ EQI_FMT.drag = {
   render(q, st) {
     const tray = [];
     for (let i = 0; i < st.n; i++) {
-      tray.push(`<div class="eqi-item" data-i="${i}" style="width:44px;height:44px;border-radius:14px;background:${q.drag.color};box-shadow:0 3px 0 rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;font-size:22px;touch-action:none;cursor:grab">${q.drag.icon}</div>`);
+      tray.push(`<div class="eqi-item" data-i="${i}" style="width:38px;height:38px;border-radius:12px;background:${q.drag.color};box-shadow:0 3px 0 rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;font-size:20px;touch-action:none;cursor:grab">${q.drag.icon}</div>`);
     }
     return `<div style="margin-top:14px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div style="font:700 12px Nunito;color:#A08A5E;flex:1">${TX(q.drag.trayLabel)}</div>
         <div id="eqi-count" style="padding:5px 12px;border-radius:12px;background:#EFE7FF;font:800 15px 'Baloo 2';color:#5B3FD6">0</div>
       </div>
-      <div id="eqi-tray" style="min-height:56px;background:#FBE9CC;border-radius:18px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start">${tray.join('')}</div>
-      <div id="eqi-basket" style="margin-top:12px;min-height:84px;background:#EAF7EF;border:2.5px dashed #7FCFA0;border-radius:20px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;align-items:center;justify-content:center">
+      <div id="eqi-tray" style="min-height:56px;background:#FBE9CC;border-radius:18px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start">${tray.join('')}</div>
+      <div id="eqi-basket" style="margin-top:12px;min-height:64px;background:#EAF7EF;border:2.5px dashed #7FCFA0;border-radius:20px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;align-items:center;justify-content:center">
         <div id="eqi-hintline" style="font:700 13px Nunito;color:#5AA97B">${TX(q.drag.dropLabel)}</div>
       </div>
       <div id="eqi-done" class="press" style="margin-top:12px;height:56px;border-radius:20px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 18px 'Baloo 2';color:#4A3208">${TX(q.drag.doneLabel)}</div>
@@ -126,18 +126,24 @@ EQI_FMT.drag = {
       if (!item || EQIX.done) return;
       e.preventDefault();
       const r = item.getBoundingClientRect();
-      drag = { item: item, dx: e.clientX - r.left, dy: e.clientY - r.top };
+      /* the phone frame is scaled with a CSS transform, and a transformed ancestor
+         becomes the containing block of a fixed element — so the lifted apple is
+         placed in the frame's own unscaled coordinates, not the viewport's */
+      const phone = document.getElementById('phone');
+      const f = phone ? phone.getBoundingClientRect() : { left: 0, top: 0, width: 402 };
+      const k = f.width / 402 || 1;
+      drag = { item: item, dx: e.clientX - r.left, dy: e.clientY - r.top, fx: f.left, fy: f.top, k: k };
       item.style.position = 'fixed';
       item.style.zIndex = '90';
-      item.style.left = r.left + 'px';
-      item.style.top = r.top + 'px';
+      item.style.left = ((r.left - f.left) / k) + 'px';
+      item.style.top = ((r.top - f.top) / k) + 'px';
       item.style.pointerEvents = 'none';
       if (item.setPointerCapture) { try { item.setPointerCapture(e.pointerId); } catch (_) {} }
     };
     const onMove = e => {
       if (!drag) return;
-      drag.item.style.left = (e.clientX - drag.dx) + 'px';
-      drag.item.style.top = (e.clientY - drag.dy) + 'px';
+      drag.item.style.left = ((e.clientX - drag.dx - drag.fx) / drag.k) + 'px';
+      drag.item.style.top = ((e.clientY - drag.dy - drag.fy) / drag.k) + 'px';
     };
     const onUp = e => {
       if (!drag) return;
