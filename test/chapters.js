@@ -53,7 +53,7 @@ vm.createContext(sandbox);
 
 const FILES = ['i18n.js', 'components.js', 'data.js', 'regions.js', 'tracking.js', 'profiles.js', 'qr.js',
   'transfer.js', 'interact.js', 'screens-onboarding.js', 'screens-world.js', 'screens-play.js',
-  'screens-collect.js', 'parent.js', 'app.js'];
+  'screens-collect.js', 'parent.js', 'sound.js', 'app.js'];
 for (const f of FILES) vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox, { filename: f });
 /* the game's files use `const`, which never lands on the context object */
 vm.runInContext('this.EQ = EQ; this.EQD = EQD; this.EQS = EQS; this.EQT = EQT; this.EQ_DEFAULTS = EQ_DEFAULTS; this.TX = TX; this.EQI = EQI;', sandbox);

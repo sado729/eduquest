@@ -3,7 +3,7 @@
   "private": true,
   "description": "EduQuest — offline-first learning adventure (static PWA; no build step)",
   "scripts": {
-    "test": "node test/rest.js && node test/i18n.js && node test/chapters.js && node test/profiles.js && node test/ranges.js && node test/album.js && node test/missions.js && node test/adaptive.js && node test/care.js && node test/formats.js && node test/regions.js && node test/speech.js && node test/bigtext.js",
+    "test": "node test/rest.js && node test/i18n.js && node test/chapters.js && node test/profiles.js && node test/ranges.js && node test/album.js && node test/missions.js && node test/adaptive.js && node test/care.js && node test/formats.js && node test/regions.js && node test/speech.js && node test/bigtext.js && node test/sound.js",
     "test:rest": "node test/rest.js",
     "test:i18n": "node test/i18n.js",
     "test:chapters": "node test/chapters.js",
@@ -15,6 +15,7 @@
     "test:formats": "node test/formats.js",
     "test:regions": "node test/regions.js",
     "test:speech": "node test/speech.js",
-    "test:bigtext": "node test/bigtext.js"
+    "test:bigtext": "node test/bigtext.js",
+    "test:sound": "node test/sound.js"
   }
 }

@@ -107,7 +107,10 @@ const EQX = {
     const flags = (s.onboarded ? 1 : 0) | (s.bossBeaten ? 2 : 0) | (s.chestReady ? 4 : 0) | (s.chestOpened ? 8 : 0)
       | (s.wizardHatOwned ? 16 : 0) | (s.crownOwned ? 32 : 0) | (s.trophyPlaced ? 64 : 0) | (s.pendingLevelUp ? 128 : 0);
     const st = s.settings;
-    const sflags = (st.readAloud ? 1 : 0) | (st.bigText ? 2 : 0) | (st.calm ? 4 : 0) | (st.music ? 8 : 0) | (st.bedtime ? 16 : 0);
+    const sflags = (st.readAloud ? 1 : 0) | (st.bigText ? 2 : 0) | (st.calm ? 4 : 0) | (st.music ? 8 : 0) | (st.bedtime ? 16 : 0)
+      /* 32 = sound effects, 64 = "this code knows about 32". Before the effects had their
+         own switch, bit 8 silenced them, so a code without 64 reads sfx from bit 8 */
+      | (st.sfx ? 32 : 0) | 64;
 
     const rows = keep.map((k, i) => {
       const d = s.track.days[k];
@@ -174,6 +177,7 @@ const EQX = {
       wizardHatOwned: !!(flags & 16), crownOwned: !!(flags & 32), trophyPlaced: !!(flags & 64), pendingLevelUp: !!(flags & 128),
       settings: {
         readAloud: !!(sf[0] & 1), bigText: !!(sf[0] & 2), calm: !!(sf[0] & 4), music: !!(sf[0] & 8), bedtime: !!(sf[0] & 16),
+        sfx: sf[0] & 64 ? !!(sf[0] & 32) : !!(sf[0] & 8),
         limit: sf[1], bedMin: sf[2], lang: this.LANGS[sf[3]], bonusMins: sf[4], bonusDay: at(3)
       },
       lastDay: at(2),
@@ -265,6 +269,8 @@ const EQX = {
     const st = r.settings || {}, o = out.settings;
     o.readAloud = !!st.readAloud; o.bigText = !!st.bigText; o.calm = !!st.calm;
     o.music = !!st.music; o.bedtime = !!st.bedtime;
+    /* a file written before the effects had their own switch: "music" was what silenced them */
+    o.sfx = typeof st.sfx === 'boolean' ? st.sfx : !!st.music;
     o.limit = int(st.limit, 0, 180, o.limit);
     o.bedMin = int(st.bedMin, 0, 1439, o.bedMin);
     o.bonusMins = int(st.bonusMins, 0, 180, 0);

@@ -49,7 +49,7 @@ vm.runInContext(`
 
 /* data.js comes along because EQ.load() reads the real sticker album through EQD —
    loading it beats hand-maintaining a fake copy that would drift from the real one */
-for (const f of ['i18n.js', 'data.js', 'regions.js', 'tracking.js', 'app.js', 'profiles.js']) {
+for (const f of ['i18n.js', 'data.js', 'regions.js', 'tracking.js', 'sound.js', 'app.js', 'profiles.js']) {
   vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox, { filename: f });
 }
 

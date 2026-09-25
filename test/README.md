@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all thirteen suites
+npm test              # all fourteen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -18,6 +18,7 @@ npm run test:formats
 npm run test:regions
 npm run test:speech
 npm run test:bigtext
+npm run test:sound
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -392,3 +393,25 @@ back to doing nothing with nothing looking broken. The suite covers:
 Layout (nothing clipped, nothing overlapping, Done on screen) can only be measured in a
 browser; that was checked in headless Chrome for every child screen and ~400 generated
 questions, three languages, both modes.
+
+## sound.js — the music switch and the sound-effects switch
+
+The parent settings showed "Music · Forest theme · 40%" in a game with no music: the
+switch actually silenced the effect cues. [js/sound.js](../js/sound.js) now holds both —
+`SFX` (taps, chimes, fanfares; `settings.sfx`) and `EQM` (a synthesized forest melody,
+no audio files; `settings.music`). Nothing about a broken version is visible, and most
+of it is hard to catch by ear, so a fake `AudioContext` records every oscillator, what
+it is wired to, and every level a gain is asked for. It obeys the autoplay rule
+(`resume()` only works after a gesture).
+
+Covers: the two switches never affecting each other; the bus really at 0.4 of a cue's
+loudness and 0.2 in calm mode (which also halves the cues — the calm line promises
+"softer sounds"), and the melody ducking while Questy reads aloud; nothing before the
+first touch; silence on the rest screen (including when the limit reroutes there) and in
+a hidden tab; the context suspended whenever nothing is sounding, one wake-up per phrase
+rather than a ticking timer; transfer codes and backup files written before the split
+(bit 8 used to silence everything, so a code without the new marker bit 64 reads `sfx`
+from bit 8, and a saved game without `sfx` inherits it from `music`); and the settings,
+gate and new "Money & ads" screen (`parent_money`) no longer promising purchases that
+never existed, in all three languages.
+

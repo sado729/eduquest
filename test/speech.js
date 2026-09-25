@@ -75,7 +75,7 @@ vm.createContext(sandbox);
 
 const FILES = ['i18n.js', 'components.js', 'data.js', 'regions.js', 'tracking.js', 'profiles.js', 'qr.js',
   'transfer.js', 'screens-onboarding.js', 'screens-world.js', 'interact.js', 'speech.js', 'screens-play.js',
-  'screens-collect.js', 'parent.js', 'app.js'];
+  'screens-collect.js', 'parent.js', 'sound.js', 'app.js'];
 for (const f of FILES) vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), sandbox, { filename: f });
 vm.runInContext('this.EQ = EQ; this.EQD = EQD; this.EQS = EQS; this.EQT = EQT; this.EQV = EQV; this.EQ_DEFAULTS = EQ_DEFAULTS; this.TX = TX; this.EQI = EQI; this.EQIX = EQIX;', sandbox);
 const { EQ, EQD, EQS, EQT, EQV, EQ_DEFAULTS, TX, EQI } = sandbox;

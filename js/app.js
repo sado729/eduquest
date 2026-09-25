@@ -30,33 +30,10 @@ const EQ_DEFAULTS = {
   trophyPlaced: false, pendingLevelUp: false,
   lastVisit: null,
   lastDay: null, questDay: 0, playedDays: [], bestStreak: 1,
-  settings: { readAloud: true, bigText: false, calm: false, music: true, bedtime: true, bedMin: 1200, limit: 45, bonusDay: null, bonusMins: 0, lang: 'az' }
+  settings: { readAloud: true, bigText: false, calm: false, music: true, sfx: true, bedtime: true, bedMin: 1200, limit: 45, bonusDay: null, bonusMins: 0, lang: 'az' }
 };
 
-/* ── tiny synth — every cue has a silent visual twin ── */
-const SFX = {
-  ctx: null,
-  ac() {
-    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; } }
-    return this.ctx;
-  },
-  off() { return !EQ.s.settings.music; },
-  note(freq, at, dur, type, vol) {
-    const c = this.ac(); if (!c) return;
-    const o = c.createOscillator(), g = c.createGain();
-    o.type = type || 'sine'; o.frequency.value = freq;
-    const t = c.currentTime + at;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol || 0.07, t + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(c.destination);
-    o.start(t); o.stop(t + dur + 0.05);
-  },
-  correct() { if (this.off()) return; this.note(523, 0, 0.22); this.note(659, 0.12, 0.3); this.note(1046, 0.2, 0.18, 'sine', 0.03); },
-  wrong() { if (this.off()) return; this.note(220, 0, 0.16, 'triangle', 0.06); this.note(196, 0.14, 0.22, 'triangle', 0.05); },
-  tap() { if (this.off()) return; this.note(660, 0, 0.06, 'sine', 0.025); },
-  fanfare() { if (this.off()) return; [523, 659, 784, 1046].forEach((f, i) => this.note(f, i * 0.11, 0.32, 'sine', 0.06)); }
-};
+/* the sound (effect cues SFX and the forest music EQM) lives in js/sound.js */
 
 const EQ = {
   s: null,
@@ -177,6 +154,9 @@ const EQ = {
     this.s = Object.assign({}, EQ_DEFAULTS, s || {});
     this.s.hero = Object.assign({}, EQ_DEFAULTS.hero, (s && s.hero) || {});
     this.s.settings = Object.assign({}, EQ_DEFAULTS.settings, (s && s.settings) || {});
+    /* before the effects had a switch of their own, "music" silenced them — a child saved
+       then with it off keeps a silent game, and hears the melody only if it was on */
+    if (s && s.settings && typeof s.settings.sfx !== 'boolean') this.s.settings.sfx = !!this.s.settings.music;
     this.s.stickerIds = this.cleanStickers(s && s.stickerIds, this.s.stickers);
     this.s.stickers = this.s.stickerIds.length;
     this.s.regions = this.cleanRegions(s && s.regions);
@@ -284,6 +264,7 @@ const EQ = {
     /* Questy's voice: every navigation silences the last screen (the rest screen too),
        and a question screen reads its question as it opens (js/speech.js) */
     if (typeof EQV !== 'undefined') EQV.route(from, name);
+    if (typeof EQM !== 'undefined') EQM.update(); /* the rest screen is silent */
   },
   nav(tab) {
     SFX.tap();
@@ -935,6 +916,7 @@ const EQ = {
     this.applyCalm();
     this.applyBig();
     this.render();
+    if (typeof EQM !== 'undefined') EQM.update(); /* music on/off, or calm's softer level */
     /* switched off: silent now, not after the sentence. Switched on: the grown-up hears
        exactly what the child will — or, with no voice for this language, nothing, which
        the subtitle under the switch now says plainly */
@@ -1155,6 +1137,7 @@ const EQ = {
     this.applyCalm();
     this.applyBig();
     if (typeof EQV !== 'undefined') EQV.init();
+    if (typeof EQM !== 'undefined') EQM.init(); /* the melody waits for the first touch */
     this.fit();
     window.addEventListener('resize', () => this.fit());
     EQT._t = Date.now();
@@ -1169,11 +1152,12 @@ const EQ = {
     document.addEventListener('visibilitychange', () => {
       EQT.tick();
       if (document.hidden && typeof EQV !== 'undefined') EQV.stop(); /* never talk from a hidden tab */
+      if (typeof EQM !== 'undefined') EQM.update(); /* a hidden tab plays nothing */
       if (document.hidden) this.save();
       else if (!this.checkNewDay(true)) this.restNudge();
     });
     window.addEventListener('focus', () => { if (!this.checkNewDay(true)) this.restNudge(); });
-    window.addEventListener('pagehide', () => { EQT.tick(); this.save(); if (typeof EQV !== 'undefined') EQV.stop(); });
+    window.addEventListener('pagehide', () => { EQT.tick(); this.save(); if (typeof EQV !== 'undefined') EQV.stop(); if (typeof EQM !== 'undefined') EQM.stop(); });
 
     const params = new URLSearchParams(location.search);
 

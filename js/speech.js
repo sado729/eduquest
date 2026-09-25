@@ -155,6 +155,7 @@ const EQV = {
   stop() {
     this.seq++;
     this.speaking = false;
+    this.duck();
     const a = this.api();
     if (a) { try { a.cancel(); } catch (e) { /* nothing to stop */ } }
   },
@@ -178,15 +179,19 @@ const EQV = {
         u.rate = calm ? 0.78 : 0.92;
         u.pitch = calm ? 1.0 : 1.1;
         u.volume = calm ? 0.75 : 1;
-        u.onend = u.onerror = () => { if (my === this.seq) { this.speaking = false; this.paintBtn(); } };
+        u.onend = u.onerror = () => { if (my === this.seq) { this.speaking = false; this.duck(); this.paintBtn(); } };
         if (a.paused) a.resume();
         a.speak(u);
         this.speaking = true;
+        this.duck();
         this.paintBtn();
       } catch (e) { this.speaking = false; }
     }, 60);
     return true;
   },
+
+  /* the forest music steps back while a question is being read (js/sound.js) */
+  duck() { if (typeof EQM !== 'undefined') EQM.duck(this.speaking); },
 
   /* read what the current screen says */
   read(screen) {
