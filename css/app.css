@@ -95,3 +95,43 @@ body.standalone-touch #statusbar{display:none}
 /* a mis-matched pair shakes and comes loose again (js/interact.js) */
 .eqi-shake{animation:eqWobble 240ms ease}
 .calm .eqi-shake{animation:none}
+
+/* bigger text: parent setting settings.bigText → body.bigtext (EQ.applyBig).
+   The screens are fixed-px designs with absolutely placed parts, so only what the child
+   reads is tagged and grown, by about a quarter:
+   .bt  — running text. zoom reflows it inside the width it already had.
+   .btf — a label in a box whose size is part of the layout (answer, button, tile): only
+          the glyphs grow, from the inline --fs, by --bz (a long word grows less — one
+          word cannot wrap). */
+.bigtext .bt{zoom:1.25}
+.bigtext .btf{font-size:calc(var(--fs) * var(--bz, 1.25)) !important}
+/* the question cards hang from a fixed top above answers placed at a fixed top, so
+   grown text would slide the card under the answers. In big text they are anchored just
+   above the answers instead and grow upward over the scenery; the cap keeps them clear
+   of the top bar, and only past it does the card scroll. The answers step up a little
+   so Questy's grown tip below them still clears them */
+.bigtext .bt-card{top:auto !important;bottom:266px;max-height:498px;overflow-y:auto}
+.bigtext .bt-ansrow{top:622px !important}
+.bigtext .bt-tip{zoom:1.15}
+.bigtext .bt-boss{top:auto !important;bottom:238px;max-height:420px;overflow-y:auto}
+/* a hands-on card already reaches the bottom; it grows upward rather than hiding Done
+   under its own scroll */
+.bigtext .bt-hands{top:auto !important;bottom:34px;max-height:728px !important}
+/* tutor: Questy steps back and the explanation card and its picture become one column,
+   so a longer explanation pushes the picture down instead of lying on top of it. The
+   room comes from the "hold to talk" bar, which only says voice is coming (the mic in
+   the top bar says the same) */
+.bt-tflow{display:contents}
+.bigtext .bt-tq{top:108px !important;pointer-events:none}
+.bigtext .bt-tq svg{width:88px !important}
+.bigtext .bt-tvoice{display:none !important}
+.bigtext .bt-tgrid{bottom:30px !important}
+.bigtext .bt-tflow{display:flex;flex-direction:column;gap:8px;position:absolute;top:194px;left:20px;right:20px;bottom:166px;padding-top:12px;overflow-y:auto}
+.bigtext .bt-tflow > *{position:relative !important;top:auto !important;left:auto !important;right:auto !important;flex:none}
+/* the picture's caption sits beside a drawing, so it grows less; and a drawing shrunk
+   with transform still holds its full width, so it is shrunk with zoom to give the
+   caption that width back */
+.bigtext .bt-tvis .bt{zoom:1.12}
+.bigtext .bt-shrink{transform:none !important;zoom:0.8}
+/* Baloo's own line box is tall; on a title that now wraps it leaves a gap a line wide */
+.bigtext .bt-tt{line-height:1.2 !important}

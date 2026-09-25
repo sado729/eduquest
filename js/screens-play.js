@@ -45,10 +45,14 @@ EQS.progressPips = function (s, activeIdx, total) {
 EQS.ansFont = function (a, big) {
   const letters = String(a).match(/\p{L}/gu);
   const n = letters ? letters.length : 0;
-  if (n <= 2) return `font:800 ${big}px 'Baloo 2', system-ui`;
-  if (n <= 6) return `font:800 ${Math.round(big * 0.66)}px 'Baloo 2', system-ui`;
-  if (n <= 10) return `font:800 ${Math.round(big * 0.5)}px 'Baloo 2', system-ui;padding:0 6px;text-align:center`;
-  return `font:800 ${Math.round(big * 0.42)}px 'Baloo 2', system-ui;padding:0 8px;text-align:center;line-height:1.15`;
+  /* --fs / --bz feed the "Bigger text" setting (.btf in css/app.css): a number or a short
+     word grows by a quarter, a long word by less, because one word cannot wrap and a
+     three-across button is only ~115px wide */
+  const f = (px, bz) => `font:800 ${px}px 'Baloo 2', system-ui;--fs:${px}px;--bz:${bz}`;
+  if (n <= 2) return f(big, 1.25);
+  if (n <= 6) return f(Math.round(big * 0.66), n <= 4 ? 1.25 : 1.1);
+  if (n <= 10) return `${f(Math.round(big * 0.5), 1.15)};padding:0 6px;text-align:center`;
+  return `${f(Math.round(big * 0.42), 1.1)};padding:0 8px;text-align:center;line-height:1.15`;
 };
 
 /* 08 · Educational challenge */
@@ -76,7 +80,7 @@ EQS.screens.challenge = function (s) {
      Done button, and the child could not finish the question */
   const tip = q.tip ? TX(q.tip) : TX({ az: 'Tələsmə — mən burada gözləyirəm.', en: 'Take your time — I’ll wait right here.', ru: 'Не спеши — я подожду здесь.' });
   const answers = hands ? '' : EQD.qa(q).answers.map((a, i) => `
-    <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;min-width:0;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;${EQS.ansFont(a, 38)};color:#2A1F45">${a}</div>`).join('');
+    <div class="press ans btf" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;min-width:0;height:96px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;${EQS.ansFont(a, 38)};color:#2A1F45">${a}</div>`).join('');
   return `<div class="scr" style="background:#BFE9FB">
     ${EQS.dragonScene()}
     ${EQC.hero(s.hero, 'position:absolute;left:34px;top:196px;width:78px')}
@@ -85,22 +89,22 @@ EQS.screens.challenge = function (s) {
       <div style="flex:1;display:flex;gap:5px;align-items:center">${EQS.progressPips(s, idx, total)}</div>
       <div class="press" onclick="EQ.go('hint')" style="width:44px;height:44px;border-radius:16px;background:#FFC24B;box-shadow:0 4px 0 #E39B1C;display:flex;align-items:center;justify-content:center;flex:none">${EQC.bulb('#4A3208', 20)}</div>
     </div>
-    <div class="rise" style="position:absolute;top:${hands ? 300 : 352}px;left:16px;right:16px;${hands ? 'max-height:540px;overflow-y:auto;' : ''}background:#FFF7EA;border-radius:30px;padding:20px;box-shadow:0 7px 0 #E0C79A, 0 20px 34px -16px rgba(20,10,40,0.45)">
+    <div class="rise ${hands ? 'bt-hands' : 'bt-card'}" style="position:absolute;top:${hands ? 300 : 352}px;left:16px;right:16px;${hands ? 'max-height:540px;overflow-y:auto;' : ''}background:#FFF7EA;border-radius:30px;padding:20px;box-shadow:0 7px 0 #E0C79A, 0 20px 34px -16px rgba(20,10,40,0.45)">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="padding:4px 10px;border-radius:10px;background:#E4F6FF;font:800 10px Nunito;color:#2196C9;letter-spacing:1.2px">${TX(q.tag)}</div>
         <div style="font:700 11px Nunito;color:#A08A5E">${counter}</div>
         ${typeof EQV !== 'undefined' ? EQV.btn() : ''}
       </div>
-      <div style="font:800 21px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.25">${TX(q.title)}</div>
-      ${hands ? `<div style="font:700 12px Nunito;color:#8A7550;margin-top:6px;line-height:1.4">${tip}</div>` : ''}
+      <div class="bt" style="font:800 21px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.25">${TX(q.title)}</div>
+      ${hands ? `<div class="bt" style="font:700 12px Nunito;color:#8A7550;margin-top:6px;line-height:1.4">${tip}</div>` : ''}
       ${q.visual()}
       ${panel}
     </div>
-    <div style="position:absolute;top:640px;left:16px;right:16px;display:flex;gap:12px">${answers}</div>
+    <div class="bt-ansrow" style="position:absolute;top:640px;left:16px;right:16px;display:flex;gap:12px">${answers}</div>
     ${hands ? '' : `<div style="position:absolute;bottom:44px;left:16px;right:16px;display:flex;align-items:flex-end;gap:10px">
       ${EQC.questy('thinking', 'width:76px', s.questyFur, s.questyFurDark)}
       <div style="flex:1;background:rgba(30,21,54,0.9);border-radius:22px;border-bottom-left-radius:8px;padding:14px 16px">
-        <div style="font:700 14px Nunito;color:#fff;line-height:1.5">${tip}</div>
+        <div class="bt bt-tip" style="font:700 14px Nunito;color:#fff;line-height:1.5">${tip}</div>
       </div>
     </div>`}
   </div>`;
@@ -188,19 +192,19 @@ EQS.screens.hint = function (s) {
     <div style="position:absolute;top:210px;left:20px;right:20px;display:flex;gap:12px;align-items:flex-start">
       <div style="width:82px;flex:none">${EQC.questy('encouraging', 'width:82px', s.questyFur, s.questyFurDark)}</div>
       <div class="rise" style="flex:1;background:#FFF7EA;border-radius:24px;border-bottom-left-radius:8px;padding:16px 18px;box-shadow:0 6px 0 rgba(20,10,40,0.35)">
-        <div style="display:flex;align-items:flex-start;gap:8px"><div style="font:800 18px 'Baloo 2', system-ui;color:#2A1F45">${TX(h.heading)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
-        <div style="font:700 14px Nunito;color:#5C4E7E;margin-top:6px;line-height:1.5">${TX(h.sub)}</div>
+        <div style="display:flex;align-items:flex-start;gap:8px"><div class="bt" style="font:800 18px 'Baloo 2', system-ui;color:#2A1F45">${TX(h.heading)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
+        <div class="bt" style="font:700 14px Nunito;color:#5C4E7E;margin-top:6px;line-height:1.5">${TX(h.sub)}</div>
       </div>
     </div>
     <div class="rise" style="position:absolute;top:440px;left:0;right:0;bottom:0;background:#FFF7EA;border-radius:36px 36px 0 0;padding:24px 20px">
-      <div style="display:flex;align-items:center;gap:9px"><div style="width:34px;height:34px;border-radius:12px;background:#FFC24B;display:flex;align-items:center;justify-content:center">${EQC.bulb('#4A3208', 17)}</div><div style="font:800 18px 'Baloo 2', system-ui;color:#2A1F45">${TX(h.panelTitle)}</div></div>
+      <div style="display:flex;align-items:center;gap:9px"><div style="width:34px;height:34px;border-radius:12px;background:#FFC24B;display:flex;align-items:center;justify-content:center">${EQC.bulb('#4A3208', 17)}</div><div class="bt" style="font:800 18px 'Baloo 2', system-ui;color:#2A1F45">${TX(h.panelTitle)}</div></div>
       ${h.body()}
-      <div style="margin-top:10px;font:700 12px Nunito;color:#8B7A55">${TX(h.note)}</div>
+      <div class="bt" style="margin-top:10px;font:700 12px Nunito;color:#8B7A55">${TX(h.note)}</div>
       <div style="margin-top:22px;display:flex;flex-direction:column;gap:11px">
-        <div class="press" onclick="EQ.go('${backTo}')" style="height:64px;border-radius:22px;background:#3DBE6E;box-shadow:0 5px 0 #2A9455;display:flex;align-items:center;justify-content:center;font:800 19px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Yenidən yoxlayacağam', en: 'I&#39;ll try again', ru: 'Попробую ещё раз' })}</div>
+        <div class="press btf" onclick="EQ.go('${backTo}')" style="height:64px;border-radius:22px;background:#3DBE6E;box-shadow:0 5px 0 #2A9455;display:flex;align-items:center;justify-content:center;font:800 19px 'Baloo 2', system-ui;--fs:19px;color:#fff">${TX({ az: 'Yenidən yoxlayacağam', en: 'I&#39;ll try again', ru: 'Попробую ещё раз' })}</div>
         <div style="display:flex;gap:11px">
-          <div class="press" onclick="EQ.go('tutor')" style="flex:1;height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 4px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:7px;font:800 15px 'Baloo 2';color:#7A6438"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="3" fill="none" stroke="#7A6438" stroke-width="2.2"></rect><path d="M8 10 h8 M8 14 h5" stroke="#7A6438" stroke-width="2.2" stroke-linecap="round"></path></svg>${TX({ az: 'Nümunə göstər', en: 'Show example', ru: 'Покажи пример' })}</div>
-          <div class="press" onclick="EQ.go('tutor')" style="flex:1;height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 4px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:7px;font:800 15px 'Baloo 2';color:#7A6438"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 3 a9 9 0 1 0 0.01 0 Z" fill="none" stroke="#7A6438" stroke-width="2.2"></path><path d="M9.6 9.4 a2.6 2.6 0 1 1 3.4 2.4 v1.6 M12.4 17 h0.01" stroke="#7A6438" stroke-width="2.2" stroke-linecap="round"></path></svg>${TX({ az: 'İzah et', en: 'Explain it', ru: 'Объясни' })}</div>
+          <div class="press btf" onclick="EQ.go('tutor')" style="flex:1;height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 4px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:7px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#7A6438"><svg width="17" height="17" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="3" fill="none" stroke="#7A6438" stroke-width="2.2"></rect><path d="M8 10 h8 M8 14 h5" stroke="#7A6438" stroke-width="2.2" stroke-linecap="round"></path></svg>${TX({ az: 'Nümunə göstər', en: 'Show example', ru: 'Покажи пример' })}</div>
+          <div class="press btf" onclick="EQ.go('tutor')" style="flex:1;height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 4px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:7px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#7A6438"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 3 a9 9 0 1 0 0.01 0 Z" fill="none" stroke="#7A6438" stroke-width="2.2"></path><path d="M9.6 9.4 a2.6 2.6 0 1 1 3.4 2.4 v1.6 M12.4 17 h0.01" stroke="#7A6438" stroke-width="2.2" stroke-linecap="round"></path></svg>${TX({ az: 'İzah et', en: 'Explain it', ru: 'Объясни' })}</div>
         </div>
       </div>
     </div>
@@ -218,11 +222,11 @@ EQS.screens.tutor = function (s) {
     visual: () => ''
   };
   const backTo = EQ.session.ctx === 'boss' ? 'boss' : 'challenge';
-  const whyBlock = EQ.session.tutorWhy ? `<div class="rise" style="margin-top:10px;padding:12px 14px;border-radius:16px;background:#FBE9CC;font:700 13px Nunito;color:#7A6438;line-height:1.5;position:relative">${TX(ex.why)}</div>` : '';
+  const whyBlock = EQ.session.tutorWhy ? `<div class="rise" style="margin-top:10px;padding:12px 14px;border-radius:16px;background:#FBE9CC;position:relative"><div class="bt" style="font:700 13px Nunito;color:#7A6438;line-height:1.5">${TX(ex.why)}</div></div>` : '';
   const easierLabel = TX({ az: 'Daha asanını ver', en: 'An easier one', ru: 'Полегче' });
   const easierBtn = q.easier
-    ? `<div class="press" onclick="EQ.easierOne()" style="height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 5px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2';color:#7A6438">${easierLabel}</div>`
-    : `<div class="press" onclick="EQ.toast(TX({az:'Bu elə asan olanıdır — bacararsan!',en:'This is the easy one — you can do it!',ru:'Это и есть лёгкое — у тебя получится!'}))" style="height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 5px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2';color:#7A6438">${easierLabel}</div>`;
+    ? `<div class="press btf" onclick="EQ.easierOne()" style="height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 5px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#7A6438">${easierLabel}</div>`
+    : `<div class="press btf" onclick="EQ.toast(TX({az:'Bu elə asan olanıdır — bacararsan!',en:'This is the easy one — you can do it!',ru:'Это и есть лёгкое — у тебя получится!'}))" style="height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 5px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#7A6438">${easierLabel}</div>`;
   const voiceToast = `EQ.toast(TX({az:'Danışmaq üçün basıb-saxlama səs dəstəyi ilə gəlir 🎤',en:'Hold to talk is coming with voice support 🎤',ru:'Удержание для разговора появится вместе с голосовой поддержкой 🎤'}))`;
   return `<div class="scr" style="background:#2C1F52">
     <div style="position:absolute;top:0;left:0;right:0;height:520px;background:radial-gradient(300px 260px at 50% 40%, rgba(123,92,255,0.55), rgba(44,31,82,0) 72%)"></div>
@@ -231,23 +235,25 @@ EQS.screens.tutor = function (s) {
       <div style="flex:1"><div style="font:800 18px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Questy kömək edir', en: 'Questy helps', ru: 'Квести помогает' })}</div><div style="font:700 10px Nunito;color:#A896E0;letter-spacing:1px">${TX(q.tag)} · ${TX({ az: 'VALİDEYN TƏSDİQLİ', en: 'PARENT-APPROVED', ru: 'ОДОБРЕНО РОДИТЕЛЯМИ' })}</div></div>
       <div class="press" onclick="${voiceToast}" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4 a4 4 0 0 1 4 4 v3 a4 4 0 0 1 -8 0 V8 a4 4 0 0 1 4-4 Z" fill="#fff"></path><path d="M6 12 a6 6 0 0 0 12 0 M12 18 v3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"></path></svg></div>
     </div>
-    <div class="float" style="position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center">${EQC.questy('hint', 'width:170px', s.questyFur, s.questyFurDark)}</div>
+    <div class="float bt-tq" style="position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center">${EQC.questy('hint', 'width:170px', s.questyFur, s.questyFurDark)}</div>
+    <div class="bt-tflow">
     <div class="rise" id="tutor-card" style="position:absolute;top:346px;left:20px;right:20px;background:#FFF7EA;border-radius:28px;padding:18px;box-shadow:0 7px 0 rgba(0,0,0,0.28)">
       <div style="position:absolute;top:-11px;left:52px;width:24px;height:24px;background:#FFF7EA;border-radius:6px;transform:rotate(45deg)"></div>
-      <div style="display:flex;align-items:flex-start;gap:8px;position:relative"><div style="font:800 19px 'Baloo 2', system-ui;color:#2A1F45">${TX(ex.title)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
-      <div style="font:700 14.5px Nunito;color:#5C4E7E;margin-top:8px;line-height:1.55;position:relative">${TX(ex.text)}</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;position:relative"><div class="bt bt-tt" style="font:800 19px 'Baloo 2', system-ui;color:#2A1F45">${TX(ex.title)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
+      <div class="bt" style="font:700 14.5px Nunito;color:#5C4E7E;margin-top:8px;line-height:1.55;position:relative">${TX(ex.text)}</div>
       ${whyBlock}
     </div>
-    <div style="position:absolute;top:${EQ.session.tutorWhy ? 560 : 500}px;left:20px;right:20px;background:rgba(255,255,255,0.09);border-radius:26px;padding:16px">
+    <div class="bt-tvis" style="position:absolute;top:${EQ.session.tutorWhy ? 560 : 500}px;left:20px;right:20px;background:rgba(255,255,255,0.09);border-radius:26px;padding:16px">
       ${ex.visual()}
     </div>
-    <div style="position:absolute;bottom:110px;left:20px;right:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="press" onclick="EQ.tutorAgain()" style="height:58px;border-radius:20px;background:#FFF7EA;box-shadow:0 5px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Bir də göstər', en: 'Show me again', ru: 'Покажи ещё раз' })}</div>
-      <div class="press" onclick="EQ.tutorWhy()" style="height:58px;border-radius:20px;background:#FFF7EA;box-shadow:0 5px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2';color:#2A1F45">${TX({ az: 'Niyə?', en: 'Why?', ru: 'Почему?' })}</div>
-      ${easierBtn}
-      <div class="press" onclick="EQ.go('${backTo}')" style="height:58px;border-radius:20px;background:#5CE39B;box-shadow:0 5px 0 #2FA76D;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2';color:#0B3D25">${TX({ az: 'Başa düşdüm!', en: 'I&#39;ve got it!', ru: 'Я понял!' })}</div>
     </div>
-    <div class="press" onclick="${voiceToast}" style="position:absolute;bottom:28px;left:20px;right:20px;height:58px;border-radius:22px;background:rgba(255,255,255,0.09);display:flex;align-items:center;justify-content:center;gap:10px;font:800 14px Nunito;color:#C9BCEF"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4 a4 4 0 0 1 4 4 v3 a4 4 0 0 1 -8 0 V8 a4 4 0 0 1 4-4 Z" fill="#C9BCEF"></path><path d="M6 12 a6 6 0 0 0 12 0 M12 18 v3" stroke="#C9BCEF" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>${TX({ az: 'Questy ilə danışmaq üçün basıb saxla', en: 'Hold to talk to Questy', ru: 'Удерживай, чтобы поговорить с Квести' })}</div>
+    <div class="bt-tgrid" style="position:absolute;bottom:110px;left:20px;right:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="press btf" onclick="EQ.tutorAgain()" style="height:58px;border-radius:20px;background:#FFF7EA;box-shadow:0 5px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#2A1F45">${TX({ az: 'Bir də göstər', en: 'Show me again', ru: 'Покажи ещё раз' })}</div>
+      <div class="press btf" onclick="EQ.tutorWhy()" style="height:58px;border-radius:20px;background:#FFF7EA;box-shadow:0 5px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#2A1F45">${TX({ az: 'Niyə?', en: 'Why?', ru: 'Почему?' })}</div>
+      ${easierBtn}
+      <div class="press btf" onclick="EQ.go('${backTo}')" style="height:58px;border-radius:20px;background:#5CE39B;box-shadow:0 5px 0 #2FA76D;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#0B3D25">${TX({ az: 'Başa düşdüm!', en: 'I&#39;ve got it!', ru: 'Я понял!' })}</div>
+    </div>
+    <div class="press bt-tvoice" onclick="${voiceToast}" style="position:absolute;bottom:28px;left:20px;right:20px;height:58px;border-radius:22px;background:rgba(255,255,255,0.09);display:flex;align-items:center;justify-content:center;gap:10px;font:800 14px Nunito;color:#C9BCEF"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4 a4 4 0 0 1 4 4 v3 a4 4 0 0 1 -8 0 V8 a4 4 0 0 1 4-4 Z" fill="#C9BCEF"></path><path d="M6 12 a6 6 0 0 0 12 0 M12 18 v3" stroke="#C9BCEF" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>${TX({ az: 'Questy ilə danışmaq üçün basıb saxla', en: 'Hold to talk to Questy', ru: 'Удерживай, чтобы поговорить с Квести' })}</div>
   </div>`;
 };
 
@@ -266,7 +272,7 @@ EQS.screens.boss = function (s) {
   const hands = !!(typeof EQIX !== 'undefined' && q.kind && EQIX.fmt(q));
   const panel = hands ? EQIX.render(q, s) : '';
   const answers = hands ? '' : EQD.qa(q).answers.map((a, i) => `
-    <div class="press ans" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;min-width:0;height:84px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;${EQS.ansFont(a, 34)};color:#2A1F45">${a}</div>`).join('');
+    <div class="press ans btf" id="ans-${i}" onclick="EQ.answer(${i})" style="flex:1;min-width:0;height:84px;border-radius:26px;background:#fff;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;${EQS.ansFont(a, 34)};color:#2A1F45">${a}</div>`).join('');
   const beam = EQ.session.bossBeam ? `
     <div class="pop" style="position:absolute;top:308px;left:18px;width:150px;height:80px">
       <div style="position:absolute;left:0;top:28px;right:0;height:18px;border-radius:9px;background:linear-gradient(90deg, rgba(92,227,155,0) 0%, rgba(92,227,155,0.9) 100%);box-shadow:0 0 22px rgba(92,227,155,0.8)"></div>
@@ -324,9 +330,9 @@ EQS.screens.boss = function (s) {
 
     <div style="position:absolute;top:196px;right:6px">${creature}</div>
     ${beam}
-    <div class="rise" style="position:absolute;top:400px;left:16px;right:16px;background:#FFF7EA;border-radius:30px;padding:16px;box-shadow:0 7px 0 #C9BCA6, 0 20px 34px -16px rgba(0,0,0,0.5)">
+    <div class="rise bt-boss" style="position:absolute;top:400px;left:16px;right:16px;background:#FFF7EA;border-radius:30px;padding:16px;box-shadow:0 7px 0 #C9BCA6, 0 20px 34px -16px rgba(0,0,0,0.5)">
       <div style="display:flex;align-items:center;gap:8px"><div style="padding:4px 10px;border-radius:10px;background:#EFE7FF;font:800 10px Nunito;color:#5B3FD6;letter-spacing:1.2px">${TX(q.tag)}</div><div style="font:700 11px Nunito;color:#A08A5E">${TX(q.meta)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
-      <div style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.3">${TX(q.title)}</div>
+      <div class="bt" style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45;margin-top:12px;line-height:1.3">${TX(q.title)}</div>
       ${q.visual()}
       ${panel}
     </div>
@@ -334,7 +340,7 @@ EQS.screens.boss = function (s) {
     <div style="position:absolute;bottom:26px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
       ${EQC.hero(Object.assign({}, s.hero, { hat: s.hero.hat === 'none' && s.wizardHatOwned ? 'wizard' : s.hero.hat }), 'width:54px')}
       ${EQC.questy('thinking', 'width:46px', s.questyFur, s.questyFurDark)}
-      <div class="press" onclick="EQ.go('hint')" style="flex:1;height:50px;border-radius:18px;background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:center;gap:8px;font:800 14px 'Baloo 2';color:#FFD98A">${EQC.bulb('#FFD98A', 18)}${TX({ az: 'Questy-dən ipucu istə', en: 'Ask Questy for a hint', ru: 'Попроси у Квести подсказку' })}</div>
+      <div class="press btf" onclick="EQ.go('hint')" style="flex:1;height:50px;border-radius:18px;background:rgba(255,255,255,0.10);display:flex;align-items:center;justify-content:center;gap:8px;font:800 14px 'Baloo 2', system-ui;--fs:14px;--bz:1.15;color:#FFD98A">${EQC.bulb('#FFD98A', 18)}${TX({ az: 'Questy-dən ipucu istə', en: 'Ask Questy for a hint', ru: 'Попроси у Квести подсказку' })}</div>
     </div>
   </div>`;
 };

@@ -95,14 +95,14 @@ EQI_FMT.drag = {
     }
     return `<div style="margin-top:14px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="font:700 12px Nunito;color:#A08A5E;flex:1">${TX(q.drag.trayLabel)}</div>
-        <div id="eqi-count" style="padding:5px 12px;border-radius:12px;background:#EFE7FF;font:800 15px 'Baloo 2';color:#5B3FD6">0</div>
+        <div class="bt" style="font:700 12px Nunito;color:#A08A5E;flex:1">${TX(q.drag.trayLabel)}</div>
+        <div id="eqi-count" class="btf" style="padding:5px 12px;border-radius:12px;background:#EFE7FF;font:800 15px 'Baloo 2';--fs:15px;color:#5B3FD6">0</div>
       </div>
       <div id="eqi-tray" style="min-height:56px;background:#FBE9CC;border-radius:18px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start">${tray.join('')}</div>
       <div id="eqi-basket" style="margin-top:12px;min-height:64px;background:#EAF7EF;border:2.5px dashed #7FCFA0;border-radius:20px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;align-items:center;justify-content:center">
-        <div id="eqi-hintline" style="font:700 13px Nunito;color:#5AA97B">${TX(q.drag.dropLabel)}</div>
+        <div id="eqi-hintline" class="bt" style="font:700 13px Nunito;color:#5AA97B">${TX(q.drag.dropLabel)}</div>
       </div>
-      <div id="eqi-done" class="press" style="margin-top:12px;height:56px;border-radius:20px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 18px 'Baloo 2';color:#4A3208">${TX(q.drag.doneLabel)}</div>
+      <div id="eqi-done" class="press btf" style="margin-top:12px;height:56px;border-radius:20px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 18px 'Baloo 2', system-ui;--fs:18px;color:#4A3208">${TX(q.drag.doneLabel)}</div>
     </div>`;
   },
 
@@ -205,10 +205,10 @@ EQI_FMT.pair = {
   render(q, st) {
     /* a cell may be a number, a picture or a word in three languages (reading pairs) */
     const col = (side, items) => items.map((it, i) =>
-      `<div class="eqi-p" id="eqi-${side}${i}" data-side="${side}" data-i="${i}" style="height:52px;border-radius:16px;background:#fff;box-shadow:0 4px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2';color:#2A1F45">${TX(it)}</div>`
+      `<div class="eqi-p btf" id="eqi-${side}${i}" data-side="${side}" data-i="${i}" style="height:52px;border-radius:16px;background:#fff;box-shadow:0 4px 0 #C9BCA6;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;--fs:22px;--bz:1.2;color:#2A1F45">${TX(it)}</div>`
     ).join('');
     return `<div style="margin-top:14px">
-      <div style="font:700 12px Nunito;color:#A08A5E;margin-bottom:10px">${TX(q.pair.label)}</div>
+      <div class="bt" style="font:700 12px Nunito;color:#A08A5E;margin-bottom:10px">${TX(q.pair.label)}</div>
       <div style="display:flex;gap:14px">
         <div style="flex:1;display:flex;flex-direction:column;gap:9px">${col('L', q.pair.left)}</div>
         <div style="flex:1;display:flex;flex-direction:column;gap:9px">${col('R', q.pair.rightShown)}</div>
@@ -294,16 +294,16 @@ EQI_FMT.order = {
 
   render(q, st) {
     return `<div style="margin-top:14px">
-      <div style="font:700 12px Nunito;color:#A08A5E;margin-bottom:10px">${TX(q.order.label)}</div>
+      <div class="bt" style="font:700 12px Nunito;color:#A08A5E;margin-bottom:10px">${TX(q.order.label)}</div>
       <div id="eqi-row" style="display:flex;gap:8px">${this.tiles(st)}</div>
-      <div id="eqi-done" class="press" style="margin-top:14px;height:56px;border-radius:20px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 18px 'Baloo 2';color:#4A3208">${TX(q.order.doneLabel)}</div>
+      <div id="eqi-done" class="press btf" style="margin-top:14px;height:56px;border-radius:20px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;display:flex;align-items:center;justify-content:center;font:800 18px 'Baloo 2', system-ui;--fs:18px;color:#4A3208">${TX(q.order.doneLabel)}</div>
     </div>`;
   },
 
   tiles(st) {
     return st.cur.map((v, i) => {
       const on = i === st.sel;
-      return `<div class="eqi-t press" data-i="${i}" style="flex:1;height:68px;border-radius:18px;background:${on ? '#EFE7FF' : '#fff'};box-shadow:0 5px 0 ${on ? '#7B5CFF' : '#C9BCA6'};display:flex;align-items:center;justify-content:center;font:800 26px 'Baloo 2';color:${on ? '#5B3FD6' : '#2A1F45'}">${v}</div>`;
+      return `<div class="eqi-t press btf" data-i="${i}" style="flex:1;height:68px;border-radius:18px;background:${on ? '#EFE7FF' : '#fff'};box-shadow:0 5px 0 ${on ? '#7B5CFF' : '#C9BCA6'};display:flex;align-items:center;justify-content:center;font:800 26px 'Baloo 2', system-ui;--fs:26px;--bz:1.2;color:${on ? '#5B3FD6' : '#2A1F45'}">${v}</div>`;
     }).join('');
   },
 

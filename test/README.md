@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all twelve suites
+npm test              # all thirteen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -17,6 +17,7 @@ npm run test:care
 npm run test:formats
 npm run test:regions
 npm run test:speech
+npm run test:bigtext
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -357,3 +358,37 @@ words lowered so BALIQ is read rather than spelled (with az `İ`→`i`), calm mo
 and softer, an engine that throws swallowed, every `EQV` call in app.js behind a
 `typeof` guard (the other suites load app.js without speech.js), and speech.js being in
 index.html and the sw.js precache.
+
+## bigtext.js — the "Bigger text" switch
+
+The parent settings had a "Daha böyük mətn — daha iri yazılar və cavablar" switch that
+was saved, rode in the transfer code, and changed nothing on any screen. It now sets
+`body.bigtext` (`EQ.applyBig()`, the same pattern as calm mode).
+
+The screens are fixed-px designs with absolutely placed parts, so nothing is scaled
+wholesale. Only what the child reads is tagged: `.bt` (running text, grown with `zoom`,
+so it reflows inside the width it had) and `.btf` (a label inside a box whose size is part
+of the layout — answers, buttons, tiles — grown from its inline `--fs` by `--bz`; a long
+word grows less because one word cannot wrap). The question cards are re-anchored in big
+text so they grow upward instead of sliding under the answers (`.bt-card`, `.bt-boss`,
+`.bt-hands`), and the tutor's card and picture become one column (`.bt-tflow`).
+
+A design re-sync restores the screens without any of these tags, and the switch goes
+back to doing nothing with nothing looking broken. The suite covers:
+
+1. **The class follows the setting** — on the switch, at boot, and on switching child:
+   the setting is per child, a new child starts without it, removing the playing child
+   applies the next child's own.
+2. **It moves with the child** — code and file round trips, a code written before this
+   change (the bit was already in the format; `transfer.js` is untouched), a file with no
+   field reading as off, and the whole import → reload → class on.
+3. **The markup** — every topic and format × challenge/hint/tutor/boss × three languages
+   carries its tags, and no `.btf` element lacks `--fs` (without it the `calc()` is
+   invalid and the label falls back to the inherited size — a 38px answer would drop to
+   16px in the very mode meant to make it bigger).
+4. **The stylesheet and the ship** — the rules the tags point at exist, nothing is scaled
+   outside `body.bigtext`, `boot()` applies it, the sw.js cache was bumped.
+
+Layout (nothing clipped, nothing overlapping, Done on screen) can only be measured in a
+browser; that was checked in headless Chrome for every child screen and ~400 generated
+questions, three languages, both modes.

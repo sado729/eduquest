@@ -83,6 +83,7 @@ const EQP = {
     EQ.load();
     EQI.set(EQ.s.settings.lang || 'az');
     EQ.applyCalm();
+    EQ.applyBig(); /* each child's own "bigger text": one may read fine, a sibling not yet */
   },
 
   /* new child: a clean state, opened in the language the grown-up is already reading */
@@ -106,6 +107,7 @@ const EQP = {
       EQ.load();
       EQI.set(EQ.s.settings.lang || 'az');
       EQ.applyCalm();
+      EQ.applyBig();
     }
     this.ids = this.ids.filter(x => x !== id);
     this.save();

@@ -81,8 +81,8 @@ EQD.vPic = function (emoji, h) {
 /* one letter per tile; `hide` is the index drawn as the empty, glowing box */
 EQD.vTiles = function (letters, hide) {
   const cells = letters.map((ch, i) => i === hide
-    ? `<div style="flex:1;max-width:52px;height:54px;border-radius:16px;background:rgba(123,92,255,0.18);box-shadow:0 0 0 2.5px #7B5CFF inset;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;color:#7B5CFF">?</div>`
-    : `<div style="flex:1;max-width:52px;height:54px;border-radius:16px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;color:#fff">${ch}</div>`).join('');
+    ? `<div class="btf" style="flex:1;max-width:52px;height:54px;border-radius:16px;background:rgba(123,92,255,0.18);box-shadow:0 0 0 2.5px #7B5CFF inset;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;--fs:22px;--bz:1.2;color:#7B5CFF">?</div>`
+    : `<div class="btf" style="flex:1;max-width:52px;height:54px;border-radius:16px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;--fs:22px;--bz:1.2;color:#fff">${ch}</div>`).join('');
   return `<div style="margin-top:12px;display:flex;gap:6px;justify-content:center">${cells}</div>`;
 };
 
@@ -112,7 +112,7 @@ EQD.vStrike = function (opts, out) {
   const cells = opts.map(o => {
     const gone = o === out;
     const big = EQD.isShort(o);
-    return `<div style="flex:1;min-height:64px;padding:6px;border-radius:18px;background:${gone ? '#F1E6D2' : '#fff'};box-shadow:0 4px 0 ${gone ? '#E0D2B8' : '#C9BCA6'};display:flex;align-items:center;justify-content:center;text-align:center;font:800 ${big ? 30 : 14}px 'Baloo 2', system-ui;color:#2A1F45;line-height:1.15;${gone ? 'opacity:0.45;text-decoration:line-through;' : ''}position:relative">${o}${gone ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 40px Nunito;color:#E06327">✕</div>' : ''}</div>`;
+    return `<div class="btf" style="flex:1;min-height:64px;padding:6px;border-radius:18px;background:${gone ? '#F1E6D2' : '#fff'};box-shadow:0 4px 0 ${gone ? '#E0D2B8' : '#C9BCA6'};display:flex;align-items:center;justify-content:center;text-align:center;font:800 ${big ? 30 : 14}px 'Baloo 2', system-ui;--fs:${big ? 30 : 14}px;--bz:${big ? 1.1 : 1.2};color:#2A1F45;line-height:1.15;${gone ? 'opacity:0.45;text-decoration:line-through;' : ''}position:relative">${o}${gone ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 40px Nunito;color:#E06327">✕</div>' : ''}</div>`;
   }).join('');
   return `<div style="margin-top:16px;display:flex;gap:8px">${cells}</div>`;
 };
@@ -341,7 +341,7 @@ EQD._qLetter = function (ri, hard, noEasier) {
         en: 'Knowing first letters makes new words much easier to read.',
         ru: 'Когда знаешь первые буквы, новые слова читать гораздо легче.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:2px"><span style="color:#FFC24B">${TX(L)}</span>${Array.from(TX(W)).slice(1).join('')}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Sarı hərf — sözün ilk hərfi.', en: 'The yellow letter is the first one.', ru: 'Жёлтая буква — первая в слове.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:2px"><span style="color:#FFC24B">${TX(L)}</span>${Array.from(TX(W)).slice(1).join('')}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Sarı hərf — sözün ilk hərfi.', en: 'The yellow letter is the first one.', ru: 'Жёлтая буква — первая в слове.' })}</div></div></div>`
     }
   });
   /* the step down shows the word with only its first letter gone — the same question
@@ -410,7 +410,7 @@ EQD._qWord = function (ri, hard, alt, noEasier) {
         en: 'Turning letters into sounds and blending them — that is reading.',
         ru: 'Превращать буквы в звуки и соединять их — это и есть чтение.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:2px">${TX(W)}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${Array.from(TX(W)).join(' · ')}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:2px">${TX(W)}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${Array.from(TX(W)).join(' · ')}</div></div></div>`
     }
   });
   if (!noEasier) q.easier = EQD._qWord(ri, false, false, true);
@@ -535,7 +535,7 @@ EQD._qMissing = function (ri, hard, noEasier, pos) {
         en: 'Listening to each sound in a word helps you spell it too.',
         ru: 'Когда слушаешь каждый звук, легче и писать слово правильно.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:2px">${TX(letters).map((c, i) => i === TX(at) ? `<span style="color:#FFC24B">${c}</span>` : c).join('')}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Sarı hərf boşluğa yerləşdi.', en: 'The yellow letter filled the gap.', ru: 'Жёлтая буква заполнила пропуск.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:2px">${TX(letters).map((c, i) => i === TX(at) ? `<span style="color:#FFC24B">${c}</span>` : c).join('')}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Sarı hərf boşluğa yerləşdi.', en: 'The yellow letter filled the gap.', ru: 'Жёлтая буква заполнила пропуск.' })}</div></div></div>`
     }
   });
   if (!noEasier) q.easier = EQD._qMissing(ri, false, true, 0);
@@ -607,7 +607,7 @@ EQD._qBuild = function (ri, hard, noEasier) {
         en: 'Hearing sounds in order is what lets you write words by yourself.',
         ru: 'Кто слышит звуки по порядку, тот может сам писать слова.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:4px">${TX(W)}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX(sorted).join(' → ')}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="font-size:56px;line-height:1;flex:none">${it.e}</div><div style="flex:1"><div style="font:800 24px 'Baloo 2', system-ui;color:#fff;letter-spacing:4px">${TX(W)}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX(sorted).join(' → ')}</div></div></div>`
     }
   });
   if (!noEasier) q.easier = EQD._qBuild(ri, false, true);
@@ -900,7 +900,7 @@ EQD._qFact = function (topic, ri, hard, noEasier) {
       title: T.explainTitle[kind],
       text: f.why,
       why: T.explainWhy[kind],
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;min-width:64px;height:64px;padding:0 10px;border-radius:20px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font:800 ${EQD.isShort(TX(f.a)) ? 40 : 16}px 'Baloo 2', system-ui;color:#fff;line-height:1">${TX(f.a)}</div><div style="flex:1;font:700 13px Nunito;color:#C9BCEF;line-height:1.5">${TX(f.q)}</div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;min-width:64px;height:64px;padding:0 10px;border-radius:20px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font:800 ${EQD.isShort(TX(f.a)) ? 40 : 16}px 'Baloo 2', system-ui;color:#fff;line-height:1">${TX(f.a)}</div><div class="bt" style="flex:1;font:700 13px Nunito;color:#C9BCEF;line-height:1.5">${TX(f.q)}</div></div>`
     }
   });
   if (!noEasier) q.easier = EQD._qFact(topic, ri, false, true);

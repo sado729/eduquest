@@ -113,7 +113,7 @@ EQD.QUESTIONS = [
       },
       visual: () => `<div style="display:flex;align-items:center;gap:16px">
         <svg width="96" height="96" viewBox="0 0 150 96">${EQC.apple(30, 26)}${EQC.apple(66, 22)}${EQC.apple(102, 28)}${EQC.apple(48, 60)}${EQC.apple(86, 62)}</svg>
-        <div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Beş təzə alma', en: 'Five new apples', ru: 'Пять новых яблок' })}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: '«Yeddi» de, sonra sayaraq hər təzə almaya toxun.', en: 'Say “seven”, then touch each new apple as you count up.', ru: 'Скажи «семь», а потом касайся каждого нового яблока и считай дальше.' })}</div></div>
+        <div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Beş təzə alma', en: 'Five new apples', ru: 'Пять новых яблок' })}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: '«Yeddi» de, sonra sayaraq hər təzə almaya toxun.', en: 'Say “seven”, then touch each new apple as you count up.', ru: 'Скажи «семь», а потом касайся каждого нового яблока и считай дальше.' })}</div></div>
       </div>`
     },
     easier: {
@@ -190,7 +190,7 @@ EQD.QUESTIONS = [
       },
       visual: () => `<div style="display:flex;align-items:center;gap:16px">
         <svg width="96" height="80" viewBox="0 0 120 80"><g fill="#FFC24B"><circle cx="16" cy="56" r="10"></circle><circle cx="44" cy="44" r="10"></circle><circle cx="72" cy="32" r="10"></circle><circle cx="100" cy="20" r="10"></circle></g><path d="M22 48 q8-10 16 0 M50 36 q8-10 16 0 M78 24 q8-10 16 0" stroke="#5CE39B" stroke-width="3" fill="none" stroke-linecap="round"></path></svg>
-        <div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Eyni ölçülü sıçrayışlar', en: 'Same-size jumps', ru: 'Одинаковые прыжки' })}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər hoppanış ikilik qalxır. 8-dən bir dəfə də hoppan.', en: 'Every hop climbs by two. Hop once more from 8.', ru: 'Каждый прыжок поднимает на два. Прыгни ещё раз от 8.' })}</div></div>
+        <div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Eyni ölçülü sıçrayışlar', en: 'Same-size jumps', ru: 'Одинаковые прыжки' })}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər hoppanış ikilik qalxır. 8-dən bir dəfə də hoppan.', en: 'Every hop climbs by two. Hop once more from 8.', ru: 'Каждый прыжок поднимает на два. Прыгни ещё раз от 8.' })}</div></div>
       </div>`
     },
     easier: {
@@ -252,7 +252,7 @@ EQD.BOSS = [
         en: 'Groups let you count big things quickly — that’s what multiplying is.',
         ru: 'Группы позволяют быстро считать большое — это и есть умножение.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(3, 4, '#C8B4FF')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">4 + 4 + 4</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Üç bərabər sıra. Dörd-dörd, üç dəfə sıçra.', en: 'Three equal rows. Jump by four, three times.', ru: 'Три равных ряда. Прыгай по четыре, три раза.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(3, 4, '#C8B4FF')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">4 + 4 + 4</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Üç bərabər sıra. Dörd-dörd, üç dəfə sıçra.', en: 'Three equal rows. Jump by four, three times.', ru: 'Три равных ряда. Прыгай по четыре, три раза.' })}</div></div></div>`
     }
   },
   {
@@ -286,7 +286,7 @@ EQD.BOSS = [
         en: 'Doubles come up all the time — knowing them makes bigger sums easy.',
         ru: 'Двойные встречаются постоянно — зная их, легче складывать большие числа.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, 6, '#8FDCF7')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">6 + 6</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki bərabər halqa sırası — yadda saxlaya biləcəyin qoşa.', en: 'Two equal rows of rings — a double you can remember.', ru: 'Два равных ряда колец — двойное, которое легко запомнить.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, 6, '#8FDCF7')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">6 + 6</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki bərabər halqa sırası — yadda saxlaya biləcəyin qoşa.', en: 'Two equal rows of rings — a double you can remember.', ru: 'Два равных ряда колец — двойное, которое легко запомнить.' })}</div></div></div>`
     }
   },
   {
@@ -320,7 +320,7 @@ EQD.BOSS = [
         en: 'Counting back works for any “how many are left?” question.',
         ru: 'Счёт назад работает для любого вопроса «сколько осталось?».'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(3, 5, '#E0A365')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">15 − 6</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Altı taxta hazırdır — on beşdən altı addım geriyə get.', en: 'Six planks are done — step back six from fifteen.', ru: 'Шесть досок готовы — отступи на шесть от пятнадцати.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(3, 5, '#E0A365')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">15 − 6</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Altı taxta hazırdır — on beşdən altı addım geriyə get.', en: 'Six planks are done — step back six from fifteen.', ru: 'Шесть досок готовы — отступи на шесть от пятнадцати.' })}</div></div></div>`
     }
   },
   {
@@ -350,7 +350,7 @@ EQD.BOSS = [
         en: 'Same-size groups mean you can double instead of counting one by one.',
         ru: 'Равные группы позволяют удваивать, а не считать по одному.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, 4, '#FFB08A')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">4 + 4</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Bir tərəf, sonra o biri. İkiqat elə.', en: 'One side, then the other. Double it.', ru: 'Одна сторона, потом другая. Удвой.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, 4, '#FFB08A')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">4 + 4</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Bir tərəf, sonra o biri. İkiqat elə.', en: 'One side, then the other. Double it.', ru: 'Одна сторона, потом другая. Удвой.' })}</div></div></div>`
     }
   }
 ];
@@ -673,7 +673,7 @@ EQD._qAdd = function (ri, hard) {
         en: `Starting from the bigger number saves you counting the first ${a} all over again — same answer, shorter trip.`,
         ru: `Начав с большего числа, не придётся заново считать первые ${a} ${RUP(a, 'яблоко', 'яблока', 'яблок')} — ответ тот же, путь короче.`
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;width:120px">${EQC.appleBox(b)}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: `${b} təzə alma`, en: `${b} new apples`, ru: `${b} ${RUP(b, 'новое яблоко', 'новых яблока', 'новых яблок')}` })}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `«${a}» de, sonra sayaraq hər təzə almaya toxun.`, en: `Say “${a}”, then touch each new apple as you count up.`, ru: `Скажи «${a}», а потом касайся каждого нового яблока и считай дальше.` })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;width:120px">${EQC.appleBox(b)}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: `${b} təzə alma`, en: `${b} new apples`, ru: `${b} ${RUP(b, 'новое яблоко', 'новых яблока', 'новых яблок')}` })}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `«${a}» de, sonra sayaraq hər təzə almaya toxun.`, en: `Say “${a}”, then touch each new apple as you count up.`, ru: `Скажи «${a}», а потом касайся каждого нового яблока и считай дальше.` })}</div></div></div>`
     },
     easier: EQD._qAddEasy(ri)
   };
@@ -755,7 +755,7 @@ EQD._qPattern = function (ri) {
         en: 'When you know the rule, you never have to guess — you can keep the pattern going forever.',
         ru: 'Когда знаешь правило, не нужно угадывать — узор можно продолжать бесконечно.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><svg width="96" height="80" viewBox="0 0 120 80"><g fill="#FFC24B"><circle cx="16" cy="56" r="10"></circle><circle cx="44" cy="44" r="10"></circle><circle cx="72" cy="32" r="10"></circle><circle cx="100" cy="20" r="10"></circle></g><path d="M22 48 q8-10 16 0 M50 36 q8-10 16 0 M78 24 q8-10 16 0" stroke="#5CE39B" stroke-width="3" fill="none" stroke-linecap="round"></path></svg><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Eyni ölçülü sıçrayışlar', en: 'Same-size jumps', ru: 'Одинаковые прыжки' })}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `Hər hoppanış ${step} qalxır. ${seq[3]}-${AZD(seq[3])} bir dəfə də hoppan.`, en: `Every hop climbs by ${step}. Hop once more from ${seq[3]}.`, ru: `Каждый прыжок поднимает на ${step}. Прыгни ещё раз от ${seq[3]}.` })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><svg width="96" height="80" viewBox="0 0 120 80"><g fill="#FFC24B"><circle cx="16" cy="56" r="10"></circle><circle cx="44" cy="44" r="10"></circle><circle cx="72" cy="32" r="10"></circle><circle cx="100" cy="20" r="10"></circle></g><path d="M22 48 q8-10 16 0 M50 36 q8-10 16 0 M78 24 q8-10 16 0" stroke="#5CE39B" stroke-width="3" fill="none" stroke-linecap="round"></path></svg><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Eyni ölçülü sıçrayışlar', en: 'Same-size jumps', ru: 'Одинаковые прыжки' })}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `Hər hoppanış ${step} qalxır. ${seq[3]}-${AZD(seq[3])} bir dəfə də hoppan.`, en: `Every hop climbs by ${step}. Hop once more from ${seq[3]}.`, ru: `Каждый прыжок поднимает на ${step}. Прыгни ещё раз от ${seq[3]}.` })}</div></div></div>`
     },
     easier: {
       tag: EQD._tagPattern, subject: EQD._subjLogic, subj: 'logic',
@@ -831,7 +831,7 @@ EQD._qGroups = function (ri, hard) {
         en: 'Groups let you count big things quickly — that’s what multiplying is.',
         ru: 'Группы позволяют быстро считать большое — это и есть умножение.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(rows, cols, '#C8B4FF')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${Array(rows).fill(cols).join(' + ')}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `${rows} bərabər sıra. ${rows} dəfə, hər dəfə ${cols} sıçra.`, en: `${rows} equal rows. Jump by ${cols}, ${rows} times.`, ru: `${rows} ${RUP(rows, 'равный ряд', 'равных ряда', 'равных рядов')}. Прыгай по ${cols}, ${rows} ${RUP(rows, 'раз', 'раза', 'раз')}.` })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(rows, cols, '#C8B4FF')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${Array(rows).fill(cols).join(' + ')}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `${rows} bərabər sıra. ${rows} dəfə, hər dəfə ${cols} sıçra.`, en: `${rows} equal rows. Jump by ${cols}, ${rows} times.`, ru: `${rows} ${RUP(rows, 'равный ряд', 'равных ряда', 'равных рядов')}. Прыгай по ${cols}, ${rows} ${RUP(rows, 'раз', 'раза', 'раз')}.` })}</div></div></div>`
     }
   };
 };
@@ -886,7 +886,7 @@ EQD._qTakeAway = function (ri) {
         en: 'Counting back works for any “how many are left?” question.',
         ru: 'Счёт назад работает для любого вопроса «сколько осталось?».'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, Math.ceil(total / 2), '#E0A365')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${total} − ${take}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `${take} taxta hazırdır — ${total}-${AZD(total)} ${take} addım geriyə get.`, en: `${take} planks are done — step back ${take} from ${total}.`, ru: `${take} ${RUP(take, 'доска готова', 'доски готовы', 'досок готово')} — отступи на ${take} от ${total}.` })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, Math.ceil(total / 2), '#E0A365')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${total} − ${take}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: `${take} taxta hazırdır — ${total}-${AZD(total)} ${take} addım geriyə get.`, en: `${take} planks are done — step back ${take} from ${total}.`, ru: `${take} ${RUP(take, 'доска готова', 'доски готовы', 'досок готово')} — отступи на ${take} от ${total}.` })}</div></div></div>`
     }
   };
 };
@@ -932,7 +932,7 @@ EQD._qDouble = function (ri, hard) {
         en: 'Doubles come up all the time — knowing them makes bigger sums easy.',
         ru: 'Двойные встречаются постоянно — зная их, легче складывать большие числа.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, n, '#8FDCF7')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${n} + ${n}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki bərabər halqa sırası — yadda saxlaya biləcəyin qoşa.', en: 'Two equal rows of rings — a double you can remember.', ru: 'Два равных ряда колец — двойное, которое легко запомнить.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, n, '#8FDCF7')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${n} + ${n}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki bərabər halqa sırası — yadda saxlaya biləcəyin qoşa.', en: 'Two equal rows of rings — a double you can remember.', ru: 'Два равных ряда колец — двойное, которое легко запомнить.' })}</div></div></div>`
     }
   };
 };
@@ -1014,7 +1014,7 @@ EQD._qDragCount = function (ri, hard) {
         en: 'One-to-one counting keeps working with big numbers too — it leaves no room to slip.',
         ru: 'Счёт по одному работает и с большими числами — ошибиться почти невозможно.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;width:120px">${EQC.appleBox(Math.min(10, c))}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${c}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər almaya bir dəfə toxun.', en: 'Touch each apple exactly once.', ru: 'Коснись каждого яблока ровно один раз.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="flex:none;width:120px">${EQC.appleBox(Math.min(10, c))}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${c}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər almaya bir dəfə toxun.', en: 'Touch each apple exactly once.', ru: 'Коснись каждого яблока ровно один раз.' })}</div></div></div>`
     },
     easier: EQD._qAddEasy(ri)
   };
@@ -1093,7 +1093,7 @@ EQD._qPairDouble = function (ri, hard) {
         en: 'Knowing your doubles makes bigger sums easy.',
         ru: 'Зная двойные, легче складывать большие числа.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, bases[0], '#8FDCF7')}</div><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${bases[0]} + ${bases[0]} = ${bases[0] * 2}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki eyni sıra — bir qoşa.', en: 'Two identical rows — one double.', ru: 'Два одинаковых ряда — одно двойное.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><div class="bt-shrink" style="transform:scale(0.8);transform-origin:left center">${EQD.vGrid(2, bases[0], '#8FDCF7')}</div><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${bases[0]} + ${bases[0]} = ${bases[0] * 2}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'İki eyni sıra — bir qoşa.', en: 'Two identical rows — one double.', ru: 'Два одинаковых ряда — одно двойное.' })}</div></div></div>`
     }
   };
 };
@@ -1167,7 +1167,7 @@ EQD._qOrder = function (ri, hard) {
         en: 'Comparing two numbers at a time is always easy — however many there are.',
         ru: 'Сравнивать по два всегда просто — сколько бы их ни было.'
       },
-      visual: () => `<div style="display:flex;align-items:center;gap:16px"><svg width="96" height="80" viewBox="0 0 120 80"><g fill="#FFC24B"><rect x="8" y="56" width="22" height="18" rx="5"></rect><rect x="36" y="44" width="22" height="30" rx="5"></rect><rect x="64" y="30" width="22" height="44" rx="5"></rect><rect x="92" y="14" width="22" height="60" rx="5"></rect></g></svg><div style="flex:1"><div style="font:800 15px 'Baloo 2', system-ui;color:#fff">${sorted.join(' · ')}</div><div style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər pillə əvvəlkindən hündürdür.', en: 'Each step is taller than the one before.', ru: 'Каждая ступень выше предыдущей.' })}</div></div></div>`
+      visual: () => `<div style="display:flex;align-items:center;gap:16px"><svg width="96" height="80" viewBox="0 0 120 80"><g fill="#FFC24B"><rect x="8" y="56" width="22" height="18" rx="5"></rect><rect x="36" y="44" width="22" height="30" rx="5"></rect><rect x="64" y="30" width="22" height="44" rx="5"></rect><rect x="92" y="14" width="22" height="60" rx="5"></rect></g></svg><div style="flex:1"><div class="bt" style="font:800 15px 'Baloo 2', system-ui;color:#fff">${sorted.join(' · ')}</div><div class="bt" style="font:700 13px Nunito;color:#C9BCEF;margin-top:5px;line-height:1.5">${TX({ az: 'Hər pillə əvvəlkindən hündürdür.', en: 'Each step is taller than the one before.', ru: 'Каждая ступень выше предыдущей.' })}</div></div></div>`
     }
   };
 };

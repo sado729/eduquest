@@ -933,6 +933,7 @@ const EQ = {
     this.s.settings[key] = !this.s.settings[key];
     this.save();
     this.applyCalm();
+    this.applyBig();
     this.render();
     /* switched off: silent now, not after the sentence. Switched on: the grown-up hears
        exactly what the child will — or, with no voice for this language, nothing, which
@@ -988,6 +989,12 @@ const EQ = {
     this.toast(TX({ az: 'Rədd edildi — Questy yenisini təklif etdi', en: 'Dismissed — Questy suggested something new', ru: 'Отклонено — Квести предложил другое' }));
   },
   applyCalm() { document.body.classList.toggle('calm', !!this.s.settings.calm); },
+  /* "Bigger text" (parent settings) — the same body-class switch as calm mode. The screens
+     are fixed-px designs laid out with position:absolute, so the class does not scale
+     anything wholesale: css/app.css grows only what the child reads (tagged .bt / .btf)
+     and re-anchors the question cards so the larger text pushes them up, not under the
+     answer buttons */
+  applyBig() { document.body.classList.toggle('bigtext', !!this.s.settings.bigText); },
   resetDemo() {
     const many = EQP.ids.length > 1;
     const ask = many
@@ -1146,6 +1153,7 @@ const EQ = {
     this.load();
     EQI.set(this.s.settings.lang || 'az');
     this.applyCalm();
+    this.applyBig();
     if (typeof EQV !== 'undefined') EQV.init();
     this.fit();
     window.addEventListener('resize', () => this.fit());
