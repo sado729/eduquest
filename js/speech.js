@@ -62,8 +62,9 @@ const EQV = {
     const changed = () => {
       load();
       this.ready = true;
-      /* the settings subtitle depends on the list: redraw it once the voices arrive */
-      if (typeof EQ !== 'undefined' && EQ.current === 'parent_settings') EQ.render();
+      /* the settings subtitle and the button-only screens (hint, tutor) depend on the
+         list: redraw them once the voices arrive */
+      if (typeof EQ !== 'undefined' && ['parent_settings', 'hint', 'tutor'].indexOf(EQ.current) >= 0) EQ.render();
     };
     try {
       if (a.addEventListener) a.addEventListener('voiceschanged', changed);
@@ -229,18 +230,36 @@ const EQV = {
   },
 
   /* ── the speaker button ── */
-  btn(dark) {
+  btn(dark, cls) {
     if (!this.can()) return '';
     const bg = dark ? 'rgba(255,255,255,0.14)' : '#E4F6FF';
     const fg = dark ? '#fff' : '#2196C9';
-    return `<div class="press" id="eqv-btn" onclick="EQV.tap()" aria-label="${TX({ az: 'Səsli oxu', en: 'Read aloud', ru: 'Прочитать вслух' })}" style="margin-left:auto;width:34px;height:34px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;flex:none;position:relative">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 9 h4 l5-4 v14 l-5-4 H4 Z" fill="${fg}"></path><path id="eqv-wave" d="M16 8.5 a4.5 4.5 0 0 1 0 7 M18.5 6 a8 8 0 0 1 0 12" stroke="${fg}" stroke-width="2" fill="none" stroke-linecap="round" opacity="${this.speaking ? 1 : 0.55}"></path></svg>
+    return `<div class="press${cls ? ' ' + cls : ''}" id="eqv-btn" onclick="EQV.tap()" aria-label="${TX({ az: 'Səsli oxu', en: 'Read aloud', ru: 'Прочитать вслух' })}" style="margin-left:auto;width:34px;height:34px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;flex:none;position:relative">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 9 h4 l5-4 v14 l-5-4 H4 Z" fill="${fg}"></path><path class="eqv-wave" d="M16 8.5 a4.5 4.5 0 0 1 0 7 M18.5 6 a8 8 0 0 1 0 12" stroke="${fg}" stroke-width="2" fill="none" stroke-linecap="round" opacity="${this.speaking ? 1 : 0.55}"></path></svg>
     </div>`;
+  },
+  /* the tutor's big "Questy, read it" bar. It took the place of a "hold to talk" bar that
+     only ever showed a "coming soon" toast: listening would mean speech recognition, and
+     in Chrome that sends the child's voice to Google's servers — the game promises that
+     nothing leaves the device. No voice (switch off, no voice of this language, no API)
+     means no bar, never a promise. */
+  bigBtn(cls) {
+    if (!this.can()) return '';
+    return `<div class="press${cls ? ' ' + cls : ''}" id="eqv-big" onclick="EQV.tap()" style="position:absolute;bottom:28px;left:20px;right:20px;height:58px;border-radius:22px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;gap:10px;font:800 15px 'Baloo 2', system-ui;color:#fff">
+      <svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 9 h4 l5-4 v14 l-5-4 H4 Z" fill="#fff"></path><path class="eqv-wave" d="M16 8.5 a4.5 4.5 0 0 1 0 7 M18.5 6 a8 8 0 0 1 0 12" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity="${this.speaking ? 1 : 0.55}"></path></svg>
+      <span class="eqv-lbl">${this.label()}</span>
+    </div>`;
+  },
+  label() {
+    return this.speaking
+      ? TX({ az: 'Dayandır', en: 'Stop', ru: 'Стоп' })
+      : TX({ az: 'Questy oxusun', en: 'Let Questy read it', ru: 'Пусть Квести прочитает' });
   },
   paintBtn() {
     try {
-      const w = document.getElementById('eqv-wave');
-      if (w) w.setAttribute('opacity', this.speaking ? '1' : '0.55');
+      const all = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
+      all('.eqv-wave').forEach(w => w.setAttribute('opacity', this.speaking ? '1' : '0.55'));
+      all('.eqv-lbl').forEach(l => { l.textContent = this.label(); });
     } catch (e) { /* no DOM */ }
   }
 };

@@ -227,19 +227,22 @@ EQS.screens.tutor = function (s) {
   const easierBtn = q.easier
     ? `<div class="press btf" onclick="EQ.easierOne()" style="height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 5px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#7A6438">${easierLabel}</div>`
     : `<div class="press btf" onclick="EQ.toast(TX({az:'Bu elə asan olanıdır — bacararsan!',en:'This is the easy one — you can do it!',ru:'Это и есть лёгкое — у тебя получится!'}))" style="height:58px;border-radius:20px;background:#FBE9CC;box-shadow:0 5px 0 #E8D0A8;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#7A6438">${easierLabel}</div>`;
-  const voiceToast = `EQ.toast(TX({az:'Danışmaq üçün basıb-saxlama səs dəstəyi ilə gəlir 🎤',en:'Hold to talk is coming with voice support 🎤',ru:'Удержание для разговора появится вместе с голосовой поддержкой 🎤'}))`;
+  /* only a mission is something a grown-up actually approved (screen 26) — an everyday
+     question's explanation is the game's own, so it does not claim a parent's stamp */
+  const approved = EQ.session.ctx === 'mission'
+    ? ` · ${TX({ az: 'VALİDEYN TƏSDİQLİ', en: 'PARENT-APPROVED', ru: 'ОДОБРЕНО РОДИТЕЛЯМИ' })}` : '';
+  const voice = typeof EQV !== 'undefined';
   return `<div class="scr" style="background:#2C1F52">
     <div style="position:absolute;top:0;left:0;right:0;height:520px;background:radial-gradient(300px 260px at 50% 40%, rgba(123,92,255,0.55), rgba(44,31,82,0) 72%)"></div>
     <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:12px">
       <div class="press" onclick="EQ.go('hint')" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center">${EQC.chevL('#fff', 19)}</div>
-      <div style="flex:1"><div style="font:800 18px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Questy kömək edir', en: 'Questy helps', ru: 'Квести помогает' })}</div><div style="font:700 10px Nunito;color:#A896E0;letter-spacing:1px">${TX(q.tag)} · ${TX({ az: 'VALİDEYN TƏSDİQLİ', en: 'PARENT-APPROVED', ru: 'ОДОБРЕНО РОДИТЕЛЯМИ' })}</div></div>
-      <div class="press" onclick="${voiceToast}" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4 a4 4 0 0 1 4 4 v3 a4 4 0 0 1 -8 0 V8 a4 4 0 0 1 4-4 Z" fill="#fff"></path><path d="M6 12 a6 6 0 0 0 12 0 M12 18 v3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"></path></svg></div>
+      <div style="flex:1"><div style="font:800 18px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Questy kömək edir', en: 'Questy helps', ru: 'Квести помогает' })}</div><div style="font:700 10px Nunito;color:#A896E0;letter-spacing:1px">${TX(q.tag)}${approved}</div></div>
     </div>
     <div class="float bt-tq" style="position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center">${EQC.questy('hint', 'width:170px', s.questyFur, s.questyFurDark)}</div>
     <div class="bt-tflow">
     <div class="rise" id="tutor-card" style="position:absolute;top:346px;left:20px;right:20px;background:#FFF7EA;border-radius:28px;padding:18px;box-shadow:0 7px 0 rgba(0,0,0,0.28)">
       <div style="position:absolute;top:-11px;left:52px;width:24px;height:24px;background:#FFF7EA;border-radius:6px;transform:rotate(45deg)"></div>
-      <div style="display:flex;align-items:flex-start;gap:8px;position:relative"><div class="bt bt-tt" style="font:800 19px 'Baloo 2', system-ui;color:#2A1F45">${TX(ex.title)}</div>${typeof EQV !== 'undefined' ? EQV.btn() : ''}</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;position:relative"><div class="bt bt-tt" style="font:800 19px 'Baloo 2', system-ui;color:#2A1F45">${TX(ex.title)}</div>${voice ? EQV.btn(false, 'eqv-bigonly') : ''}</div>
       <div class="bt" style="font:700 14.5px Nunito;color:#5C4E7E;margin-top:8px;line-height:1.55;position:relative">${TX(ex.text)}</div>
       ${whyBlock}
     </div>
@@ -253,7 +256,7 @@ EQS.screens.tutor = function (s) {
       ${easierBtn}
       <div class="press btf" onclick="EQ.go('${backTo}')" style="height:58px;border-radius:20px;background:#5CE39B;box-shadow:0 5px 0 #2FA76D;display:flex;align-items:center;justify-content:center;gap:8px;font:800 15px 'Baloo 2', system-ui;--fs:15px;--bz:1.2;color:#0B3D25">${TX({ az: 'Başa düşdüm!', en: 'I&#39;ve got it!', ru: 'Я понял!' })}</div>
     </div>
-    <div class="press bt-tvoice" onclick="${voiceToast}" style="position:absolute;bottom:28px;left:20px;right:20px;height:58px;border-radius:22px;background:rgba(255,255,255,0.09);display:flex;align-items:center;justify-content:center;gap:10px;font:800 14px Nunito;color:#C9BCEF"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 4 a4 4 0 0 1 4 4 v3 a4 4 0 0 1 -8 0 V8 a4 4 0 0 1 4-4 Z" fill="#C9BCEF"></path><path d="M6 12 a6 6 0 0 0 12 0 M12 18 v3" stroke="#C9BCEF" stroke-width="2" fill="none" stroke-linecap="round"></path></svg>${TX({ az: 'Questy ilə danışmaq üçün basıb saxla', en: 'Hold to talk to Questy', ru: 'Удерживай, чтобы поговорить с Квести' })}</div>
+    ${voice ? EQV.bigBtn('bt-tvoice') : ''}
   </div>`;
 };
 

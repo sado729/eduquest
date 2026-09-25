@@ -240,7 +240,7 @@ for (const lang of LANGS) {
     if (tagOf(h, /class="press btf"/g) < 3) bad.push(id + ': hint buttons not .btf');
     if (!/class="bt-tflow"[\s\S]*id="tutor-card"[\s\S]*class="bt-tvis"/.test(tu)) bad.push(id + ': tutor card and picture are not one .bt-tflow column');
     if (!/class="bt bt-tt"/.test(tu) || tagOf(tu, /class="press btf"/g) < 4) bad.push(id + ': tutor title/buttons untagged');
-    if (!/class="bt-tgrid"/.test(tu) || !/class="press bt-tvoice"/.test(tu) || !/class="float bt-tq"/.test(tu)) bad.push(id + ': tutor layout hooks missing');
+    if (!/class="bt-tgrid"/.test(tu) || (/id="eqv-big"/.test(tu) && !/bt-tvoice/.test(tu)) || !/class="float bt-tq"/.test(tu)) bad.push(id + ': tutor layout hooks missing');
     if (!q.kind) {
       const b = show(q, 'boss', t);
       if (!/class="rise bt-boss"/.test(b) || tagOf(b, /class="press ans btf"/g) !== EQD.qa(q).answers.length) bad.push(id + ': boss card/answers untagged');

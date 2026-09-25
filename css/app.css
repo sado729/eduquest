@@ -119,9 +119,11 @@ body.standalone-touch #statusbar{display:none}
 .bigtext .bt-hands{top:auto !important;bottom:34px;max-height:728px !important}
 /* tutor: Questy steps back and the explanation card and its picture become one column,
    so a longer explanation pushes the picture down instead of lying on top of it. The
-   room comes from the "hold to talk" bar, which only says voice is coming (the mic in
-   the top bar says the same) */
+   room comes from the big "Questy, read it" bar; in its place the card keeps its small
+   speaker, which normal mode hides because the bar does the same job */
 .bt-tflow{display:contents}
+.eqv-bigonly{display:none !important}
+.bigtext .eqv-bigonly{display:flex !important}
 .bigtext .bt-tq{top:108px !important;pointer-events:none}
 .bigtext .bt-tq svg{width:88px !important}
 .bigtext .bt-tvoice{display:none !important}

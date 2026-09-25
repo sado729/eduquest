@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all fourteen suites
+npm test              # all fifteen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -19,6 +19,7 @@ npm run test:regions
 npm run test:speech
 npm run test:bigtext
 npm run test:sound
+npm run test:tutor
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -414,4 +415,24 @@ rather than a ticking timer; transfer codes and backup files written before the 
 from bit 8, and a saved game without `sfx` inherits it from `music`); and the settings,
 gate and new "Money & ads" screen (`parent_money`) no longer promising purchases that
 never existed, in all three languages.
+
+## tutor.js — the tutor's "Questy, read it" bar and its header
+
+The tutor screen had two microphones — a corner button and a big "hold to talk to
+Questy" bar — and both only showed a toast that hold-to-talk "is coming". Real listening
+was ruled out, not postponed: browser speech recognition streams the child's voice to
+Google's servers (the game says nothing leaves the device), needs a connection, and has
+no usable Azerbaijani model for a six-year-old. The bar is now "Questy oxusun": it reads
+the card through js/speech.js, on the device. The corner mic is gone.
+
+Covers, in all three languages: the bar reads the card's heading and explanation (and
+the "why" once it is open) in the language's own voice; it says "Stop" while speaking and
+a second tap hushes it; in Söz Vadisi it never reads an explanation that states the
+answer; with the switch off, no voice of the language (the usual az phone), no voices or
+no speech API there is **no bar at all** — never a mic, a toast or a "coming"; bigger
+text swaps the bar for the card's small speaker; "PARENT-APPROVED" appears only on a
+parent's mission, not on daily, guardian or region questions; and no `js/` file uses
+`SpeechRecognition`, `getUserMedia` or `MediaRecorder`. Verified red against five seeded
+regressions (label always on, bar without a voice, reading answer spoken, mic toast
+back, a recognition call added).
 
