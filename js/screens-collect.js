@@ -10,7 +10,9 @@ EQS.screens.wardrobe = function (s) {
     none: `<svg width="34" height="34" viewBox="0 0 36 36"><circle cx="18" cy="18" r="12" fill="none" stroke="#C9BCA6" stroke-width="3" stroke-dasharray="5 6"></circle></svg>`,
     explorer: `<svg width="34" height="34" viewBox="0 0 36 36"><ellipse cx="18" cy="24" rx="16" ry="4" fill="#C98A4B"></ellipse><path d="M8 24 q0-14 10-14 q10 0 10 14 Z" fill="#E0A365"></path><rect x="7" y="20" width="22" height="5" rx="2.5" fill="#7B5CFF"></rect></svg>`,
     wizard: `<svg width="34" height="34" viewBox="0 0 36 36"><ellipse cx="18" cy="26" rx="15" ry="4" fill="#8A6BE0"></ellipse><path d="M18 4 L30 24 H6 Z" fill="#7B5CFF"></path><path d="M18 12 l2.4 5 5 2.4 -5 2 -2.4 5 -2.4-5 -5-2 5-2.4 Z" fill="#FFE9A8"></path></svg>`,
-    crown: `<svg width="34" height="34" viewBox="0 0 36 36"><path d="M6 24 L11 8 L18 16 L25 8 L30 24 Z" fill="#FFC24B"></path><circle cx="12" cy="19" r="2" fill="#FF5D73"></circle><circle cx="24" cy="19" r="2" fill="#45C6F0"></circle></svg>`
+    crown: `<svg width="34" height="34" viewBox="0 0 36 36"><path d="M6 24 L11 8 L18 16 L25 8 L30 24 Z" fill="#FFC24B"></path><circle cx="12" cy="19" r="2" fill="#FF5D73"></circle><circle cx="24" cy="19" r="2" fill="#45C6F0"></circle></svg>`,
+    diver: `<svg width="34" height="34" viewBox="0 0 36 36"><rect x="15" y="2" width="6" height="4" rx="1.5" fill="#B7832A"></rect><circle cx="18" cy="17" r="12.5" fill="#D9A441"></circle><circle cx="18" cy="18" r="7" fill="#BDEBFF" stroke="#B7832A" stroke-width="2.2"></circle><rect x="7" y="27" width="22" height="5" rx="2.5" fill="#B7832A"></rect></svg>`,
+    space: `<svg width="34" height="34" viewBox="0 0 36 36"><path d="M26 7 l3-4" stroke="#8FA3C4" stroke-width="1.8" stroke-linecap="round"></path><circle cx="29.5" cy="3" r="2.2" fill="#FF5D73"></circle><circle cx="18" cy="17" r="12.5" fill="#DDF3FF" stroke="#8FA3C4" stroke-width="2"></circle><path d="M10.5 13 q3-6 9-7" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"></path><rect x="7" y="27" width="22" height="5" rx="2.5" fill="#9B7CFF"></rect></svg>`
   };
   const cardOn = 'border-radius:22px;background:#fff;box-shadow:0 5px 0 #E0C79A, 0 0 0 3px #3DBE6E inset;padding:9px 6px;text-align:center;position:relative';
   const cardOff = 'border-radius:22px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:9px 6px;text-align:center;position:relative';
@@ -45,17 +47,24 @@ EQS.screens.wardrobe = function (s) {
         <div style="font:700 10px Nunito;color:#A197BC">${hh.lockNote}</div>
       </div>`;
     }).join('');
-    grid += `
-      <div class="press" onclick="EQ.toast(TX({az:'Dalğıc Dəbilqəsi Elm Adasında açılır 🌊',en:'Diver Helm unlocks in Science Island 🌊',ru:'Шлем Водолаза откроется на Острове Науки 🌊'}))" style="${cardLock}">
-        <svg width="34" height="34" viewBox="0 0 36 36" opacity="0.4"><path d="M6 26 h24 l-3-8 H9 Z" fill="#8878A8"></path><path d="M12 18 q6-12 12 0 Z" fill="#8878A8"></path></svg>
-        <div style="font:800 12px 'Baloo 2';color:#8878A8;margin-top:4px">${TX({ az: 'Dalğıc Dəbilqəsi', en: 'Diver Helm', ru: 'Шлем Водолаза' })}</div>
-        <div style="font:700 10px Nunito;color:#A197BC">${TX({ az: 'Elm Adası', en: 'Science Island', ru: 'Остров Науки' })}</div>
-      </div>
-      <div class="press" onclick="EQ.toast(TX({az:'Kosmik Dəbilqə 15-ci səviyyədə açılır 🚀',en:'Space Helm unlocks at Level 15 🚀',ru:'Космический шлем откроется на 15-м уровне 🚀'}))" style="${cardLock}">
-        <svg width="34" height="34" viewBox="0 0 36 36" opacity="0.4"><ellipse cx="18" cy="24" rx="14" ry="4" fill="#8878A8"></ellipse><path d="M9 24 q2-16 9-16 q7 0 9 16 Z" fill="#8878A8"></path></svg>
-        <div style="font:800 12px 'Baloo 2';color:#8878A8;margin-top:4px">${TX({ az: 'Kosmik Dəbilqə', en: 'Space Helm', ru: 'Космошлем' })}</div>
-        <div style="font:700 10px Nunito;color:#A197BC">${TX({ az: 'Səviyyə 15-ə çat', en: 'Reach Level 15', ru: 'Достигни 15 уровня' })}</div>
+    /* the region helmets: earned by a region's first full round (EQ.earnHelms), and the
+       card says exactly that — plus the region's level while it is still shut */
+    grid += EQD.HELMS.map(hm => {
+      const wearing = s.hero.hat === hm.key;
+      if (s[hm.flag]) return `<div class="press" onclick="EQ.wearHat('${hm.key}')" style="${wearing ? cardOn : cardOff}">
+        ${wearing ? wearBadge : ''}${hatIcon[hm.key]}
+        <div style="font:800 12px 'Baloo 2';color:#2A1F45;margin-top:4px">${TX(hm.name)}</div>
+        <div style="font:700 10px Nunito;color:${wearing ? '#3DBE6E' : '#8B7A55'}">${wearing ? wearingLbl : ownedLbl}</div>
       </div>`;
+      const shut = !EQ.regionOpen(hm.region);
+      const lv = EQD.REGIONS[hm.region].level;
+      return `<div class="press" onclick="EQ.helmHow('${hm.key}')" style="${cardLock}">
+        <div style="opacity:0.4">${hatIcon[hm.key]}</div>
+        <div style="font:800 12px 'Baloo 2';color:#8878A8;margin-top:4px">${TX(hm.name)}</div>
+        <div style="font:700 10px Nunito;color:#A197BC">${TX(hm.note)}</div>
+        ${shut ? `<div style="font:800 10px Nunito;color:#A197BC;margin-top:1px">${TX({ az: `Səviyyə ${lv}`, en: `Level ${lv}`, ru: `Уровень ${lv}` })}</div>` : ''}
+      </div>`;
+    }).join('');
   } else if (cat === 'outfits') {
     grid = EQD.OUTFITS.map(p => {
       const wearing = s.hero.outfit === p[0];

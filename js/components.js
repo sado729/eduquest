@@ -24,6 +24,28 @@ EQC.hero = function (h, style) {
   if (hat === 'explorer') hatSvg = `<g><ellipse cx="60" cy="26" rx="34" ry="8" fill="#C98A4B"></ellipse><path d="M40 26 q0-18 20-18 q20 0 20 18 Z" fill="#E0A365"></path><rect x="39" y="22" width="42" height="7" rx="3.5" fill="#7B5CFF"></rect></g>`;
   if (hat === 'wizard') hatSvg = `<g><path d="M60 -12 L84 28 L36 28 Z" fill="#7B5CFF"></path><ellipse cx="60" cy="28" rx="28" ry="7" fill="#5B3FD6"></ellipse><path d="M60 4 l3-6 3 6 6 2 -6 2.4 -3 6 -3-6 -6-2.4 Z" fill="#FFE9A8"></path></g>`;
   if (hat === 'crown') hatSvg = `<path d="M40 22 L47 8 L54 18 L60 4 L66 18 L73 8 L80 22 Z" fill="#FFC24B"></path>`;
+  /* the two region helmets go round the head, not on top of it — so the face is left
+     open: the diver's brass dome is a ring around a glass window, the space helm a
+     see-through bubble */
+  if (hat === 'diver') hatSvg = `<g>
+    <path d="M27 42 a33 33 0 1 0 66 0 a33 33 0 1 0 -66 0 Z M41 48 a19 19 0 1 1 38 0 a19 19 0 1 1 -38 0 Z" fill="#D9A441" fill-rule="evenodd"></path>
+    <rect x="54" y="3" width="12" height="8" rx="2.5" fill="#B7832A"></rect>
+    <circle cx="60" cy="48" r="19" fill="#BDEBFF" opacity="0.28"></circle>
+    <circle cx="60" cy="48" r="19" fill="none" stroke="#B7832A" stroke-width="4"></circle>
+    <path d="M47 41 q4-8 12-9" stroke="#fff" stroke-width="3" opacity="0.7" fill="none" stroke-linecap="round"></path>
+    <circle cx="60" cy="29" r="2.2" fill="#FFE9A8"></circle><circle cx="79" cy="48" r="2.2" fill="#FFE9A8"></circle>
+    <circle cx="41" cy="48" r="2.2" fill="#FFE9A8"></circle><circle cx="60" cy="67" r="2.2" fill="#FFE9A8"></circle>
+    <path d="M30 70 q30 12 60 0 l2 9 q-32 12 -64 0 Z" fill="#B7832A"></path>
+  </g>`;
+  if (hat === 'space') hatSvg = `<g>
+    <path d="M84 16 l8-11" stroke="#DCE8F7" stroke-width="3" stroke-linecap="round"></path>
+    <circle cx="93" cy="4" r="3.6" fill="#FF5D73"></circle>
+    <circle cx="60" cy="44" r="36.5" fill="none" stroke="#8FA3C4" stroke-width="1.5"></circle>
+    <circle cx="60" cy="44" r="35" fill="#BDEBFF" fill-opacity="0.22" stroke="#EEF6FF" stroke-width="4"></circle>
+    <path d="M36 30 q8-14 24-17" stroke="#fff" stroke-width="4" opacity="0.75" fill="none" stroke-linecap="round"></path>
+    <path d="M30 70 q30 12 60 0 l1 8 q-31 12 -62 0 Z" fill="#EEF6FF"></path>
+    <path d="M31 74.5 q29 11 58 0" stroke="#9B7CFF" stroke-width="2.5" fill="none"></path>
+  </g>`;
   return `<svg viewBox="0 0 120 160" style="overflow:visible;${style || ''}" preserveAspectRatio="xMidYMax meet">
     <ellipse cx="60" cy="154" rx="30" ry="5" fill="#2A1F45" opacity="0.13"></ellipse>
     <rect x="42" y="132" width="15" height="18" rx="7" fill="${shoe}"></rect>

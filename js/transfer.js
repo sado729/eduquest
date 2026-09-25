@@ -14,7 +14,8 @@ const EQX = {
   HOME: 'https://sado729.github.io/eduquest/',
 
   HAIR: ['bob', 'curly', 'spiky', 'long', 'braids'],
-  HAT: ['none', 'explorer', 'wizard', 'crown'],
+  /* append-only too: a hat's position is its number in a code (the region helmets came last) */
+  HAT: ['none', 'explorer', 'wizard', 'crown', 'diver', 'space'],
   LANGS: ['az', 'en', 'ru'],
   SUBJ: ['math', 'logic', 'reading', 'science'],
   /* append-only: a topic's position is its number inside a code, so a new topic goes on
@@ -105,7 +106,9 @@ const EQX = {
 
     const h = s.hero, hx = c => String(c || '').replace('#', '');
     const flags = (s.onboarded ? 1 : 0) | (s.bossBeaten ? 2 : 0) | (s.chestReady ? 4 : 0) | (s.chestOpened ? 8 : 0)
-      | (s.wizardHatOwned ? 16 : 0) | (s.crownOwned ? 32 : 0) | (s.trophyPlaced ? 64 : 0) | (s.pendingLevelUp ? 128 : 0);
+      | (s.wizardHatOwned ? 16 : 0) | (s.crownOwned ? 32 : 0) | (s.trophyPlaced ? 64 : 0) | (s.pendingLevelUp ? 128 : 0)
+      /* the region helmets: new bits above the old ones, so an older code reads as "not yet" */
+      | (s.diverHelmOwned ? 256 : 0) | (s.spaceHelmOwned ? 512 : 0);
     const st = s.settings;
     const sflags = (st.readAloud ? 1 : 0) | (st.bigText ? 2 : 0) | (st.calm ? 4 : 0) | (st.music ? 8 : 0) | (st.bedtime ? 16 : 0)
       /* 32 = sound effects, 64 = "this code knows about 32". Before the effects had their
@@ -175,6 +178,7 @@ const EQX = {
       careDay: dt.length > 4 ? at(4) : null,
       onboarded: !!(flags & 1), bossBeaten: !!(flags & 2), chestReady: !!(flags & 4), chestOpened: !!(flags & 8),
       wizardHatOwned: !!(flags & 16), crownOwned: !!(flags & 32), trophyPlaced: !!(flags & 64), pendingLevelUp: !!(flags & 128),
+      diverHelmOwned: !!(flags & 256), spaceHelmOwned: !!(flags & 512),
       settings: {
         readAloud: !!(sf[0] & 1), bigText: !!(sf[0] & 2), calm: !!(sf[0] & 4), music: !!(sf[0] & 8), bedtime: !!(sf[0] & 16),
         sfx: sf[0] & 64 ? !!(sf[0] & 32) : !!(sf[0] & 8),
@@ -265,6 +269,11 @@ const EQX = {
     out.regions = EQ.cleanRegions(r.regions);
     ['onboarded', 'bossBeaten', 'chestReady', 'chestOpened', 'wizardHatOwned', 'crownOwned', 'trophyPlaced', 'pendingLevelUp']
       .forEach(k => { out[k] = !!r[k]; });
+    /* a file from before the helmets has no flag but does carry the regions, so it is
+       derived exactly as the loader derives it; a hat the child does not own comes off */
+    EQD.HELMS.forEach(h => { out[h.flag] = typeof r[h.flag] === 'boolean' ? r[h.flag] : EQ.helmFromHistory(out.regions, h); });
+    const worn = EQD.HELM_BY[out.hero.hat];
+    if (worn && !out[worn.flag]) out.hero.hat = 'none';
 
     const st = r.settings || {}, o = out.settings;
     o.readAloud = !!st.readAloud; o.bigText = !!st.bigText; o.calm = !!st.calm;

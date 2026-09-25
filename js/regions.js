@@ -199,6 +199,50 @@ EQD.regionOf = function (topic) {
   return null;
 };
 
+/* ── the two helmets the regions give ──
+   The wardrobe always showed a Diver Helm and a Space Helm as locked cards, with nothing
+   anywhere that could open them. Each now belongs to its region: the first full round
+   there (all five questions) puts it in the wardrobe, and `flag` is where the state
+   keeps it — the same shape as wizardHatOwned / crownOwned. `key` is the hero's hat key
+   (EQC.hero draws it) and is appended to EQX.HAT, so its number in a code never moves. */
+EQD.HELMS = [
+  {
+    key: 'diver', region: 'island', flag: 'diverHelmOwned', mark: '🌊',
+    name: { az: 'Dalğıc Dəbilqəsi', en: 'Diver Helm', ru: 'Шлем Водолаза' },
+    note: { az: 'Elm Adasında 1 raund', en: '1 round on Science Island', ru: '1 раунд на Острове Науки' },
+    how: {
+      az: 'Elm Adasında bir tam raund (5 sual) bitir — Dalğıc Dəbilqəsi sənin olacaq! 🌊',
+      en: 'Finish one full round (5 questions) on Science Island and the Diver Helm is yours! 🌊',
+      ru: 'Пройди один полный раунд (5 вопросов) на Острове Науки — и Шлем Водолаза твой! 🌊'
+    },
+    shut: {
+      az: 'Dalğıc Dəbilqəsi Elm Adasındadır: ada 10-cu səviyyədə açılır, orada bir tam raund bitir. 🌊',
+      en: 'The Diver Helm waits on Science Island: the island opens at Level 10 — finish one full round there. 🌊',
+      ru: 'Шлем Водолаза ждёт на Острове Науки: остров откроется на 10-м уровне — пройди там один полный раунд. 🌊'
+    },
+    got: { az: 'Dalğıc Dəbilqəsi qarderobuna əlavə olundu! 🌊', en: 'Diver Helm added to your wardrobe! 🌊', ru: 'Шлем Водолаза добавлен в гардероб! 🌊' }
+  },
+  {
+    key: 'space', region: 'station', flag: 'spaceHelmOwned', mark: '🚀',
+    name: { az: 'Kosmik Dəbilqə', en: 'Space Helm', ru: 'Космошлем' },
+    note: { az: 'Kosmik Stansiyada 1 raund', en: '1 round at the Space Station', ru: '1 раунд на Космостанции' },
+    how: {
+      az: 'Kosmik Stansiyada bir tam raund (5 sual) bitir — Kosmik Dəbilqə sənin olacaq! 🚀',
+      en: 'Finish one full round (5 questions) at the Space Station and the Space Helm is yours! 🚀',
+      ru: 'Пройди один полный раунд (5 вопросов) на Космической Станции — и Космошлем твой! 🚀'
+    },
+    shut: {
+      az: 'Kosmik Dəbilqə Kosmik Stansiyadadır: stansiya 15-ci səviyyədə açılır, orada bir tam raund bitir. 🚀',
+      en: 'The Space Helm waits at the Space Station: it opens at Level 15 — finish one full round there. 🚀',
+      ru: 'Космошлем ждёт на Космической Станции: она откроется на 15-м уровне — пройди там один полный раунд. 🚀'
+    },
+    got: { az: 'Kosmik Dəbilqə qarderobuna əlavə olundu! 🚀', en: 'Space Helm added to your wardrobe! 🚀', ru: 'Космошлем добавлен в гардероб! 🚀' }
+  }
+];
+EQD.HELM_BY = {};
+EQD.HELMS.forEach(h => { EQD.HELM_BY[h.key] = h; });
+EQD.helmOf = r => EQD.HELMS.find(h => h.region === r) || null;
+
 /* the per-topic labels a question carries */
 EQD.RTAG = {
   letter: { az: 'OXU · İLK HƏRF', en: 'READING · FIRST LETTERS', ru: 'ЧТЕНИЕ · ПЕРВАЯ БУКВА' },

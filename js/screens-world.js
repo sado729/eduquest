@@ -399,6 +399,19 @@ EQS.screens.region = function (s) {
   const bonus = e.paid
     ? `<div style="font:800 15px 'Baloo 2';color:#8FE0B6">${EQC.check('#8FE0B6', 14, 3.6)}</div><div><div style="font:800 13px 'Baloo 2';color:#fff">${TX({ az: 'Bonus', en: 'Bonus', ru: 'Бонус' })}</div><div style="font:700 9px Nunito;color:${R.soft};letter-spacing:0.6px">${TX({ az: 'BU GÜN ALINDI', en: 'TAKEN TODAY', ru: 'ПОЛУЧЕН СЕГОДНЯ' })}</div></div>`
     : `${EQC.coin(20)}<div><div style="font:800 15px 'Baloo 2';color:#fff">+${EQD.REGION_BONUS}</div><div style="font:700 9px Nunito;color:${R.soft};letter-spacing:0.6px">${TX({ az: 'RAUNDUN SONUNDA', en: 'AT ROUND END', ru: 'В КОНЦЕ РАУНДА' })}</div></div>`;
+  /* the round that just earned this region's helmet: the stats row makes way for the
+     hero wearing it (EQ.earnHelm), with a button to keep it on */
+  const statTop = R.topics.length > 3 ? 580 : 540;
+  const hm = EQD.helmOf(r);
+  const helmCard = done && hm && EQ.session.helmCard === hm.key && s[hm.flag]
+    ? `<div class="rise" style="position:absolute;top:${statTop - 14}px;left:20px;right:20px;height:74px;border-radius:22px;background:rgba(255,255,255,0.14);box-shadow:0 0 0 2px ${R.accent} inset;display:flex;align-items:center;gap:10px;padding:0 12px 0 6px">
+        <div style="width:66px;height:74px;flex:none;position:relative">${EQC.hero(Object.assign({}, s.hero, { hat: hm.key }), 'position:absolute;left:-2px;bottom:4px;width:70px')}</div>
+        <div style="flex:1;min-width:0"><div style="font:700 9.5px Nunito;color:${R.soft};letter-spacing:1px">${TX({ az: 'YENİ PAPAQ', en: 'NEW HAT', ru: 'НОВАЯ ШЛЯПА' })}</div><div style="font:800 15px 'Baloo 2', system-ui;color:#fff;line-height:1.15">${TX(hm.name)}</div></div>
+        ${s.hero.hat === hm.key
+          ? `<div style="flex:none;height:40px;padding:0 12px;border-radius:14px;background:rgba(92,227,155,0.18);display:flex;align-items:center;gap:6px;font:800 13px 'Baloo 2';color:#8FE0B6">${EQC.check('#8FE0B6', 13, 3.6)}${TX({ az: 'Geyinilib', en: 'Wearing', ru: 'Надето' })}</div>`
+          : `<div class="press" onclick="EQ.wearHat('${hm.key}')" style="flex:none;height:44px;padding:0 16px;border-radius:15px;background:${R.accent};box-shadow:0 4px 0 rgba(0,0,0,0.28);display:flex;align-items:center;font:800 15px 'Baloo 2';color:${R.ink}">${TX({ az: 'Geyin', en: 'Put it on', ru: 'Надеть' })}</div>`}
+      </div>`
+    : '';
   const cta = done
     ? `<div style="position:absolute;bottom:52px;left:20px;right:20px;display:flex;flex-direction:column;gap:10px">
         <div class="press rise" onclick="EQ.regionAgain()" style="height:66px;border-radius:24px;background:${R.accent};box-shadow:0 6px 0 rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;gap:10px;font:800 20px 'Baloo 2', system-ui;color:${R.ink}">${TX({ az: 'Bir raund da', en: 'Play another round', ru: 'Ещё раунд' })}${EQC.arrowR(R.ink, 20)}</div>
@@ -434,10 +447,10 @@ EQS.screens.region = function (s) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${topics}</div>
     </div>
 
-    <div style="position:absolute;top:${R.topics.length > 3 ? 580 : 540}px;left:20px;right:20px;display:flex;gap:12px">
+    ${helmCard || `<div style="position:absolute;top:${statTop}px;left:20px;right:20px;display:flex;gap:12px">
       <div style="flex:1;height:60px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;gap:8px"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2.6 l2.6 6.4 6.8 0.6 -5.2 4.6 1.6 6.8 -5.8-3.6 -5.8 3.6 1.6-6.8 -5.2-4.6 6.8-0.6 Z" fill="#5CE39B"></path></svg><div><div style="font:800 15px 'Baloo 2';color:#fff">+25</div><div style="font:700 9px Nunito;color:${R.soft};letter-spacing:0.6px">${TX({ az: 'HƏR SUAL', en: 'EACH', ru: 'ЗА ВОПРОС' })}</div></div></div>
       <div style="flex:1;height:60px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;gap:8px">${bonus}</div>
-    </div>
+    </div>`}
     ${cta}
   </div>`;
 };

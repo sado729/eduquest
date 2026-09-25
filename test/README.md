@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all fifteen suites
+npm test              # all sixteen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -20,6 +20,7 @@ npm run test:speech
 npm run test:bigtext
 npm run test:sound
 npm run test:tutor
+npm run test:helmets
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -436,3 +437,26 @@ parent's mission, not on daily, guardian or region questions; and no `js/` file 
 regressions (label always on, bar without a voice, reading answer spoken, mic toast
 back, a recognition call added).
 
+## helmets.js — the Diver Helm and the Space Helm
+
+The wardrobe always showed two locked helmets — "Diver Helm · opens on Science Island"
+and "Space Helm · reach Level 15" — and no code anywhere could open them, even after
+both regions became playable. Now the first full round (all five questions) in Elm Adası
+earns the Diver Helm and the first full round in Kosmik Stansiya earns the Space Helm;
+that region opens at Level 15, so the old card's level stays true. Both are ordinary
+hats (`s.diverHelmOwned` / `s.spaceHelmOwned`, worn through `EQ.wearHat`, drawn by
+`EQC.hero`), listed in `EQD.HELMS` in js/regions.js.
+
+Covers: four answers are not a round and a wrong answer earns nothing; the fifth answer
+earns exactly that region's helmet, is announced by a toast on the round's end screen
+(never over the success beat, never twice) and shown there on the hero with a "put it
+on" button; the locked cards state the real condition, plus the region's level while it
+is shut; a locked card cannot be worn or reached with the preview arrows; a save from
+before this change with at least five correct answers in the region (`regions[r].total`)
+gets the helmet on load and is told, while a saved boolean is never re-derived; transfer
+codes carry two new flag bits and the hat list is append-only, so a code written by the
+previous build (fixture in the suite) still imports with its crown on; an old backup
+file derives the helmets from its regions; and every screen that draws the hero shows
+the helmet with no `undefined` / `NaN` / `[object Object]`, in all three languages.
+Verified red against seven seeded regressions (no earning, no migration, a dropped code
+bit, helmet not drawn, silent unlock, reordered hat list, unguarded `wearHat`).

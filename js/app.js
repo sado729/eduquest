@@ -8,6 +8,8 @@
 const EQ_REST_FREE = ['restday', 'splash', 'welcome', 'create', 'meet', 'begin', 'success', 'victory', 'levelup', 'chest', 'sticker'];
 /* calm screens where the heartbeat may bring the rest screen up on its own
    (never mid-question: a challenge already started is always allowed to finish) */
+/* screens calm enough to announce a newly earned helmet on (never mid-question) */
+const EQ_HELM_TOLD = ['map', 'region', 'wardrobe', 'quest', 'bag', 'awards', 'home'];
 const EQ_REST_NUDGE = ['map', 'quest', 'mission', 'region', 'details', 'story', 'home', 'awards', 'bag', 'album', 'care', 'wardrobe', 'unlock', 'welcomeback'];
 const EQ_REST_MORNING = 5 * 60; /* the bedtime window closes at 05:00 */
 
@@ -22,6 +24,8 @@ const EQ_DEFAULTS = {
   bossHits: 0, bossBeaten: false,
   chestReady: false, chestOpened: false,
   wizardHatOwned: false, crownOwned: false,
+  /* the region helmets — the first full round in Elm Adası / Kosmik Stansiya (EQD.HELMS) */
+  diverHelmOwned: false, spaceHelmOwned: false,
   mathSolved: 0, hintSparks: 0, stickers: 0, stickerIds: [], trophiesEarned: 0,
   /* Questy'nin qulluğu: bugünkü verilmiş qulluqlar və ümumi say (bax: EQ.careGive) */
   careDay: null, careGiven: [], careTotal: 0,
@@ -39,7 +43,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
+  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, helmNews: [], helmCard: null, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
 
   rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
   pron() { return 'their'; },
@@ -160,6 +164,7 @@ const EQ = {
     this.s.stickerIds = this.cleanStickers(s && s.stickerIds, this.s.stickers);
     this.s.stickers = this.s.stickerIds.length;
     this.s.regions = this.cleanRegions(s && s.regions);
+    this.loadHelms(s);
     EQT.init(this.s);
   },
   save() {
@@ -227,6 +232,7 @@ const EQ = {
       this.session.ctx = 'daily';
       this.session.region = null;
       this.session.q = null; this.session.qIdx = -1; this.session.qKey = null;
+      this.session.helmCard = null;
     }
     if (name === 'boss') {
       if (this.s.bossBeaten) name = 'victory';
@@ -261,6 +267,7 @@ const EQ = {
     if (this.current === 'tutor' && name !== 'tutor') this.session.tutorWhy = false;
     this.current = name;
     this.render();
+    this.helmNotice(name);
     /* Questy's voice: every navigation silences the last screen (the rest screen too),
        and a question screen reads its question as it opens (js/speech.js) */
     if (typeof EQV !== 'undefined') EQV.route(from, name);
@@ -308,7 +315,8 @@ const EQ = {
     t.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" style="flex:none"><path d="M12 3 l2.4 6.4 6.6 0.4 -5 4.4 1.6 6.4 -5.6-3.4 -5.6 3.4 1.6-6.4 -5-4.4 6.6-0.4 Z" fill="#5CE39B"></path></svg><span>${msg}</span>`;
     t.classList.add('on');
     clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => t.classList.remove('on'), 2400);
+    /* long enough to read: a three-line "how to earn it" needs more than a "+100 coins" */
+    this.toastTimer = setTimeout(() => t.classList.remove('on'), Math.max(2400, String(msg).length * 45));
   },
 
   /* ── onboarding ── */
@@ -501,6 +509,10 @@ const EQ = {
       e.paid = true;
       this.s.coins += EQD.REGION_BONUS; this.s.coinsToday += EQD.REGION_BONUS;
     }
+    if (e.n >= EQD.REGION_LEN) {
+      const got = this.earnHelm(r);
+      if (got) this.session.helmCard = got.key; /* the round's end screen shows it on the hero */
+    }
     this.save();
   },
   continueRegion() {
@@ -517,11 +529,56 @@ const EQ = {
     if (e.n < EQD.REGION_LEN) return;
     SFX.tap();
     e.round++; e.n = 0; e.plan = null;
+    this.session.helmCard = null;
     this.session.q = null; this.session.qIdx = -1; this.session.qKey = null;
     this.save();
     this.go('challenge');
   },
   leaveRegion() { SFX.tap(); this.go('map'); },
+
+  /* ── the region helmets (EQD.HELMS in js/regions.js) ──
+     A region's helmet is earned by its first full round: all five questions, not the
+     first answer and not the day's bonus (a second round the same day earns it too, if
+     the first was somehow left half-done). The child is told — a toast on the next calm
+     screen and the helmet on the hero at the round's end — never a silent flag. */
+  earnHelm(r) {
+    const h = EQD.helmOf(r);
+    if (!h || this.s[h.flag]) return null;
+    this.s[h.flag] = true;
+    this.session.helmNews.push(h.key);
+    return h;
+  },
+  /* A save written before the helmets could be earned has no flag at all. Its rounds are
+     not remembered one by one, but `total` counts every correct answer ever given in the
+     region — five of them is a full round's worth, so that child gets the helmet (and is
+     told). Only a missing flag is derived: once it is a boolean, rounds alone decide. */
+  helmFromHistory(regions, h) {
+    const e = regions && regions[h.region];
+    return !!(e && e.total >= EQD.REGION_LEN);
+  },
+  loadHelms(raw) {
+    this.session.helmNews = [];
+    this.session.helmCard = null;
+    EQD.HELMS.forEach(h => {
+      if (raw && typeof raw[h.flag] === 'boolean') { this.s[h.flag] = raw[h.flag]; return; }
+      this.s[h.flag] = this.helmFromHistory(this.s.regions, h);
+      if (this.s[h.flag]) this.session.helmNews.push(h.key);
+    });
+    const worn = EQD.HELM_BY[this.s.hero.hat];
+    if (worn && !this.s[worn.flag]) this.s.hero.hat = 'none';
+  },
+  helmNotice(name) {
+    const news = this.session.helmNews;
+    if (!news || !news.length || EQ_HELM_TOLD.indexOf(name) < 0) return;
+    this.session.helmNews = [];
+    this.toast(news.map(k => TX(EQD.HELM_BY[k].got)).join(' '));
+  },
+  /* a locked helmet card says how to earn it — with the level first while the region is shut */
+  helmHow(key) {
+    const h = EQD.HELM_BY[key];
+    if (!h) return;
+    this.toast(TX(this.regionOpen(h.region) ? h.how : h.shut));
+  },
   /* rebuilt field by field on load and on import: the screens write these into markup */
   cleanRegions(raw) {
     const out = {};
@@ -798,7 +855,10 @@ const EQ = {
 
   /* ── wardrobe ── */
   wardrobeCat(key) { SFX.tap(); this.session.wardrobeCat = key; this.render(); },
-  wearHat(key) { SFX.tap(); this.s.hero.hat = key; this.save(); this.render(); },
+  wearHat(key) {
+    if (this.ownedHats().indexOf(key) < 0) return; /* a locked card never dresses the hero */
+    SFX.tap(); this.s.hero.hat = key; this.save(); this.render();
+  },
   wearOutfit(c, d) { SFX.tap(); this.s.hero.outfit = c; this.s.hero.outfitDark = d; this.save(); this.render(); },
   wearShoes(c) { SFX.tap(); this.s.hero.shoe = c; this.save(); this.render(); },
   wearFur(f, fd) { SFX.tap(); this.s.questyFur = f; this.s.questyFurDark = fd; this.save(); this.render(); },
@@ -813,6 +873,7 @@ const EQ = {
     const list = ['none', 'explorer'];
     if (this.s.wizardHatOwned) list.push('wizard');
     if (this.s.crownOwned) list.push('crown');
+    EQD.HELMS.forEach(h => { if (this.s[h.flag]) list.push(h.key); });
     return list;
   },
   cycleHat(dir) {
