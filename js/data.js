@@ -447,6 +447,15 @@ EQD.CHAPTERS = [
       ru: '«Кристалл исчез прошлой ночью. Без него деревья забывают, как расти, — мы должны вернуть его домой.»'
     },
     mission: { az: 'Kristalı tap və meşəni oyat', en: 'Find the crystal and wake the forest', ru: 'Найди кристалл и разбуди лес' },
+    /* the chapter's relic: one piece per stage whose boss is beaten, three rebuild it (EQ.relicNow) */
+    relic: {
+      piece: { az: 'Kristal Qəlpəsi', en: 'Crystal Shard', ru: 'Осколок Кристалла' },
+      whole: { az: 'Bilik Kristalı', en: 'Knowledge Crystal', ru: 'Кристалл Знаний' },
+      goal: { az: 'Bilik Kristalını bərpa etmək üçün 3 dənə topla.', en: 'Collect 3 to rebuild the Knowledge Crystal.', ru: 'Собери 3, чтобы восстановить Кристалл Знаний.' },
+      done: { az: 'Bilik Kristalı bərpa olundu!', en: 'The Knowledge Crystal is whole again!', ru: 'Кристалл Знаний снова целый!' },
+      color: '#5CE39B', glow: 'rgba(92,227,155,0.35)',
+      art: '<path d="M18 3 L27 14 L22 32 H14 L9 14 Z" fill="#7FE0AE"></path><path d="M18 3 L27 14 L18 18 Z" fill="#C8FFE4"></path><path d="M18 18 L22 32 H14 Z" fill="#5CE39B"></path>'
+    },
     /* the ordinary guardian of stages 1–2 */
     guardian: {
       name: { az: 'Riyaziyyat Əjdahası', en: 'Math Dragon', ru: 'Дракон Математики' },
@@ -491,6 +500,14 @@ EQD.CHAPTERS = [
       ru: '«Река всегда пела. Теперь она молчит — кто-то спрятал песню под камнями.»'
     },
     mission: { az: 'Daşları aç və çayın mahnısını qaytar', en: 'Free the stones and return the river’s song', ru: 'Освободи камни и верни песню реки' },
+    relic: {
+      piece: { az: 'Mahnı Notu', en: 'Song Note', ru: 'Нота Песни' },
+      whole: { az: 'Çayın Mahnısı', en: 'The River’s Song', ru: 'Песня Реки' },
+      goal: { az: 'Çayın mahnısını qaytarmaq üçün 3 dənə topla.', en: 'Collect 3 to bring back the river’s song.', ru: 'Собери 3, чтобы вернуть песню реки.' },
+      done: { az: 'Çayın mahnısı geri qayıtdı!', en: 'The river sings again!', ru: 'Река снова поёт!' },
+      color: '#45C6F0', glow: 'rgba(69,198,240,0.32)',
+      art: '<path d="M14 26 V8 L28 4 V22" fill="none" stroke="#45C6F0" stroke-width="3" stroke-linejoin="round"></path><circle cx="10" cy="26" r="5" fill="#45C6F0"></circle><circle cx="24" cy="22" r="5" fill="#8FDCF7"></circle>'
+    },
     guardian: {
       name: { az: 'Daş Kirpisi', en: 'The Stone Urchin', ru: 'Каменный Ёж' },
       role: { az: 'AYRIMIN KEŞİKÇİSİ', en: 'GUARDIAN OF THE FORD', ru: 'ХРАНИТЕЛЬ БРОДА' },
@@ -532,6 +549,14 @@ EQD.CHAPTERS = [
       ru: '«За хребтом упала звезда. Если мы её не найдём, ночная карта останется неполной.»'
     },
     mission: { az: 'Ulduzu tap və gecə xəritəsini tamamla', en: 'Find the star and complete the night map', ru: 'Найди звезду и заверши ночную карту' },
+    relic: {
+      piece: { az: 'Ulduz Parçası', en: 'Star Piece', ru: 'Осколок Звезды' },
+      whole: { az: 'Düşən Ulduz', en: 'The Fallen Star', ru: 'Упавшая Звезда' },
+      goal: { az: 'Düşən ulduzu göyə qaytarmaq üçün 3 dənə topla.', en: 'Collect 3 to put the fallen star back in the sky.', ru: 'Собери 3, чтобы вернуть упавшую звезду на небо.' },
+      done: { az: 'Ulduz yenidən göydədir!', en: 'The star is back in the sky!', ru: 'Звезда снова на небе!' },
+      color: '#FFC24B', glow: 'rgba(255,194,75,0.30)',
+      art: '<path d="M18 3 l4 11 11.5 0.6 -9 7.4 3 11.4 -9.5-6.4 -9.5 6.4 3-11.4 -9-7.4 11.5-0.6 Z" fill="#FFC24B"></path><path d="M18 3 l4 11 -4 4 Z" fill="#FFE9A8"></path>'
+    },
     guardian: {
       name: { az: 'Bulud Keşikçisi', en: 'The Cloud Warden', ru: 'Облачный Страж' },
       role: { az: 'ZİRVƏNİN KEŞİKÇİSİ', en: 'GUARDIAN OF THE RIDGE', ru: 'ХРАНИТЕЛЬ ХРЕБТА' },

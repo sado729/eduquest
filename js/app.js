@@ -27,6 +27,8 @@ const EQ_DEFAULTS = {
   /* the region helmets — the first full round in Elm Adası / Kosmik Stansiya (EQD.HELMS) */
   diverHelmOwned: false, spaceHelmOwned: false,
   mathSolved: 0, hintSparks: 0, stickers: 0, stickerIds: [], trophiesEarned: 0,
+  /* the chapter relics: { chapterNo: bitmask of the stages whose boss was beaten } (EQ.earnRelic) */
+  relics: {},
   /* Questy'nin qulluğu: bugünkü verilmiş qulluqlar və ümumi say (bax: EQ.careGive) */
   careDay: null, careGiven: [], careTotal: 0,
   /* the regions beyond the forest: today's round in each, plus a lifetime count (see EQ.region) */
@@ -43,7 +45,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, helmNews: [], helmCard: null, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
+  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, helmNews: [], helmCard: null, answering: false, bossBeam: false, attempted: false, hinted: false, sparked: false, recSkips: [], range: 'week' },
 
   rankOf(level) { return EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT); },
   rank(level) { return TX(this.rankOf(level)); },
@@ -166,6 +168,7 @@ const EQ = {
     this.s.stickers = this.s.stickerIds.length;
     this.s.regions = this.cleanRegions(s && s.regions);
     this.loadHelms(s);
+    this.s.relics = this.cleanRelics(s && s.relics, this.s);
     EQT.init(this.s);
   },
   save() {
@@ -189,7 +192,7 @@ const EQ = {
         if (this.session.qIdx !== m.n || this.session.q !== mq) {
           this.session.q = mq;
           this.session.qIdx = m.n;
-          this.session.attempted = false; this.session.hinted = false;
+          this.session.attempted = false; this.session.hinted = false; this.session.sparked = false;
         }
       }
     } else if (name === 'challenge' && this.session.ctx === 'region' && this.regionCur()) {
@@ -205,7 +208,7 @@ const EQ = {
           this.session.q = this.regionSet(r).questions[e.n];
           this.session.qIdx = e.n;
           this.session.qKey = key;
-          this.session.attempted = false; this.session.hinted = false;
+          this.session.attempted = false; this.session.hinted = false; this.session.sparked = false;
         }
       }
     } else if (name === 'challenge') {
@@ -215,7 +218,7 @@ const EQ = {
         if (!this.session.q || this.session.qIdx !== this.s.challengesDone) {
           this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)];
           this.session.qIdx = this.s.challengesDone;
-          this.session.attempted = false; this.session.hinted = false;
+          this.session.attempted = false; this.session.hinted = false; this.session.sparked = false;
         }
       }
     }
@@ -241,7 +244,7 @@ const EQ = {
         this.session.ctx = 'boss';
         const pool = this.qset().boss;
         const bq = pool[Math.min(pool.length - 1, this.s.bossHits)];
-        if (this.session.q !== bq) { this.session.q = bq; this.session.attempted = false; this.session.hinted = false; }
+        if (this.session.q !== bq) { this.session.q = bq; this.session.attempted = false; this.session.hinted = false; this.session.sparked = false; }
       }
     }
     if ((name === 'success' || name === 'hint' || name === 'tutor') && !this.session.q) {
@@ -259,7 +262,7 @@ const EQ = {
         this.session.q = this.qset().questions[Math.min(4, this.s.challengesDone)] || this.qset().questions[3];
         this.session.qIdx = this.s.challengesDone;
       }
-      this.session.attempted = false; this.session.hinted = false;
+      this.session.attempted = false; this.session.hinted = false; this.session.sparked = false;
     }
     if (name === 'hint' && this.session.q && !this.session.hinted) {
       this.session.hinted = true;
@@ -600,6 +603,59 @@ const EQ = {
     if (!h) return;
     this.toast(TX(this.regionOpen(h.region) ? h.how : h.shut));
   },
+  /* ── hint sparks ──
+     The hint is free and always will be; a spark takes nothing away from it. A spark is
+     what a child *earns by using* one: a question solved after its hint was open (tapped,
+     or shown after a miss) — in the daily quest, a mission, a region round or the boss
+     fight, at most once per question. Sparks are not spent on anything: they are the
+     bag's record that asking for help and then carrying on is part of winning. */
+  earnSpark() {
+    if (!this.session.hinted || this.session.sparked) return false;
+    this.session.sparked = true;
+    this.s.hintSparks = (this.s.hintSparks || 0) + 1;
+    if (this.session.ctx === 'boss') this.toast(TX({ az: '+1 ipucu qığılcımı ✨', en: '+1 hint spark ✨', ru: '+1 искра-подсказка ✨' }));
+    return true;
+  },
+
+  /* ── chapter relics (EQD.CHAPTERS[].relic) ──
+     A chapter has three stages, and every stage whose boss the child actually beat puts
+     one piece of that chapter's relic in the bag; three pieces rebuild it. The record is
+     kept per chapter number (chapters loop, the numbering carries on) and is only ever
+     added to. It has to be a record and not a sum over questDay: a new calendar day moves
+     the adventure on to the next stage whether or not the last boss was beaten. */
+  earnRelic() {
+    const c = this.chapter();
+    const r = this.s.relics || (this.s.relics = {});
+    r[c.chapterNo] = (r[c.chapterNo] || 0) | (1 << (c.stageNo - 1));
+  },
+  /* the current chapter's relic as the bag shows it */
+  relicNow() {
+    const c = this.chapter();
+    const mask = (this.s.relics || {})[c.chapterNo] || 0;
+    const have = [0, 1, 2].filter(i => mask & (1 << i)).length;
+    /* a stage before this one that ended without its piece — only a day passing does that */
+    const missed = [0, 1, 2].filter(i => i < c.stageNo - 1 && !(mask & (1 << i))).length;
+    return { relic: c.ch.relic, chapterNo: c.chapterNo, stageNo: c.stageNo, mask, have, missed, whole: have >= EQD.STAGES_PER_CHAPTER };
+  },
+  /* A save or code from before the relics has no record. Which earlier stages of the
+     chapter were really won cannot be known, and the old bag counted them as won, so they
+     are credited (nothing a child already saw in the bag disappears); the current stage
+     counts only if its boss is beaten. Once there is a record, only the record decides. */
+  cleanRelics(raw, s) {
+    const out = {};
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      Object.keys(raw).filter(k => /^[1-9]\d{0,5}$/.test(k)).map(Number).sort((a, b) => a - b).slice(-12).forEach(k => {
+        const m = Math.round(Number(raw[k])) & 7;
+        if (m > 0) out[k] = m;
+      });
+      return out;
+    }
+    const c = EQD.chapterAt((s && s.questDay) || 0);
+    const m = ((1 << (c.stageNo - 1)) - 1) | (s && s.bossBeaten ? 1 << (c.stageNo - 1) : 0);
+    if (m) out[c.chapterNo] = m;
+    return out;
+  },
+
   /* rebuilt field by field on load and on import: the screens write these into markup */
   cleanRegions(raw) {
     const out = {};
@@ -720,6 +776,7 @@ const EQ = {
       setTimeout(() => {
         this.session.answering = false;
         this.session.streakRow++;
+        this.earnSpark();
         if (this.session.ctx === 'boss') {
           this.s.bossHits++;
           this.s.mathSolved = Math.min(100, this.s.mathSolved + 1);
@@ -728,6 +785,7 @@ const EQ = {
             this.s.bossBeaten = true;
             this.s.chestReady = true;
             this.s.trophiesEarned++;
+            this.earnRelic();
             /* a chapter finale is the longer fight, so it pays the larger purse */
             const fin = this.chapter().final;
             this.grant(fin ? 400 : 250, fin ? 160 : 100);
@@ -857,7 +915,7 @@ const EQ = {
     const q = this.session.q;
     if (q && q.easier) {
       this.session.q = q.easier;
-      this.session.attempted = false; this.session.hinted = false;
+      this.session.attempted = false; this.session.hinted = false; this.session.sparked = false;
       /* the gentler question is a question in its own right: if the one being stepped
          away from was a hands-on panel that had already been judged, that verdict must
          not carry over and lock the new one before it is even drawn */

@@ -142,23 +142,28 @@ EQS.screens.bag = function (s) {
   }).join('') +
     `<div class="press" onclick="EQ.openAlbum()" style="aspect-ratio:1;border-radius:16px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2';color:#fff">${owned.length >= total ? '★' : '+' + (total - owned.length)}</div>`;
 
+  /* the current chapter's relic: one piece per stage whose boss was actually beaten
+     (EQ.relicNow). A stage the calendar moved past is named as such — never a loss, the
+     chapter comes round again */
+  const rl = EQ.relicNow(), R = rl.relic;
+  const bars = [0, 1, 2].map(i => `<div style="width:38px;height:8px;border-radius:4px;background:${rl.mask & (1 << i) ? R.color : 'rgba(255,255,255,0.2)'}"></div>`).join('');
+  const relicLine = rl.whole ? TX(R.done)
+    : rl.missed ? TX(R.goal) + ' ' + TX({ az: 'Bir mərhələ boss-suz keçdi — bu fəsil yenidən gələndə onu da yığa bilərsən.', en: 'A stage passed without its boss — you can collect it when this chapter comes round again.', ru: 'Один этап прошёл без босса — соберёшь его, когда эта глава вернётся.' })
+    : TX(R.goal);
+
   return `<div class="scr" style="background:#FFF7EA">
     <div style="position:absolute;top:0;left:0;right:0;height:250px;background:#2C1F52;border-radius:0 0 36px 36px;overflow:hidden">
-      <div style="position:absolute;inset:0;background:radial-gradient(220px 200px at 74% 60%, rgba(92,227,155,0.35), rgba(44,31,82,0) 72%)"></div>
+      <div style="position:absolute;inset:0;background:radial-gradient(220px 200px at 74% 60%, ${R.glow}, rgba(44,31,82,0) 72%)"></div>
       <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
         <div class="press" onclick="EQ.go('map')" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#fff', 19)}</div>
         <div style="flex:1;font:800 21px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Çantam', en: 'My bag', ru: 'Моя сумка' })}</div>
       </div>
       <div style="position:absolute;bottom:20px;left:16px;right:16px;display:flex;align-items:center;gap:14px">
-        <div style="width:76px;height:76px;border-radius:26px;background:rgba(92,227,155,0.18);display:flex;align-items:center;justify-content:center;flex:none"><svg width="44" height="44" viewBox="0 0 36 36"><path d="M18 3 L27 14 L22 32 H14 L9 14 Z" fill="#7FE0AE"></path><path d="M18 3 L27 14 L18 18 Z" fill="#C8FFE4"></path><path d="M18 18 L22 32 H14 Z" fill="#5CE39B"></path></svg></div>
+        <div style="width:76px;height:76px;border-radius:26px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex:none"><svg width="44" height="44" viewBox="0 0 36 36"${rl.have ? '' : ' style="opacity:0.35"'}>${R.art}</svg></div>
         <div style="flex:1">
-          <div style="font:800 18px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Kristal Qəlpəsi', en: 'Crystal Shard', ru: 'Осколок Кристалла' })}</div>
-          <div style="font:700 12.5px Nunito;color:#A896E0;margin-top:4px;line-height:1.45">${TX({ az: 'Bilik Kristalını bərpa etmək üçün 3 dənə topla.', en: 'Collect 3 to rebuild the Knowledge Crystal.', ru: 'Собери 3, чтобы восстановить Кристалл Знаний.' })}</div>
-          <div style="display:flex;gap:6px;margin-top:8px">
-            <div style="width:38px;height:8px;border-radius:4px;background:#5CE39B"></div>
-            <div style="width:38px;height:8px;border-radius:4px;background:${s.bossBeaten ? '#5CE39B' : 'rgba(255,255,255,0.2)'}"></div>
-            <div style="width:38px;height:8px;border-radius:4px;background:rgba(255,255,255,0.2)"></div>
-          </div>
+          <div id="relic-name" style="font:800 18px 'Baloo 2', system-ui;color:#fff">${TX(rl.whole ? R.whole : R.piece)} · ${rl.have}/${EQD.STAGES_PER_CHAPTER}</div>
+          <div id="relic-line" style="font:700 12.5px Nunito;color:#A896E0;margin-top:4px;line-height:1.45">${relicLine}</div>
+          <div id="relic-bars" style="display:flex;gap:6px;margin-top:8px">${bars}</div>
         </div>
       </div>
     </div>
@@ -166,19 +171,14 @@ EQS.screens.bag = function (s) {
     <div style="position:absolute;top:274px;left:16px;right:16px">
       <div style="font:800 11px Nunito;color:#A08A5E;letter-spacing:1.6px">${TX({ az: 'MACƏRA ƏŞYALARI', en: 'QUEST ITEMS', ru: 'ПРЕДМЕТЫ КВЕСТА' })}</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:12px">
-        <div style="aspect-ratio:1;border-radius:20px;background:#fff;box-shadow:0 4px 0 #E0C79A, 0 0 0 3px #5CE39B inset;display:flex;align-items:center;justify-content:center;position:relative"><svg width="34" height="34" viewBox="0 0 36 36"><path d="M18 3 L27 14 L22 32 H14 L9 14 Z" fill="#7FE0AE"></path><path d="M18 3 L27 14 L18 18 Z" fill="#C8FFE4"></path></svg><div style="position:absolute;bottom:5px;right:7px;font:800 11px 'Baloo 2';color:#2A9455">${s.bossBeaten ? 2 : 1}</div></div>
-        <div style="aspect-ratio:1;border-radius:20px;background:#fff;box-shadow:0 4px 0 #E0C79A;display:flex;align-items:center;justify-content:center;position:relative"><svg width="34" height="34" viewBox="0 0 36 36"><path d="M6 8 q8-3 12 2 q4-5 12-2 v20 q-8-3 -12 2 q-4-5 -12-2 Z" fill="#FBE9CC" stroke="#C9762F" stroke-width="1.6"></path><path d="M14 14 l3 3 5-6" stroke="#FF5D73" stroke-width="2" fill="none"></path></svg><div style="position:absolute;bottom:5px;right:7px;font:800 11px 'Baloo 2';color:#8B7A55">1</div></div>
-        <div style="aspect-ratio:1;border-radius:20px;background:#fff;box-shadow:0 4px 0 #E0C79A;display:flex;align-items:center;justify-content:center;position:relative"><svg width="32" height="32" viewBox="0 0 36 36"><circle cx="13" cy="13" r="8" fill="none" stroke="#FFC24B" stroke-width="4"></circle><path d="M18 18 L30 30 l-4 4 -12-12 Z" fill="#FFC24B"></path></svg><div style="position:absolute;bottom:5px;right:7px;font:800 11px 'Baloo 2';color:#8B7A55">3</div></div>
+        <div id="relic-cell" style="aspect-ratio:1;border-radius:20px;background:${rl.have ? '#fff' : 'rgba(42,31,69,0.06)'};box-shadow:${rl.have ? `0 4px 0 #E0C79A, 0 0 0 3px ${R.color} inset` : 'none'};display:flex;align-items:center;justify-content:center;position:relative"><svg width="34" height="34" viewBox="0 0 36 36"${rl.have ? '' : ' style="opacity:0.3"'}>${R.art}</svg><div style="position:absolute;bottom:5px;right:7px;font:800 11px 'Baloo 2';color:#2A1F45">${rl.have}</div></div>
         <div style="aspect-ratio:1;border-radius:20px;background:rgba(42,31,69,0.06);display:flex;align-items:center;justify-content:center">${EQC.lock('#A197BC', 26)}</div>
       </div>
     </div>
 
     <div style="position:absolute;top:466px;left:16px;right:16px">
       <div style="font:800 11px Nunito;color:#A08A5E;letter-spacing:1.6px">${TX({ az: 'KÖMƏKÇİLƏR · YALNIZ QAZANILIR, ALINMIR', en: 'HELPERS · EARNED, NEVER BOUGHT', ru: 'ПОМОЩНИКИ · ТОЛЬКО ЗАРАБАТЫВАЮТСЯ' })}</div>
-      <div style="display:flex;gap:11px;margin-top:12px">
-        <div style="flex:1;border-radius:22px;background:#fff;box-shadow:0 4px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:14px;background:#FFF3D6;display:flex;align-items:center;justify-content:center">${EQC.bulb('#E39B1C', 20)}</div><div><div style="font:800 14px 'Baloo 2';color:#2A1F45">${TX({ az: 'İpucu qığılcımı', en: 'Hint spark', ru: 'Искра-подсказка' })}</div><div style="font:700 11px Nunito;color:#8B7A55">×${s.hintSparks}</div></div></div>
-        <div style="flex:1;border-radius:22px;background:#fff;box-shadow:0 4px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:14px;background:#E8FBF1;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 3 l2.4 6.4 6.6 0.4 -5 4.4 1.6 6.4 -5.6-3.4 -5.6 3.4 1.6-6.4 -5-4.4 6.6-0.4 Z" fill="#2A9455"></path></svg></div><div><div style="font:800 14px 'Baloo 2';color:#2A1F45">${TX({ az: 'İkiqat XP', en: 'Double XP', ru: 'Двойной XP' })}</div><div style="font:700 11px Nunito;color:#8B7A55">×1</div></div></div>
-      </div>
+      <div id="spark-card" style="margin-top:12px;border-radius:22px;background:#fff;box-shadow:0 4px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:14px;background:#FFF3D6;display:flex;align-items:center;justify-content:center;flex:none">${EQC.bulb('#E39B1C', 20)}</div><div style="flex:1"><div style="font:800 14px 'Baloo 2';color:#2A1F45">${TX({ az: 'İpucu qığılcımı', en: 'Hint spark', ru: 'Искра-подсказка' })} · ×${s.hintSparks || 0}</div><div style="font:700 11px Nunito;color:#8B7A55;line-height:1.4;margin-top:2px">${TX({ az: 'İpucuna baxıb sonra həll etdiyin hər sual bir qığılcımdır. İpucu həmişə pulsuzdur.', en: 'Every question you solve after looking at its hint is a spark. Hints are always free.', ru: 'Каждый вопрос, решённый после подсказки, — это искра. Подсказки всегда бесплатны.' })}</div></div></div>
     </div>
 
     <div style="position:absolute;top:608px;left:16px;right:16px">

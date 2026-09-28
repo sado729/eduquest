@@ -145,7 +145,10 @@ const EQX = {
         const head = this.b(this.TOPIC.indexOf(m.t)) + '.' + off(this.dayNo(m.day));
         return n > 0 ? head + '.' + this.b(n) : head;
       }).join('-'),
-      rows.join('-')
+      rows.join('-'),
+      /* the chapter relics, chapterNo.mask per chapter — the last group, so a code written
+         before them has eleven groups and reads as "no record" (EQ.cleanRelics) */
+      Object.keys(s.relics || {}).map(k => this.b(k) + '.' + this.b(s.relics[k])).join('-')
     ].join('_');
   },
 
@@ -196,7 +199,12 @@ const EQX = {
           done: got >= EQD.MISSION_LEN
         };
       }),
-      track: { start: at(1) || this.dayKey(base), days: {} }
+      track: { start: at(1) || this.dayKey(base), days: {} },
+      relics: g.length > 11 ? (g[11] ? g[11].split('-') : []).reduce((o, p) => {
+        const [c, m] = p.split('.');
+        o[this.n(c)] = this.n(m);
+        return o;
+      }, {}) : null
     };
     (g[10] ? g[10].split('-') : []).forEach(row => {
       const f = row.split('.').map(N);
@@ -271,6 +279,8 @@ const EQX = {
       .forEach(k => { out[k] = !!r[k]; });
     /* a file from before the helmets has no flag but does carry the regions, so it is
        derived exactly as the loader derives it; a hat the child does not own comes off */
+    /* after questDay and bossBeaten: a code or file with no relic record derives one from them */
+    out.relics = EQ.cleanRelics(r.relics, out);
     EQD.HELMS.forEach(h => { out[h.flag] = typeof r[h.flag] === 'boolean' ? r[h.flag] : EQ.helmFromHistory(out.regions, h); });
     const worn = EQD.HELM_BY[out.hero.hat];
     if (worn && !out[worn.flag]) out.hero.hat = 'none';

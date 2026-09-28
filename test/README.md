@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all seventeen suites
+npm test              # all eighteen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -22,6 +22,7 @@ npm run test:sound
 npm run test:tutor
 npm run test:helmets
 npm run test:levelup
+npm run test:bag
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -489,3 +490,35 @@ the right card or none, never "0 levels away", English/Russian level plurals, an
 island the card named, with the wardrobe unchanged. Verified red against four seeded
 regressions (the design's old screen, a literal 1500 in `grant`, the next region fixed
 to the island, the first-boss condition dropped).
+
+## bag.js — what the bag counts
+
+The bag came from the design with five numbers that looked like state and were not:
+"Hint spark ×N" read `s.hintSparks`, which nothing ever raised; "Double XP ×1" was a
+typed-in 1; the Crystal Shard drew `s.bossBeaten ? 2 : 1` whatever had happened; and the
+quest-items row had a map "1" and a magnifier "3".
+
+Now a **hint spark** is earned by a question solved *after* its hint was open — tapped,
+or shown after a miss — in the daily quest, a mission, a region round or the boss fight,
+at most once per question. The hint stays free and a spark is never spent: it is the
+bag's record that asking for help and carrying on is part of winning. The **shard** is
+the current chapter's relic (`relic` on each of `EQD.CHAPTERS`: crystal shard / song note
+/ star piece): one piece per stage whose boss was really beaten, kept in `s.relics` as
+`{ chapterNo: bitmask }` and only ever added to. It cannot be derived from `questDay`,
+because a new calendar day moves the adventure to the next stage whether or not the boss
+was beaten — such a stage is named as missed, never counted. **Double XP**, the map and the
+magnifier are gone: a boost to "play more now" contradicts the rest screen, and the other
+two had nothing to count.
+
+Covers: no Double XP / `bossBeaten ? 2 : 1` / `×1` / map / magnifier left in the bag's
+source, and every badge and ×N on the rendered bag equal to state across four states;
+sparks through the real daily, mission, region and boss flows (none without the hint, one
+per question however many misses, the hint open with zero sparks, the success-screen chip
+and the boss toast), and no code in `js/` that spends one; relics through the real boss
+fight across a whole chapter and into the next, a calendar-skipped stage, old saves
+(earlier stages of the current chapter credited — what the old bag showed), junk records
+dropped; the code's new twelfth group, an eleven-group code from before, backup files old
+and new and a hostile one; the bag clean in every chapter × stage × language. Verified red
+against seven seeded regressions (no `earnSpark`, no `earnRelic`, no once-per-question
+guard, the typed-in shard badge back, the relic group dropped from the code, unpack
+ignoring it, the legacy credit dropped).
