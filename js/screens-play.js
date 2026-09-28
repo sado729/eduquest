@@ -117,7 +117,7 @@ EQS.screens.success = function (s) {
   const streakChip = EQ.session.streakRow >= 2
     ? TX({ az: `Dalbadal ${EQ.session.streakRow} dənə!`, en: `${EQ.session.streakRow} in a row!`, ru: `${EQ.session.streakRow} подряд!` })
     : TX({ az: 'Ağıllı fikirdir!', en: 'Nice thinking!', ru: 'Отлично соображаешь!' });
-  const pct = Math.min(100, Math.round(s.xp / 1500 * 100));
+  const pct = Math.min(100, Math.round(s.xp / EQD.XP_PER_LEVEL * 100));
   /* a mission question pays less than a daily challenge, so the two reward chips have
      to read the context rather than the fixed +50 / +10 of the adventure */
   const mis = EQ.session.ctx === 'mission' ? EQ.missionEntry() : null;
@@ -155,11 +155,11 @@ EQS.screens.success = function (s) {
     <div class="pop" style="position:absolute;top:250px;left:34px;padding:8px 14px;border-radius:18px;background:#5CE39B;box-shadow:0 5px 0 #2FA76D;font:800 18px 'Baloo 2', system-ui;color:#0B3D25">+${gainXP} XP</div>
     <div class="pop" style="position:absolute;top:320px;right:28px;padding:8px 14px;border-radius:18px;background:#FFC24B;box-shadow:0 5px 0 #E39B1C;font:800 18px 'Baloo 2', system-ui;color:#4A3208;animation-delay:120ms">${TX({ az: `+${gainCoins} sikkə`, en: `+${gainCoins} coins`, ru: `+${gainCoins} монет` })}</div>
     <div style="position:absolute;top:470px;left:22px;right:22px;background:#FFF7EA;border-radius:28px;padding:20px;box-shadow:0 7px 0 #E0C79A">
-      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px Nunito;color:#8B7A55;letter-spacing:1.2px">${TX({ az: `SƏVİYYƏ ${s.level} · ${UPC(EQ.rank(s.level))}`, en: `LEVEL ${s.level} · ${UPC(EQ.rank(s.level))}`, ru: `УРОВЕНЬ ${s.level} · ${UPC(EQ.rank(s.level))}` })}</span><span style="font:800 13px Nunito;color:#2A9455">${EQC.fmt(s.xp)} / ${EQC.fmt(1500)}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px Nunito;color:#8B7A55;letter-spacing:1.2px">${TX({ az: `SƏVİYYƏ ${s.level} · ${UPC(EQ.rank(s.level))}`, en: `LEVEL ${s.level} · ${UPC(EQ.rank(s.level))}`, ru: `УРОВЕНЬ ${s.level} · ${UPC(EQ.rank(s.level))}` })}</span><span style="font:800 13px Nunito;color:#2A9455">${EQC.fmt(s.xp)} / ${EQC.fmt(EQD.XP_PER_LEVEL)}</span></div>
       <div style="height:16px;border-radius:8px;background:#EAD9BC;margin-top:10px;overflow:hidden;position:relative"><div style="width:${pct}%;height:100%;border-radius:8px;background:#5CE39B"></div><div style="position:absolute;left:${Math.max(0, pct - 8)}%;top:0;bottom:0;width:8%;background:rgba(255,255,255,0.55)"></div></div>
       <div style="display:flex;gap:10px;margin-top:16px">
         <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${reg ? `${regE.n}/${EQD.REGION_LEN}` : (mis || misDone) ? `${misDone ? EQD.MISSION_LEN : mis.n}/${EQD.MISSION_LEN}` : `${Math.min(5, s.challengesDone)}/5`}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${reg ? UPC(TX(EQD.REGIONS[reg].name)) : (mis || misDone) ? TX({ az: 'MİSSİYA', en: 'MISSION', ru: 'МИССИЯ' }) : TX({ az: 'AÇILAN MÖHÜR', en: 'SEALS OPEN', ru: 'ПЕЧАТЕЙ СНЯТО' })}</div></div>
-        <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${Math.max(0, 1500 - s.xp)}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${TX({ az: `SƏVİYYƏ ${s.level + 1}-Ə QALAN XP`, en: `XP TO LEVEL ${s.level + 1}`, ru: `XP ДО УРОВНЯ ${s.level + 1}` })}</div></div>
+        <div style="flex:1;border-radius:18px;background:#FBE9CC;padding:12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#2A1F45">${Math.max(0, EQD.XP_PER_LEVEL - s.xp)}</div><div style="font:700 10px Nunito;color:#8B7A55;letter-spacing:0.8px">${TX({ az: `SƏVİYYƏ ${s.level + 1}-Ə QALAN XP`, en: `XP TO LEVEL ${s.level + 1}`, ru: `XP ДО УРОВНЯ ${s.level + 1}` })}</div></div>
       </div>
     </div>
     <div style="position:absolute;bottom:150px;left:22px;right:22px;background:rgba(30,21,54,0.9);border-radius:24px;padding:16px 18px;display:flex;gap:12px;align-items:center">
@@ -389,10 +389,66 @@ EQS.screens.victory = function (s) {
   </div>`;
 };
 
-/* 13 · Level up */
+/* 13 · Level up
+   Every line here is something that really happened. The design drew the same "new item:
+   Explorer Hat" card and "Science Island is N levels away" card on every level — but the
+   Explorer Hat is the hat a child starts with, a level hands over no item at all, and the
+   island card said "0 levels away" long after it opened. Now:
+   - the reward card shows what this level really gives (EQ.levelGifts): a region that
+     opens, else a new rank name, else nothing — the card is simply not drawn;
+   - the next-region card shows the nearest region still shut and its real condition
+     (EQ.nextRegion) — the first boss for Söz Vadisi, a level for the others — and is not
+     drawn once every region is open;
+   - the XP line is the child's own XP, not a copy of the level size. */
 EQS.meta.levelup = { light: true };
+EQS.levelCard = function (o) {
+  return `<div style="border-radius:26px;background:${o.bg};padding:15px;box-shadow:${o.shadow};display:flex;align-items:center;gap:14px">
+      <div style="width:60px;height:60px;border-radius:20px;background:${o.iconBg};display:flex;align-items:center;justify-content:center;flex:none">${o.icon}</div>
+      <div style="flex:1;min-width:0"><div style="font:700 10px Nunito;color:${o.kickerInk};letter-spacing:1.4px">${o.kicker}</div><div style="font:800 18px 'Baloo 2';color:${o.nameInk}">${o.name}</div><div style="font:700 12px Nunito;color:${o.noteInk}">${o.note}</div></div>
+    </div>`;
+};
 EQS.screens.levelup = function (s) {
   const newLevel = s.level + 1;
+  const need = EQD.XP_PER_LEVEL;
+  const carry = Math.max(0, s.xp - need);
+  const gifts = EQ.levelGifts(newLevel);
+  const next = EQ.nextRegion(newLevel);
+  const xpLine = `${EQC.fmt(s.xp)} / ${EQC.fmt(need)} XP` + (carry > 0
+    ? TX({ az: ` · ${carry} XP növbətiyə keçir`, en: ` · ${carry} XP carries over`, ru: ` · ${carry} XP идут дальше` })
+    : '');
+  const cream = { bg: '#FFF7EA', shadow: '0 6px 0 #C9BCA6', iconBg: '#FBE9CC', kickerInk: '#A08A5E', nameInk: '#2A1F45', noteInk: '#8B7A55' };
+  let reward = '';
+  if (gifts.regions.length) {
+    const r = gifts.regions[0], R = EQD.REGIONS[r], helm = EQD.helmOf(r);
+    const hn = helm ? TX(helm.name) : '';
+    reward = EQS.levelCard(Object.assign({}, cream, {
+      icon: EQS.regionIcon(r, true, 36),
+      kicker: TX({ az: 'YENİ REGİON AÇILDI', en: 'NEW REGION OPEN', ru: 'НОВЫЙ РЕГИОН ОТКРЫТ' }),
+      name: TX(R.name),
+      note: helm ? TX({ az: `${hn} orada qazanılır`, en: `Earn the ${hn} there`, ru: `Там ждёт ${hn}` }) : TX(R.short)
+    }));
+  } else if (gifts.rank) {
+    reward = EQS.levelCard(Object.assign({}, cream, {
+      icon: EQC.trophy('#E39B1C', 30),
+      kicker: TX({ az: 'YENİ RÜTBƏ', en: 'NEW RANK', ru: 'НОВОЕ ЗВАНИЕ' }),
+      name: EQ.rank(newLevel),
+      note: TX({ az: `Əvvəl: ${EQ.rank(s.level)}`, en: `Before: ${EQ.rank(s.level)}`, ru: `Было: ${EQ.rank(s.level)}` })
+    }));
+  }
+  let ahead = '';
+  if (next) {
+    const n = next.levels;
+    ahead = EQS.levelCard({
+      bg: 'rgba(69,198,240,0.14)', shadow: '0 0 0 1.5px rgba(69,198,240,0.35) inset', iconBg: 'rgba(69,198,240,0.25)',
+      kickerInk: '#8FDCF7', nameInk: '#fff', noteInk: '#A5DCF0',
+      icon: EQS.regionIcon(next.r, true, 32),
+      kicker: next.boss
+        ? TX({ az: 'İLK BOSSDAN SONRA', en: 'AFTER YOUR FIRST BOSS', ru: 'ПОСЛЕ ПЕРВОГО БОССА' })
+        : TX({ az: `${n} SƏVİYYƏ QALIB`, en: `${n} ${n === 1 ? 'LEVEL' : 'LEVELS'} AWAY`, ru: `ЧЕРЕЗ ${n} ${UPC(RUP(n, 'уровень', 'уровня', 'уровней'))}` }),
+      name: TX(next.R.name),
+      note: TX(next.R.short)
+    });
+  }
   return `<div class="scr" style="background:#1C1338">
     <div class="rays" style="position:absolute;top:40px;left:-120px;right:-120px;height:640px;background:repeating-conic-gradient(from 0deg, rgba(92,227,155,0.22) 0 4deg, rgba(92,227,155,0) 4deg 20deg);mask-image:radial-gradient(closest-side, rgba(0,0,0,0.9) 16%, transparent 66%);-webkit-mask-image:radial-gradient(closest-side, rgba(0,0,0,0.9) 16%, transparent 66%);opacity:0.9"></div>
     <div style="position:absolute;top:104px;left:0;right:0;text-align:center;font:800 16px Nunito;color:#5CE39B;letter-spacing:4px">${TX({ az: 'SƏVİYYƏ ARTDI!', en: 'LEVEL UP!', ru: 'НОВЫЙ УРОВЕНЬ!' })}</div>
@@ -404,21 +460,14 @@ EQS.screens.levelup = function (s) {
     </div>
     <div style="position:absolute;top:360px;left:0;right:0;text-align:center">
       <div style="font:800 30px 'Baloo 2', system-ui;color:#fff">${EQ.rank(newLevel)}</div>
-      <div style="font:700 14px Nunito;color:#A896E0;margin-top:6px">${TX({ az: `${EQC.fmt(1500)} / ${EQC.fmt(1500)} XP · yeni rütbə açıldı`, en: `${EQC.fmt(1500)} / ${EQC.fmt(1500)} XP · new rank unlocked`, ru: `${EQC.fmt(1500)} / ${EQC.fmt(1500)} XP · новое звание открыто` })}</div>
+      <div style="font:700 14px Nunito;color:#A896E0;margin-top:6px">${xpLine}</div>
     </div>
     <div style="position:absolute;top:452px;left:20px;right:20px;display:flex;gap:10px">
       <div style="flex:1;border-radius:22px;background:rgba(255,255,255,0.07);padding:16px 12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#5CE39B">+${s.xpToday}</div><div style="font:700 10px Nunito;color:#8FE0B6;letter-spacing:1px">${TX({ az: 'BUGÜNKÜ XP', en: 'XP TODAY', ru: 'XP ЗА ДЕНЬ' })}</div></div>
       <div style="flex:1;border-radius:22px;background:rgba(255,255,255,0.07);padding:16px 12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#FFC24B">+${s.coinsToday}</div><div style="font:700 10px Nunito;color:#FFD98A;letter-spacing:1px">${TX({ az: 'SİKKƏ', en: 'COINS', ru: 'МОНЕТ' })}</div></div>
       <div style="flex:1;border-radius:22px;background:rgba(255,255,255,0.07);padding:16px 12px;text-align:center"><div style="font:800 20px 'Baloo 2';color:#C8B4FF">${s.streak}</div><div style="font:700 10px Nunito;color:#C8B4FF;letter-spacing:1px">${TX({ az: 'GÜNLÜK SERİYA', en: 'DAY STREAK', ru: 'ДНЕЙ ПОДРЯД' })}</div></div>
     </div>
-    <div style="position:absolute;top:556px;left:20px;right:20px;border-radius:26px;background:#FFF7EA;padding:15px;box-shadow:0 6px 0 #C9BCA6;display:flex;align-items:center;gap:14px">
-      <div style="width:60px;height:60px;border-radius:20px;background:#FBE9CC;display:flex;align-items:center;justify-content:center;flex:none"><svg width="34" height="34" viewBox="0 0 36 36"><ellipse cx="18" cy="24" rx="16" ry="4" fill="#C98A4B"></ellipse><path d="M8 24 q0-14 10-14 q10 0 10 14 Z" fill="#E0A365"></path><rect x="7" y="20" width="22" height="5" rx="2.5" fill="#7B5CFF"></rect></svg></div>
-      <div style="flex:1"><div style="font:700 10px Nunito;color:#A08A5E;letter-spacing:1.4px">${TX({ az: 'YENİ ƏŞYA AÇILDI', en: 'NEW ITEM UNLOCKED', ru: 'НОВЫЙ ПРЕДМЕТ ОТКРЫТ' })}</div><div style="font:800 18px 'Baloo 2';color:#2A1F45">${TX({ az: 'Kaşif Papağı', en: 'Explorer Hat', ru: 'Шляпа Исследователя' })}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX({ az: 'Qarderobunda gözləyir', en: 'Waiting in your wardrobe', ru: 'Ждёт в твоём гардеробе' })}</div></div>
-    </div>
-    <div style="position:absolute;top:648px;left:20px;right:20px;border-radius:26px;background:rgba(69,198,240,0.14);padding:15px;box-shadow:0 0 0 1.5px rgba(69,198,240,0.35) inset;display:flex;align-items:center;gap:14px">
-      <div style="width:60px;height:60px;border-radius:20px;background:rgba(69,198,240,0.25);display:flex;align-items:center;justify-content:center;flex:none"><svg width="32" height="32" viewBox="0 0 36 36"><path d="M14 6 h8 v7 l7 14 a3 3 0 0 1 -2.6 4.4 H9.6 A3 3 0 0 1 7 27 l7-14 Z" fill="#EAF7FF"></path><path d="M10.4 22 h15.2 l3 6 a3 3 0 0 1 -2.6 4 H10 a3 3 0 0 1 -2.6-4 Z" fill="#45C6F0"></path></svg></div>
-      <div style="flex:1"><div style="font:700 10px Nunito;color:#8FDCF7;letter-spacing:1.4px">${TX({ az: `${Math.max(0, 10 - newLevel)} SƏVİYYƏ QALIB`, en: `${Math.max(0, 10 - newLevel)} LEVELS AWAY`, ru: `ЧЕРЕЗ ${Math.max(0, 10 - newLevel)} ${UPC(RUP(Math.max(0, 10 - newLevel), 'уровень', 'уровня', 'уровней'))}` })}</div><div style="font:800 18px 'Baloo 2';color:#fff">${TX({ az: 'Elm Adası', en: 'Science Island', ru: 'Остров Науки' })}</div><div style="font:700 12px Nunito;color:#A5DCF0">${TX({ az: 'Qaynayan təcrübələr və təbiət tapşırıqları', en: 'Bubbling experiments and nature quests', ru: 'Бурлящие опыты и задания о природе' })}</div></div>
-    </div>
+    <div style="position:absolute;top:556px;left:20px;right:20px;display:flex;flex-direction:column;gap:12px">${reward}${ahead}</div>
     <div class="press" onclick="EQ.applyLevelUp()" style="position:absolute;bottom:44px;left:20px;right:20px;height:68px;border-radius:24px;background:#3DBE6E;box-shadow:0 6px 0 #2A9455, 0 16px 26px -12px rgba(42,148,85,0.6);display:flex;align-items:center;justify-content:center;font:800 21px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Kəşfə davam et', en: 'Keep exploring', ru: 'Продолжить исследование' })}</div>
   </div>`;
 };

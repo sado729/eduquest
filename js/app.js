@@ -45,7 +45,8 @@ const EQ = {
   frozen: false, /* set while an import is being written: nothing may save over it */
   session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, helmNews: [], helmCard: null, answering: false, bossBeam: false, attempted: false, hinted: false, recSkips: [], range: 'week' },
 
-  rank(level) { return TX(EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT)); },
+  rankOf(level) { return EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT); },
+  rank(level) { return TX(this.rankOf(level)); },
   pron() { return 'their'; },
   qset() { return EQD.questSet(this.s.questDay || 0); },
   /* where the current stage sits in the chapter structure (3 stages = 1 chapter) */
@@ -439,11 +440,31 @@ const EQ = {
      tutor and success screens as the forest, no boss. The first finished round of a
      day pays a coin bonus; more rounds are welcome, they just pay per question. Like a
      mission, a region never touches the daily 5/5: it is beside the adventure. */
-  regionOpen(r) {
+  regionOpen(r) { return this.regionOpenAt(r, this.s && this.s.level); },
+  /* the same test for a level the child is about to reach (the level-up screen) */
+  regionOpenAt(r, level) {
     const R = EQD.REGIONS[r];
     if (!R || !this.s) return false;
     if (R.trophy && (this.s.trophiesEarned || 0) < R.trophy) return false;
-    return (this.s.level || 1) >= R.level;
+    return (level || 1) >= R.level;
+  },
+  /* What reaching `level` really hands over — nothing is invented here. A level opens a
+     region (Elm Adası 10, Kosmik Stansiya 15, Sirli Qala 20) and sometimes a new rank
+     name. It gives no sticker (those come from chests, in album order) and no hat (the
+     helmets are earned by a round inside their region). */
+  levelGifts(level) {
+    const regions = EQD.REGION_ORDER.filter(r => this.regionOpenAt(r, level) && !this.regionOpenAt(r, level - 1));
+    const rank = this.rankOf(level).en !== this.rankOf(level - 1).en;
+    return { regions, rank };
+  },
+  /* the nearest region still shut at `level`, and what really opens it: Söz Vadisi waits
+     for the first boss, the others for a level. null once every region is open. */
+  nextRegion(level) {
+    const r = EQD.REGION_ORDER.filter(k => !this.regionOpenAt(k, level))[0];
+    if (!r) return null;
+    const R = EQD.REGIONS[r];
+    const boss = !!(R.trophy && (this.s.trophiesEarned || 0) < R.trophy);
+    return { r, R, boss, levels: boss ? 0 : Math.max(0, R.level - (level || 1)) };
   },
   regionsOpen() { return EQD.REGION_ORDER.filter(r => this.regionOpen(r)); },
   /* today's progress in a region, read without creating anything (for the map pins) */
@@ -646,7 +667,7 @@ const EQ = {
   grant(xp, coins) {
     this.s.xp += xp; this.s.xpToday += xp;
     this.s.coins += coins; this.s.coinsToday += coins;
-    if (this.s.xp >= 1500) this.s.pendingLevelUp = true;
+    if (this.s.xp >= EQD.XP_PER_LEVEL) this.s.pendingLevelUp = true;
   },
   /* Tapping one of the three answer buttons. Multiple choice is still the game's
      default question, so this stays the shortest possible path into resolve(): judge
@@ -752,7 +773,7 @@ const EQ = {
   },
   applyLevelUp() {
     this.s.level++;
-    this.s.xp = Math.max(0, this.s.xp - 1500);
+    this.s.xp = Math.max(0, this.s.xp - EQD.XP_PER_LEVEL);
     this.s.pendingLevelUp = false;
     this.save();
     const target = this.session.afterLevel || 'map';

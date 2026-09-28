@@ -171,7 +171,7 @@ EQC.appleBox = (n) => {
 
 /* ── HUD bar (ported from HudBar.dc.html) ─────────────── */
 EQC.hud = function (s, style) {
-  const need = 1500;
+  const need = EQD.XP_PER_LEVEL;
   const pct = Math.min(100, Math.round(s.xp / need * 100));
   return `<div style="${style || ''};padding:0 14px;display:flex;align-items:center;gap:10px">
     <div class="press" onclick="EQ.go('wardrobe')" style="position:relative;width:56px;height:56px;flex:none">

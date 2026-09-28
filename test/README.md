@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all sixteen suites
+npm test              # all seventeen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -21,6 +21,7 @@ npm run test:bigtext
 npm run test:sound
 npm run test:tutor
 npm run test:helmets
+npm run test:levelup
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -460,3 +461,31 @@ file derives the helmets from its regions; and every screen that draws the hero 
 the helmet with no `undefined` / `NaN` / `[object Object]`, in all three languages.
 Verified red against seven seeded regressions (no earning, no migration, a dropped code
 bit, helmet not drawn, silent unlock, reordered hat list, unguarded `wearHat`).
+
+## levelup.js — what the level-up screen promises
+
+The level-up screen came from the design with three fixed lines, all false for most
+children: "NEW ITEM UNLOCKED · Explorer Hat · waiting in your wardrobe" on every level
+(it is the hat a child starts with, and a level gives no item), "1,500 / 1,500 XP"
+whatever the child had, and "N LEVELS AWAY · Science Island" — always the island, and
+"0 levels away" from Level 10 on while Kosmik Stansiya and Sirli Qala were still shut.
+
+Now the reward card shows what `EQ.levelGifts(level)` finds — a region whose condition
+becomes true (Elm Adası 10, Kosmik Stansiya 15, Sirli Qala 20), else a new rank name,
+else no card. Stickers are not a level reward (chests hand them out in album order) and
+neither are hats (the helmets are earned by a round inside their region; the card only
+points at it). The next-region card is `EQ.nextRegion(level)`: the nearest region still
+shut and its real condition — the first boss for Söz Vadisi, levels for the others — and
+no card once all four are open. The level size is `EQD.XP_PER_LEVEL`, read by `grant`,
+`applyLevelUp`, the HUD bar and the level screens.
+
+Covers: no screen or rule types 1500 itself, and changing the constant moves every place
+that uses it; which levels open which region and which change the rank name; the next
+region before and after the first boss and at Levels 10 / 15 / 20; the screen at 1→2
+(with and without a boss), 5→6, 9→10, 14→15, 19→20 (with and without a boss) and 24→25
+in all three languages — no invented item, the child's real XP with what carries over,
+the right card or none, never "0 levels away", English/Russian level plurals, and no
+`undefined` / `NaN` / `[object Object]`; and the real flow from 9 to 10 opening the
+island the card named, with the wardrobe unchanged. Verified red against four seeded
+regressions (the design's old screen, a literal 1500 in `grant`, the next region fixed
+to the island, the first-boss condition dropped).

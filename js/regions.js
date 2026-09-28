@@ -125,6 +125,7 @@ EQD.REGIONS = {
   valley: {
     subj: 'reading', topics: ['letter', 'word', 'missing', 'build'], level: 1, trophy: 1,
     name: { az: 'Söz Vadisi', en: 'Word Valley', ru: 'Долина Слов' },
+    short: { az: 'Danışan hərflər və gizli sözlər', en: 'Talking letters and hidden words', ru: 'Говорящие буквы и тайные слова' },
     blurb: {
       az: 'Danışan hərflər, gizli sözlər və şəkillərdən qurulan sözlər.',
       en: 'Talking letters, hidden words and words built from pictures.',
@@ -146,6 +147,7 @@ EQD.REGIONS = {
   island: {
     subj: 'science', topics: ['animals', 'body', 'nature', 'matter'], level: 10,
     name: { az: 'Elm Adası', en: 'Science Island', ru: 'Остров Науки' },
+    short: { az: 'Qaynayan təcrübələr və təbiət tapşırıqları', en: 'Bubbling experiments and nature quests', ru: 'Бурлящие опыты и задания о природе' },
     blurb: {
       az: 'Qaynayan iksirlər, maraqlı heyvanlar və yalnız sən tapanda işləyən maşınlar.',
       en: 'Bubbling potions, curious animals and machines that only work when you figure them out.',
@@ -162,6 +164,7 @@ EQD.REGIONS = {
   station: {
     subj: 'science', topics: ['planets', 'sky', 'astro'], level: 15,
     name: { az: 'Kosmik Stansiya', en: 'Space Station', ru: 'Космическая Станция' },
+    short: { az: 'Planetlər, ulduzlar və raketlər', en: 'Planets, stars and rockets', ru: 'Планеты, звёзды и ракеты' },
     blurb: {
       az: 'Planetlər, ulduzlar və raketlər — kosmosun sirlərini aç.',
       en: 'Planets, stars and rockets — unlock the secrets of space.',
@@ -178,6 +181,7 @@ EQD.REGIONS = {
   castle: {
     subj: 'logic', topics: ['odd', 'riddle', 'seq'], level: 20,
     name: { az: 'Sirli Qala', en: 'Mystery Castle', ru: 'Замок Тайн' },
+    short: { az: 'Tapmacalar və gizli naxışlar', en: 'Riddles and hidden patterns', ru: 'Загадки и тайные узоры' },
     blurb: {
       az: 'Tapmacalar, gizli naxışlar və artıq əşyalar — qalanın qapıları yalnız ağıla açılır.',
       en: 'Riddles, hidden patterns and odd ones out — the castle doors open only to clever minds.',
