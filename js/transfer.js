@@ -72,6 +72,37 @@ const EQX = {
     return out;
   },
 
+  /* the room: which decorations are owned (and which still wait to be placed) pack into
+     bitmasks over EQD.DECOR, and what stands where is one character per place in
+     EQD.HOME_SPOTS — 0 for empty, else the decoration's position + 1 in base 36 */
+  decorMask(ids) {
+    let m = 0;
+    (ids || []).forEach(id => {
+      const i = EQD.DECOR.findIndex(d => d.id === id);
+      if (i >= 0 && i < 31) m |= (1 << i);
+    });
+    return m;
+  },
+  decorIds(mask) {
+    const out = [];
+    EQD.DECOR.forEach((d, i) => { if (i < 31 && (mask & (1 << i))) out.push(d.id); });
+    return out;
+  },
+  decorRow(at) {
+    return EQD.HOME_SPOTS.map(sp => {
+      const i = EQD.DECOR.findIndex(d => d.id === (at || {})[sp.id]);
+      return i >= 0 && i < 35 ? (i + 1).toString(36) : '0';
+    }).join('');
+  },
+  decorAt(row) {
+    const out = {};
+    EQD.HOME_SPOTS.forEach((sp, k) => {
+      const i = parseInt(String(row || '').charAt(k) || '0', 36);
+      if (i > 0 && EQD.DECOR[i - 1]) out[sp.id] = EQD.DECOR[i - 1].id;
+    });
+    return out;
+  },
+
   /* the day's quest title is one of the fixed themes — store which, not the three strings */
   themeNo(title) {
     if (!title || !title.en) return 0;
@@ -146,10 +177,15 @@ const EQX = {
         return n > 0 ? head + '.' + this.b(n) : head;
       }).join('-'),
       rows.join('-'),
-      /* the chapter relics, chapterNo.mask per chapter — the last group, so a code written
-         before them has eleven groups and reads as "no record" (EQ.cleanRelics) */
+      /* the chapter relics, chapterNo.mask per chapter — a code written before them has
+         eleven groups and reads as "no record" (EQ.cleanRelics) */
       Object.keys(s.relics || {}).map(k => this.b(k) + '.' + this.b(s.relics[k])).join('-')
-    ].join('_');
+    ].concat(
+      /* the room, owned.places.waiting — the thirteenth group. A state that never had a
+         room (a child last loaded before it existed) leaves it off, exactly like a code
+         written back then, and the reader derives one (EQ.loadDecor) */
+      Array.isArray(s.decorIds) ? [[this.b(this.decorMask(s.decorIds)), this.decorRow(s.decorAt), this.b(this.decorMask(s.decorNew))].join('.')] : []
+    ).join('_');
   },
 
   /* ── read one child back out of packed text (returns a raw object, still to be cleaned) ── */
@@ -206,6 +242,12 @@ const EQX = {
         return o;
       }, {}) : null
     };
+    if (g.length > 12) {
+      const [own, row, fresh] = g[12].split('.');
+      s.decorIds = this.decorIds(this.n(own));
+      s.decorAt = this.decorAt(row);
+      s.decorNew = this.decorIds(this.n(fresh));
+    }
     (g[10] ? g[10].split('-') : []).forEach(row => {
       const f = row.split('.').map(N);
       const d = {
@@ -278,8 +320,18 @@ const EQX = {
     out.questDay = int(r.questDay, 0, 99999, 0);
     /* region rounds and lifetime counts (a file carries them; a code does not) */
     out.regions = EQ.cleanRegions(r.regions);
-    ['onboarded', 'bossBeaten', 'chestReady', 'chestOpened', 'wizardHatOwned', 'crownOwned', 'trophyPlaced', 'pendingLevelUp']
+    ['onboarded', 'bossBeaten', 'chestReady', 'chestOpened', 'wizardHatOwned', 'crownOwned', 'pendingLevelUp']
       .forEach(k => { out[k] = !!r[k]; });
+    /* the room, rebuilt by the loader's own cleaner. A code or file from before the room
+       carries none: it is left off (not defaulted), so the loader derives it — and the
+       old card's `trophyPlaced` travels only for that derivation */
+    if (Array.isArray(r.decorIds)) {
+      const d = EQ.cleanDecor(r);
+      out.decorIds = d.ids; out.decorAt = d.at; out.decorNew = d.fresh;
+    } else {
+      delete out.decorIds; delete out.decorAt; delete out.decorNew;
+      out.trophyPlaced = !!r.trophyPlaced;
+    }
     /* a file from before the helmets has no flag but does carry the regions, so it is
        derived exactly as the loader derives it; a hat the child does not own comes off */
     /* after questDay and bossBeaten: a code or file with no relic record derives one from them */

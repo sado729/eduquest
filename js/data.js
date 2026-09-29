@@ -1469,7 +1469,7 @@ EQD.STICKERS.forEach((st, i) => { st.no = i + 1; EQD.STICKER_BY_ID[st.id] = st; 
 /* the chest's own stickers, in album order: the next one a child has not got yet is what
    the chest shows and what it hands over (one function, so the two cannot disagree).
    Every other sticker is earned by the thing its `how` names (EQ.STICKER_RULES) — never
-   by a chest. Once these four are in the album a chest holds coins and the hat only. */
+   by a chest. Once these four are in the album a chest holds no sticker slot. */
 EQD.CHEST_STICKERS = EQD.STICKERS.filter(st => st.chest);
 EQD.nextChestSticker = function (owned) {
   const have = owned || [];
@@ -1477,6 +1477,186 @@ EQD.nextChestSticker = function (owned) {
     if (have.indexOf(EQD.CHEST_STICKERS[i].id) < 0) return EQD.CHEST_STICKERS[i];
   }
   return null;
+};
+
+/* ── the trophies (the Awards screen) ──
+   Six, each earned by exactly what its line says; EQ.TROPHY_RULES reads that off the
+   save. The same table puts a trophy on the Awards screen and on the shelf at home
+   (EQD.DECOR `trophy`), so the two can never disagree about whether a child has one. */
+EQD.TROPHIES = [
+  { id: 'first', title: { az: 'İlk Tapşırıq', en: 'First Quest', ru: 'Первый Квест' },
+    how: { az: 'İlk sınağını həll et', en: 'Solve your first challenge', ru: 'Реши своё первое испытание' },
+    icon: '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M7.4 4 h9.2 v5.4 a4.6 4.6 0 0 1 -9.2 0 Z" fill="#FFC24B"></path><path d="M12 14.4 V17 M8.4 20 h7.2" stroke="#FFC24B" stroke-width="2.4" stroke-linecap="round"></path></svg>',
+    bg: '#FFF3D6', ink: '#8A5A0A', bar: '#FFC24B' },
+  { id: 'bridge', title: { az: 'Körpü Keşikçisi', en: 'Bridge Keeper', ru: 'Хранитель Моста' },
+    how: { az: 'Bilik Meşəsində ilk bossu məğlub et', en: 'Beat your first boss in Knowledge Forest', ru: 'Победи первого босса в Лесу Знаний' },
+    icon: '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M7.4 4 h9.2 v5.4 a4.6 4.6 0 0 1 -9.2 0 Z" fill="#E39B1C"></path><path d="M12 14.4 V17 M8.4 20 h7.2" stroke="#E39B1C" stroke-width="2.4" stroke-linecap="round"></path></svg>',
+    bg: '#FFF3D6', ink: '#8A5A0A', bar: '#E39B1C' },
+  /* s.streak counts the days played and is never reset, so this is "on 7 days", not "in a row" */
+  { id: 'week', title: { az: '7 Günlük Kaşif', en: '7 Day Explorer', ru: 'Исследователь 7 Дней' },
+    how: { az: '7 gün oyna', en: 'Play on 7 days', ru: 'Играй 7 дней' },
+    icon: '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 3 a9 9 0 1 0 0.01 0 Z" fill="#3DBE6E"></path><path d="M12 7 v5 l3.4 2" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"></path></svg>',
+    bg: '#E8FBF1', ink: '#2A9455', bar: '#3DBE6E' },
+  { id: 'math', title: { az: 'Riyaziyyat Ustası', en: 'Math Master', ru: 'Мастер Математики' },
+    how: { az: '100 riyaziyyat sınağı həll et', en: 'Solve 100 math challenges', ru: 'Реши 100 математических испытаний' },
+    icon: '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 4 a6 6 0 0 1 6 6 c0 3-2 4-2 6 h-8 c0-2-2-3-2-6 a6 6 0 0 1 6-6 Z" fill="#7B5CFF"></path><path d="M9.4 19 h5.2" stroke="#7B5CFF" stroke-width="2.4" stroke-linecap="round"></path></svg>',
+    bg: '#EFE7FF', ink: '#5B3FD6', bar: '#7B5CFF' },
+  { id: 'book', title: { az: 'Kitab Kaşifi', en: 'Book Explorer', ru: 'Книжный Исследователь' },
+    how: { az: 'Söz Vadisində 20 oxu sualı həll et', en: 'Solve 20 reading questions in Word Valley', ru: 'Реши 20 вопросов чтения в Долине Слов' },
+    shut: { az: '20 oxu sualı həll et · Söz Vadisi ilk bossdan sonra açılır', en: 'Solve 20 reading questions · Word Valley opens after your first boss', ru: 'Реши 20 вопросов чтения · Долина Слов откроется после первого босса' },
+    icon: '<svg width="30" height="30" viewBox="0 0 36 36"><path d="M5 9 q7-3 13 2 v20 q-6-5 -13-2 Z" fill="#45C6F0"></path><path d="M31 9 q-7-3 -13 2 v20 q6-5 13-2 Z" fill="#7B5CFF"></path></svg>',
+    bg: '#E4F6FF', ink: '#2196C9', bar: '#45C6F0' },
+  { id: 'world', title: { az: 'Dünya Kaşifi', en: 'World Explorer', ru: 'Исследователь Миров' },
+    how: { az: 'Meşədən kənarda 3 dünya aç', en: 'Open 3 worlds beyond the forest', ru: 'Открой 3 мира за пределами леса' },
+    icon: '<svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="#7B5CFF" stroke-width="2.2"></circle><path d="M3.4 12 h17.2 M12 3.4 q4 8.6 0 17.2 q-4-8.6 0-17.2" stroke="#7B5CFF" stroke-width="2.2" fill="none"></path></svg>',
+    bg: '#EFE7FF', ink: '#5B3FD6', bar: '#7B5CFF' }
+];
+EQD.TROPHY_BY_ID = {};
+EQD.TROPHIES.forEach(t => { EQD.TROPHY_BY_ID[t.id] = t; });
+
+/* ── my home: the decorations and the places in the room they go ──
+   Every decoration is either a starter (in every room from the first day, and labelled
+   as such) or earned by one real thing: a trophy (EQD.TROPHIES), a chapter finale, the
+   first full round in a region, or a chest. EQ.DECOR_RULES reads the earned ones off the
+   save; the chest ones come out of the chest in this order (EQD.nextChestDecor).
+
+   `kind` says where it may stand, and each place in the room (EQD.HOME_SPOTS) takes one
+   kind — a trophy goes on a shelf, a rug on the floor under the hero. There are fewer
+   places than decorations on purpose: decorating is choosing, and whatever is not in
+   the room waits in the box, never lost.
+
+   APPEND-ONLY, both lists: a decoration's position is its bit in a transfer code and a
+   place's position is its character there (js/transfer.js). */
+EQD._star = function (cx, cy, R, fill) {
+  const p = [];
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 ? R * 0.45 : R, a = -Math.PI / 2 + i * Math.PI / 5;
+    p.push((cx + r * Math.cos(a)).toFixed(1) + ' ' + (cy + r * Math.sin(a)).toFixed(1));
+  }
+  return `<path d="M${p.join(' L')} Z" fill="${fill}"></path>`;
+};
+/* a cup on a stand with its own mark in the bowl — the six trophies differ by colour and mark */
+EQD._cup = (c, d, mark) => `<path d="M10.6 8 H6.8 a4.2 4.2 0 0 0 4.4 6.4 M25.4 8 H29.2 a4.2 4.2 0 0 1 -4.4 6.4" fill="none" stroke="${d}" stroke-width="2.2" stroke-linecap="round"></path><path d="M10 4.6 h16 v8 a8 8 0 0 1 -16 0 Z" fill="${c}"></path><rect x="16.2" y="20" width="3.6" height="6" fill="${d}"></rect><rect x="10.4" y="25.6" width="15.2" height="5.6" rx="2" fill="${d}"></rect>${mark}`;
+EQD._mark = t => `<text x="18" y="15.6" text-anchor="middle" font-family="'Baloo 2', system-ui" font-weight="800" font-size="10" fill="#fff">${t}</text>`;
+EQD._bunting = (() => {
+  const cols = ['#FF5D73', '#FFC24B', '#45C6F0', '#3DBE6E', '#7B5CFF'];
+  const at = t => [(1 - t) * (1 - t) * 2 + 2 * (1 - t) * t * 50 + t * t * 98, (1 - t) * (1 - t) * 3 + 2 * (1 - t) * t * 17 + t * t * 3];
+  let flags = '';
+  for (let i = 0; i < 9; i++) {
+    const [x, y] = at((i + 0.5) / 9);
+    flags += `<path d="M${(x - 4.4).toFixed(1)} ${(y - 0.6).toFixed(1)} L${(x + 4.4).toFixed(1)} ${(y + 0.6).toFixed(1)} L${x.toFixed(1)} ${(y + 10).toFixed(1)} Z" fill="${cols[i % cols.length]}"></path>`;
+  }
+  return '<path d="M2 3 Q50 17 98 3" stroke="#8A5A0A" stroke-width="1.2" fill="none"></path>' + flags;
+})();
+EQD._mobile = (() => {
+  const hang = [[24, 12, 'star', '#FFC24B'], [37, 20, 'moon', '#9B7CFF'], [50, 26, 'star', '#45C6F0'], [63, 18, 'star', '#FF8A4C'], [76, 11, 'moon', '#FFC24B']];
+  let out = '<path d="M18 3 h64" stroke="#8A5A0A" stroke-width="2.4" stroke-linecap="round"></path>';
+  hang.forEach(([x, len, shape, col]) => {
+    out += `<path d="M${x} 3 V${len}" stroke="#A08A5E" stroke-width="0.8"></path>`;
+    out += shape === 'star' ? EQD._star(x, len + 4.4, 5, col)
+      : `<path d="M${x + 1.6} ${len} a5 5 0 1 0 3.8 8.4 a4 4 0 0 1 -3.8 -8.4 Z" fill="${col}"></path>`;
+  });
+  return out;
+})();
+
+EQD.DECOR = [
+  /* — starters: every room has them from the first day — */
+  { id: 'books', kind: 'shelf', start: true, name: { az: 'Rəngli kitablar', en: 'Colourful books', ru: 'Цветные книжки' },
+    art: '<rect x="6" y="9" width="5.4" height="23" rx="1.2" fill="#FF5D73"></rect><rect x="12" y="5.6" width="5.4" height="26.4" rx="1.2" fill="#45C6F0"></rect><rect x="18" y="10" width="5.4" height="22" rx="1.2" fill="#3DBE6E"></rect><path d="M24.6 11.4 l4.8 -1.6 l4.4 20.8 l-4.8 1.6 Z" fill="#7B5CFF"></path><path d="M7.4 13 h2.6 M13.4 9.6 h2.6 M19.4 14 h2.6" stroke="#fff" stroke-width="1.4" opacity="0.6"></path>' },
+  { id: 'portrait', kind: 'wall', start: true, name: { az: 'Questy-nin şəkli', en: 'Questy’s picture', ru: 'Портрет Квести' },
+    art: '<rect x="3" y="4" width="30" height="28" rx="3" fill="#E0A365"></rect><rect x="6" y="7" width="24" height="22" rx="1.6" fill="#E4F6FF"></rect><path d="M11 16 l1.4 -6.6 l4.6 4 Z M25 16 l-1.4 -6.6 l-4.6 4 Z" fill="#F0762A"></path><circle cx="18" cy="19.4" r="7.2" fill="#FF9243"></circle><path d="M13.2 21.6 q4.8 5.4 9.6 0 q-4.8 2.2 -9.6 0 Z" fill="#FFF7EA"></path><circle cx="15.3" cy="18.2" r="1.3" fill="#2A1F45"></circle><circle cx="20.7" cy="18.2" r="1.3" fill="#2A1F45"></circle><circle cx="18" cy="21.6" r="1.1" fill="#2A1F45"></circle>' },
+  { id: 'plant', kind: 'floor', start: true, name: { az: 'Saksı gülü', en: 'Potted plant', ru: 'Цветок в горшке' },
+    art: '<path d="M11.4 24.4 h13.2 l-1.8 8.4 a2 2 0 0 1 -2 1.6 h-5.6 a2 2 0 0 1 -2 -1.6 Z" fill="#C9762F"></path><rect x="10.2" y="22.6" width="15.6" height="3.6" rx="1.4" fill="#E0A365"></rect><path d="M18 22.8 V9" stroke="#2A9455" stroke-width="2" stroke-linecap="round"></path><path d="M18 20 q-10 -2 -11.4 -11 q8.4 1 11.4 8 Z" fill="#3DBE6E"></path><path d="M18 16.6 q9.4 -2 11.4 -10.4 q-8.4 0 -11.4 7.4 Z" fill="#54D083"></path><path d="M18 11.4 q-2.4 -6 1 -9 q3.2 4.2 -1 9 Z" fill="#3DBE6E"></path>' },
+
+  /* — the six trophies, on the shelf — */
+  { id: 't_first', kind: 'shelf', trophy: 'first', name: { az: 'İlk Tapşırıq kuboku', en: 'First Quest trophy', ru: 'Кубок Первого Квеста' },
+    art: EQD._cup('#FFC24B', '#E39B1C', EQD._mark('1')) },
+  { id: 't_bridge', kind: 'shelf', trophy: 'bridge', name: { az: 'Körpü Keşikçisi kuboku', en: 'Bridge Keeper trophy', ru: 'Кубок Хранителя Моста' },
+    art: EQD._cup('#FF8A4C', '#E06327', '<path d="M13.4 15.4 q4.6 -6.6 9.2 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"></path><path d="M12.6 15.4 h10.8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"></path>') },
+  { id: 't_week', kind: 'shelf', trophy: 'week', name: { az: '7 Günlük Kaşif kuboku', en: '7 Day Explorer trophy', ru: 'Кубок Исследователя 7 Дней' },
+    art: EQD._cup('#3DBE6E', '#2A9455', EQD._mark('7')) },
+  { id: 't_math', kind: 'shelf', trophy: 'math', name: { az: 'Riyaziyyat Ustası kuboku', en: 'Math Master trophy', ru: 'Кубок Мастера Математики' },
+    art: EQD._cup('#7B5CFF', '#5B3FD6', '<path d="M18 8.2 v7.2 M14.4 11.8 h7.2" stroke="#fff" stroke-width="2.4" stroke-linecap="round"></path>') },
+  { id: 't_book', kind: 'shelf', trophy: 'book', name: { az: 'Kitab Kaşifi kuboku', en: 'Book Explorer trophy', ru: 'Кубок Книжного Исследователя' },
+    art: EQD._cup('#45C6F0', '#2196C9', '<path d="M12.8 9.4 q2.8 -1.4 5.2 0.6 q2.4 -2 5.2 -0.6 v6 q-2.8 -1.2 -5.2 0.6 q-2.4 -1.8 -5.2 -0.6 Z" fill="#fff"></path><path d="M18 10 v6" stroke="#2196C9" stroke-width="1"></path>') },
+  { id: 't_world', kind: 'shelf', trophy: 'world', name: { az: 'Dünya Kaşifi qlobusu', en: 'World Explorer globe', ru: 'Глобус Исследователя Миров' },
+    art: '<rect x="16.6" y="24" width="2.8" height="5" fill="#8A5A0A"></rect><rect x="10.6" y="28.4" width="14.8" height="4.4" rx="2" fill="#C9762F"></rect><path d="M8.8 16.6 a9.6 9.6 0 0 0 16.6 6" fill="none" stroke="#C9762F" stroke-width="2.2" stroke-linecap="round"></path><circle cx="18" cy="14" r="9" fill="#45C6F0"></circle><path d="M12 9.4 q3.4 -1.2 5 1.8 q-1 3.2 -4.4 2.6 q-1.8 -2.2 -0.6 -4.4 Z M19.4 15.6 q3.4 -1.4 5 1 q-1.4 3.6 -4.8 3.4 q-1.4 -2.2 -0.2 -4.4 Z" fill="#3DBE6E"></path><circle cx="14.6" cy="9" r="1.6" fill="#fff" opacity="0.5"></circle>' },
+
+  /* — the chapter finales: the boss of a chapter's third stage, beaten (s.relics bit 4) — */
+  { id: 'grove', kind: 'wall', finale: 'forest', name: { az: 'Meşə tablosu', en: 'Grove painting', ru: 'Картина с рощей' },
+    how: { az: 'Kristal Kölgəsini məğlub et — Pıçıldayan Meşəliyin finalı', en: 'Beat the Crystal Shade — the Whispering Grove finale', ru: 'Победи Кристальную Тень — финал Шепчущей Рощи' },
+    art: '<rect x="2" y="5" width="32" height="26" rx="3" fill="#C9762F"></rect><rect x="5" y="8" width="26" height="20" rx="1.4" fill="#BDE9FA"></rect><circle cx="25.4" cy="12.6" r="2.8" fill="#FFC24B"></circle><path d="M5 28 V22.6 q7 -4 13 0 q6 -3 13 1 V28 Z" fill="#7FCFA0"></path><path d="M11 24.4 h-4.6 l4.6 -9.4 l4.6 9.4 Z" fill="#2A9455"></path><path d="M19.4 23.4 h-4 l4 -7.6 l4 7.6 Z" fill="#3DBE6E"></path><rect x="10.2" y="24" width="1.6" height="2.4" fill="#8A5A0A"></rect><rect x="18.6" y="23" width="1.6" height="2.4" fill="#8A5A0A"></rect><path d="M14.6 11 l1 2 2 1 -2 1 -1 2 -1 -2 -2 -1 2 -1 Z" fill="#9B7CFF"></path>' },
+  { id: 'aquarium', kind: 'floor', finale: 'river', name: { az: 'Balıq akvariumu', en: 'Fish tank', ru: 'Аквариум с рыбками' },
+    how: { az: 'Sükut Burulğanını məğlub et — Oxuyan Çayın finalı', en: 'Beat the Hush Whirlpool — the Singing River finale', ru: 'Победи Водоворот Тишины — финал Поющей Реки' },
+    art: '<rect x="8" y="29.4" width="20" height="4.6" rx="1.4" fill="#8A5A0A"></rect><rect x="10.4" y="25.6" width="3" height="4.4" fill="#8A5A0A"></rect><rect x="22.6" y="25.6" width="3" height="4.4" fill="#8A5A0A"></rect><rect x="3.4" y="7.6" width="29.2" height="19" rx="3.4" fill="#BDE9FA"></rect><path d="M3.4 12.6 h29.2 v10.6 a3.4 3.4 0 0 1 -3.4 3.4 H6.8 a3.4 3.4 0 0 1 -3.4 -3.4 Z" fill="#45C6F0"></path><path d="M3.4 23 q4 -2 7.4 0 q3.8 2 7.2 0 q3.8 -2 7.2 0 q3.8 2 7.4 0 v0.4 a3.4 3.4 0 0 1 -3.4 3.2 H6.8 a3.4 3.4 0 0 1 -3.4 -3.2 Z" fill="#FFD98A"></path><path d="M12.6 17.4 q4.4 -4.4 8.8 0 q-4.4 4.4 -8.8 0 Z M21 17.4 l3.4 -2.6 v5.2 Z" fill="#FF8A4C"></path><circle cx="14.6" cy="16.8" r="0.9" fill="#2A1F45"></circle><circle cx="27" cy="14.6" r="1.2" fill="#fff" opacity="0.85"></circle><circle cx="28.2" cy="10.8" r="0.9" fill="#fff" opacity="0.85"></circle><path d="M7.6 25.6 q-1 -4 1 -7 M9.4 25.6 q1 -3 0 -5" stroke="#2A9455" stroke-width="1.6" fill="none" stroke-linecap="round"></path>' },
+  { id: 'mobile', kind: 'hang', finale: 'sky', name: { az: 'Ulduz asması', en: 'Star mobile', ru: 'Звёздная подвеска' },
+    how: { az: 'Gecə Toxucusunu məğlub et — Göy Qurşağı Zirvəsinin finalı', en: 'Beat the Night Weaver — the Rainbow Ridge finale', ru: 'Победи Ночного Ткача — финал Радужного Хребта' },
+    art: '<path d="M6 4 h24" stroke="#8A5A0A" stroke-width="2.4" stroke-linecap="round"></path><path d="M11 4 v9 M18 4 v15 M25 4 v7" stroke="#A08A5E" stroke-width="1.1"></path>' + EQD._star(11, 17.4, 5.4, '#FFC24B') + '<path d="M19.6 19 a6 6 0 1 0 4.6 10 a4.8 4.8 0 0 1 -4.6 -10 Z" fill="#9B7CFF"></path>' + EQD._star(25, 15, 4.4, '#45C6F0'),
+    wide: { vb: '0 0 100 34', svg: EQD._mobile } },
+
+  /* — the regions: the first full round there (s.feats[region], as the helmets) — */
+  { id: 'blocks', kind: 'floor', region: 'valley', name: { az: 'Hərf kubikləri', en: 'Letter blocks', ru: 'Кубики с буквами' },
+    how: { az: 'Söz Vadisində bir raund bitir', en: 'Finish a round in Word Valley', ru: 'Пройди раунд в Долине Слов' },
+    art: '<rect x="3.6" y="19.6" width="13.6" height="13.6" rx="2.4" fill="#FF5D73"></rect><rect x="18.8" y="19.6" width="13.6" height="13.6" rx="2.4" fill="#45C6F0"></rect><rect x="11.2" y="5.4" width="13.6" height="13.6" rx="2.4" fill="#FFC24B"></rect><g font-family="\'Baloo 2\', system-ui" font-weight="800" font-size="10" fill="#fff" text-anchor="middle"><text x="10.4" y="30">A</text><text x="25.6" y="30">B</text><text x="18" y="15.8">C</text></g>' },
+  { id: 'microscope', kind: 'shelf', region: 'island', name: { az: 'Mikroskop', en: 'Microscope', ru: 'Микроскоп' },
+    how: { az: 'Elm Adasında bir raund bitir', en: 'Finish a round on Science Island', ru: 'Пройди раунд на Острове Науки' },
+    art: '<rect x="7" y="29" width="22" height="4.4" rx="2.2" fill="#5B3FD6"></rect><path d="M22.4 29 q5.4 -7 0.6 -15" stroke="#7B5CFF" stroke-width="3.2" fill="none" stroke-linecap="round"></path><rect x="9.6" y="21.4" width="14" height="3.2" rx="1.4" fill="#A197BC"></rect><path d="M12.4 6 l5.4 -1.6 l4.4 14.6 l-5.4 1.6 Z" fill="#7B5CFF"></path><path d="M10.6 3.6 l6 -1.8 l0.9 3 l-6 1.8 Z" fill="#2A1F45"></path><circle cx="18.8" cy="20.2" r="1.7" fill="#45C6F0"></circle>' },
+  { id: 'telescope', kind: 'floor', region: 'station', name: { az: 'Teleskop', en: 'Telescope', ru: 'Телескоп' },
+    how: { az: 'Kosmik Stansiyada bir raund bitir', en: 'Finish a round on Space Station', ru: 'Пройди раунд на Космической Станции' },
+    art: '<path d="M18 19 L9.6 34 M18 19 L26.4 34 M18 19 V34" stroke="#8A5A0A" stroke-width="2.2" stroke-linecap="round"></path><g transform="rotate(-28 18 15)"><rect x="4.6" y="11.6" width="24" height="7" rx="3" fill="#5B3FD6"></rect><rect x="27" y="10.4" width="5.4" height="9.4" rx="2" fill="#7B5CFF"></rect><rect x="2.4" y="12.9" width="3" height="4.4" rx="1" fill="#2A1F45"></rect></g><circle cx="18" cy="19" r="2.2" fill="#2A1F45"></circle>' + EQD._star(30, 5.4, 3.4, '#FFC24B') },
+  { id: 'castle', kind: 'shelf', region: 'castle', name: { az: 'Qala maketi', en: 'Toy castle', ru: 'Макет замка' },
+    how: { az: 'Sirli Qalada bir raund bitir', en: 'Finish a round in Mystery Castle', ru: 'Пройди раунд в Замке Тайн' },
+    art: '<rect x="8" y="15" width="20" height="18" fill="#A197BC"></rect><rect x="3.6" y="11" width="8" height="22" fill="#8878A8"></rect><rect x="24.4" y="11" width="8" height="22" fill="#8878A8"></rect><path d="M3 11.4 L7.6 4.4 L12.2 11.4 Z M23.8 11.4 L28.4 4.4 L33 11.4 Z" fill="#FF5D73"></path><path d="M8 15 v-2.6 h3 v2.6 M16.5 15 v-2.6 h3 v2.6 M25 15 v-2.6" fill="#A197BC"></path><path d="M14.6 33 v-6 a3.4 3.4 0 0 1 6.8 0 v6 Z" fill="#2A1F45"></path><path d="M18 15 V6.4 l5 1.8 -5 1.8" fill="#FFC24B" stroke="#8A5A0A" stroke-width="0.9"></path>' },
+
+  /* — the chests: from the second one on (the first holds the Wizard Hat), in this order — */
+  { id: 'rug', kind: 'rug', chest: true, name: { az: 'Rəngli xalça', en: 'Bright rug', ru: 'Яркий коврик' },
+    art: '<ellipse cx="18" cy="22" rx="16.6" ry="9.6" fill="#FF8A4C"></ellipse><ellipse cx="18" cy="22" rx="12.4" ry="6.8" fill="#FFC24B"></ellipse><ellipse cx="18" cy="22" rx="7.6" ry="3.8" fill="#FF5D73"></ellipse>',
+    wide: { vb: '0 0 120 24', svg: '<ellipse cx="60" cy="12" rx="59" ry="11.4" fill="#FF8A4C"></ellipse><ellipse cx="60" cy="12" rx="48" ry="8.4" fill="#FFC24B"></ellipse><ellipse cx="60" cy="12" rx="34" ry="5.4" fill="#FF5D73"></ellipse><ellipse cx="60" cy="12" rx="18" ry="2.6" fill="#FFF7EA" opacity="0.7"></ellipse>' } },
+  { id: 'bunting', kind: 'hang', chest: true, name: { az: 'Bayraqcıq çələngi', en: 'Flag bunting', ru: 'Гирлянда флажков' },
+    art: '<path d="M3 8 Q18 18 33 8" stroke="#8A5A0A" stroke-width="1.4" fill="none"></path><path d="M5.6 9.4 L12 12.2 L7.6 22 Z" fill="#FF5D73"></path><path d="M14.6 13 L21.4 13 L18 23.6 Z" fill="#FFC24B"></path><path d="M24 12.2 L30.4 9.4 L28.4 22 Z" fill="#45C6F0"></path>',
+    wide: { vb: '0 0 100 22', svg: EQD._bunting } },
+  { id: 'lamp', kind: 'floor', chest: true, name: { az: 'Gecə lampası', en: 'Night lamp', ru: 'Ночник' },
+    art: '<ellipse cx="18" cy="33" rx="7.4" ry="2.2" fill="#8A5A0A"></ellipse><rect x="17" y="12" width="2" height="21" fill="#A08A5E"></rect><circle cx="18" cy="12" r="9.4" fill="#FFE9A8" opacity="0.5"></circle><path d="M10.6 14 L13.8 3.4 h8.4 L25.4 14 Z" fill="#FFC24B"></path><path d="M10.6 14 h14.8" stroke="#E39B1C" stroke-width="2" stroke-linecap="round"></path>' }
+];
+EQD.DECOR_BY_ID = {};
+EQD.DECOR.forEach(d => { EQD.DECOR_BY_ID[d.id] = d; });
+EQD.CHEST_DECOR = EQD.DECOR.filter(d => d.chest);
+/* what each one says it takes, for the locked tile in the box and a tap in the room */
+EQD.DECOR.forEach(d => {
+  if (d.how) return;
+  if (d.trophy) d.how = EQD.TROPHY_BY_ID[d.trophy].how;
+  else if (d.start) d.how = { az: 'Başlanğıc — ilk gündən evindədir', en: 'Starter — in your home from day one', ru: 'Стартовое — в твоём доме с первого дня' };
+  else if (d.chest) d.how = { az: 'Sandıqdan çıxır — hər sandıq növbətini gətirir', en: 'Comes out of a chest — each one brings the next', ru: 'Выпадает из сундука — каждый приносит следующее' };
+});
+
+/* The places in the room, in screen pixels (the phone is 402 × 874). Shelves: two planks
+   on the right wall; wall: under the window and under the shelves; floor: the two front
+   corners; the rug lies under the hero and Questy; hang: from the ceiling. */
+EQD.HOME_SPOTS = [
+  { id: 's1', kind: 'shelf', x: 192, y: 322, w: 62, h: 50 },
+  { id: 's2', kind: 'shelf', x: 256, y: 322, w: 62, h: 50 },
+  { id: 's3', kind: 'shelf', x: 320, y: 322, w: 62, h: 50 },
+  { id: 's4', kind: 'shelf', x: 192, y: 402, w: 62, h: 50 },
+  { id: 's5', kind: 'shelf', x: 256, y: 402, w: 62, h: 50 },
+  { id: 's6', kind: 'shelf', x: 320, y: 402, w: 62, h: 50 },
+  { id: 'd1', kind: 'wall', x: 36, y: 336, w: 100, h: 88 },
+  { id: 'd2', kind: 'wall', x: 294, y: 470, w: 88, h: 80 },
+  { id: 'f1', kind: 'floor', x: 10, y: 600, w: 78, h: 90 },
+  { id: 'f2', kind: 'floor', x: 314, y: 596, w: 80, h: 94 },
+  { id: 'r1', kind: 'rug', x: 96, y: 622, w: 216, h: 46 },
+  { id: 'h1', kind: 'hang', x: 100, y: 124, w: 202, h: 60 }
+];
+EQD.SPOT_BY_ID = {};
+EQD.HOME_SPOTS.forEach(sp => { EQD.SPOT_BY_ID[sp.id] = sp; });
+/* where a new room keeps its starters */
+EQD.HOME_START = { s1: 'books', d1: 'portrait', f2: 'plant' };
+/* The chest shows what it will hand over, and this is the one function both ask. The
+   first chest's gift is the Wizard Hat; from the next one on, that place in the chest
+   holds the next chest decoration the child does not have yet — then nothing. */
+EQD.nextChestDecor = function (s) {
+  if (!s || !s.wizardHatOwned) return null;
+  const have = s.decorIds || [];
+  return EQD.CHEST_DECOR.filter(d => have.indexOf(d.id) < 0)[0] || null;
 };
 
 /* ── Questy'nin qulluğu ──

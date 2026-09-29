@@ -193,9 +193,23 @@ EQS.screens.bag = function (s) {
   </div>`;
 };
 
-/* 17 · My home */
+/* 17 · My home — the room is drawn from the save: every decoration in it is one the child
+   owns, standing in the place they put it (EQD.HOME_SPOTS), and an empty place looks
+   empty. A new room still looks lived in, because it comes with three starters that say
+   they are starters. "Bəzə" opens decorating: tap one, then tap where it goes — the
+   put-in-order panel's rule — and whatever is not in the room waits in the box below. */
 EQS.meta.home = { light: false };
 EQS.screens.home = function (s) {
+  const ed = EQ.session.decor, edit = !!ed, pick = ed && ed.pick;
+  const pickD = pick ? EQD.DECOR_BY_ID[pick.id] : null;
+  const at = s.decorAt || {};
+  const owned = s.decorIds || [];
+  const pop = EQ.session.decorPop;
+  const placed = EQD.HOME_SPOTS.filter(sp => at[sp.id]).length;
+  const earnable = EQD.DECOR.filter(d => !d.start);
+  const earned = earnable.filter(d => owned.indexOf(d.id) >= 0).length;
+  const waiting = EQ.decorWaiting();
+
   /* the stickers on the wall: the room is what the album is *for*, so the six most
      recent ones hang here, and the whole strip is a door into the album */
   const mine = (s.stickerIds || []).slice(-6).map(id => EQD.STICKER_BY_ID[id]).filter(Boolean);
@@ -207,50 +221,117 @@ EQS.screens.home = function (s) {
     ${mine.length ? '' : `<div style="padding:8px 12px;border-radius:15px;background:rgba(255,247,234,0.75);font:700 10.5px Nunito;color:#8B7A55;text-align:center;line-height:1.3">${TX({ az: 'Divar stiker gözləyir', en: 'This wall is waiting for stickers', ru: 'Стена ждёт наклеек' })}</div>`}
   </div>`;
 
-  const shelfTrophy = s.trophyPlaced
-    ? `<div class="pop" style="position:absolute;bottom:56px;left:64px">${EQC.trophy('#7B5CFF', 34)}</div>`
-    : '';
-  const trophyCard = s.trophyPlaced ? '' : `
-    <div class="press" onclick="EQ.placeTrophy()" style="position:absolute;bottom:112px;left:16px;right:16px;background:#FFF7EA;border-radius:24px;padding:14px 16px;box-shadow:0 5px 0 #D8BC92;display:flex;align-items:center;gap:12px">
-      <div style="width:44px;height:44px;border-radius:16px;background:#EFE7FF;display:flex;align-items:center;justify-content:center;flex:none">${EQC.trophy('#7B5CFF', 22)}</div>
-      <div style="flex:1"><div style="font:800 14px 'Baloo 2';color:#2A1F45">${TX({ az: 'Riyaziyyat Ustası kuboku qazanıldı', en: 'Math Master trophy earned', ru: 'Получен кубок Мастера Математики' })}</div><div style="font:700 11.5px Nunito;color:#8B7A55">${TX({ az: 'Rəfə qoymaq üçün toxun', en: 'Tap to place it on your shelf', ru: 'Нажми, чтобы поставить на полку' })}</div></div>
+  /* one decoration drawn at the size of its place: the rug and the hanging ones are
+     wide pictures, the rest square — standing on the shelf or floor, centred on a wall */
+  const art = (d, sp) => {
+    if (d.wide) return `<svg width="${sp.w}" height="${sp.h}" viewBox="${d.wide.vb}" preserveAspectRatio="xMidYMid meet" style="display:block">${d.wide.svg}</svg>`;
+    const z = sp.kind === 'shelf' ? 46 : sp.kind === 'wall' ? Math.min(sp.w, sp.h) : Math.min(sp.w, sp.h) - 8;
+    return `<svg width="${z}" height="${z}" viewBox="0 0 36 36" style="display:block">${d.art}</svg>`;
+  };
+  /* an empty place on the wall is a nail, an empty ceiling a hook — nothing pretends to be there */
+  const nail = '<div style="width:9px;height:9px;border-radius:5px;background:#D8BC92;box-shadow:0 1.5px 0 #C4A57A"></div>';
+  const hook = '<svg width="14" height="22" viewBox="0 0 14 22" style="align-self:flex-start"><path d="M7 0 V12 a4 4 0 1 1 -4 4" fill="none" stroke="#C4A57A" stroke-width="2.4" stroke-linecap="round"></path></svg>';
+  const place = sp => {
+    const d = at[sp.id] ? EQD.DECOR_BY_ID[at[sp.id]] : null;
+    const up = pick && pick.from === sp.id;
+    const cls = [!edit && d ? 'press' : '', pop === sp.id ? 'pop' : ''].filter(Boolean).join(' ');
+    const align = sp.kind === 'wall' || sp.kind === 'hang' ? 'center' : 'flex-end';
+    const inner = d ? art(d, sp) : edit ? '' : sp.kind === 'wall' ? nail : sp.kind === 'hang' ? hook : '';
+    return `<div id="spot-${sp.id}"${cls ? ` class="${cls}"` : ''}${!edit && d ? ` onclick="EQ.decorPeek('${d.id}')"` : ''} data-decor="${d ? d.id : ''}" style="position:absolute;left:${sp.x}px;top:${sp.y}px;width:${sp.w}px;height:${sp.h}px;display:flex;align-items:${align};justify-content:center${up ? ';transform:translateY(-6px);filter:drop-shadow(0 6px 0 rgba(123,92,255,0.5))' : ''}">${inner}</div>`;
+  };
+  const kinds = k => EQD.HOME_SPOTS.filter(sp => sp.kind === k).map(place).join('');
+
+  /* while decorating, every place is a target drawn over everything (the hero and Questy
+     let taps through): the ones the decoration in hand fits glow green, the rest dim */
+  const target = sp => {
+    const mineHere = pick && pick.from === sp.id;
+    const fits = !!(pickD && pickD.kind === sp.kind && !mineHere);
+    const border = mineHere ? '3px solid #7B5CFF' : fits ? '2.5px dashed #2A9455' : '2px dashed rgba(42,31,69,0.30)';
+    const bg = mineHere ? 'rgba(123,92,255,0.12)' : fits ? 'rgba(61,190,110,0.18)' : 'rgba(255,247,234,0.10)';
+    const plus = at[sp.id] ? '' : `<div style="font:800 22px 'Baloo 2', system-ui;color:${fits ? '#2A9455' : 'rgba(42,31,69,0.34)'}">+</div>`;
+    return `<div class="press" id="target-${sp.id}" onclick="EQ.decorSpot('${sp.id}')" style="position:absolute;left:${sp.x - 1}px;top:${sp.y - 1}px;width:${sp.w + 2}px;height:${sp.h + 2}px;border-radius:14px;border:${border};background:${bg};display:flex;align-items:center;justify-content:center${pickD && !fits && !mineHere ? ';opacity:0.4' : ''}">${plus}</div>`;
+  };
+
+  /* the card: a decoration earned and never put anywhere — one at a time, trophies first */
+  let card = '';
+  if (!edit && waiting.length) {
+    const w = waiting[0], nm = TX(w.name), more = waiting.length - 1;
+    const title = w.trophy
+      ? TX({ az: `${nm} qazanıldı`, en: `${nm} earned`, ru: `${nm} — получен!` })
+      : TX({ az: `Yeni bəzək: ${nm}`, en: `New decoration: ${nm}`, ru: `Новое украшение: ${nm}` });
+    const sub = TX(w.trophy
+      ? { az: 'Rəfə qoymaq üçün toxun', en: 'Tap to place it on your shelf', ru: 'Нажми, чтобы поставить на полку' }
+      : { az: 'Otağa qoymaq üçün toxun', en: 'Tap to put it in your room', ru: 'Нажми, чтобы поставить в комнату' })
+      + (more ? ' · ' + TX({ az: `daha ${more} gözləyir`, en: `${more} more waiting`, ru: `ещё ${more} ${RUP(more, 'ждёт', 'ждут', 'ждут')}` }) : '');
+    card = `<div id="decor-card" class="press rise" onclick="EQ.placeNew('${w.id}')" style="position:absolute;bottom:112px;left:16px;right:16px;background:#FFF7EA;border-radius:24px;padding:12px 14px;box-shadow:0 5px 0 #D8BC92;display:flex;align-items:center;gap:12px;z-index:30">
+      <div style="width:48px;height:48px;border-radius:16px;background:#EFE7FF;display:flex;align-items:center;justify-content:center;flex:none"><svg width="34" height="34" viewBox="0 0 36 36">${w.art}</svg></div>
+      <div style="flex:1;min-width:0"><div style="font:800 14px 'Baloo 2';color:#2A1F45;line-height:1.2">${title}</div><div style="font:700 11.5px Nunito;color:#8B7A55;margin-top:2px">${sub}</div></div>
       <div style="width:36px;height:36px;border-radius:14px;background:#3DBE6E;box-shadow:0 3px 0 #2A9455;display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 5 v14 M5 12 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"></path></svg></div>
     </div>`;
+  }
+
+  /* the box: what is owned and not in the room (the new ones first, badged), then the
+     ones still to earn as silhouettes that say what they take */
+  let drawer = '';
+  if (edit) {
+    const fresh = s.decorNew || [];
+    const inBox = EQD.DECOR.filter(d => owned.indexOf(d.id) >= 0 && !EQ.decorSpotOf(d.id))
+      .sort((a, b) => (fresh.indexOf(b.id) >= 0) - (fresh.indexOf(a.id) >= 0));
+    const locked = EQD.DECOR.filter(d => owned.indexOf(d.id) < 0);
+    const label = t => `<div style="font:800 9.5px Nunito;color:#D9CEFF;margin-top:5px;line-height:1.2;text-align:center;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2">${t}</div>`;
+    const tile = d => {
+      const on = pick && pick.id === d.id && !pick.from;
+      const isNew = fresh.indexOf(d.id) >= 0;
+      return `<div class="press" id="tile-${d.id}" onclick="EQ.decorPick('${d.id}')" style="flex:none;width:74px;position:relative">
+        ${isNew ? `<div style="position:absolute;top:-6px;right:0;padding:0 6px;height:18px;border-radius:9px;background:#3DBE6E;box-shadow:0 2px 0 #2A9455;display:flex;align-items:center;font:800 8.5px Nunito;color:#fff;letter-spacing:0.4px;z-index:2">${TX({ az: 'YENİ', en: 'NEW', ru: 'НОВОЕ' })}</div>` : ''}
+        <div style="width:64px;height:64px;margin:0 auto;border-radius:20px;background:${on ? '#EFE7FF' : '#FFF7EA'};box-shadow:${on ? '0 0 0 3px #7B5CFF, 0 6px 0 #5B3FD6' : '0 4px 0 #C9B48E'};display:flex;align-items:center;justify-content:center${on ? ';transform:translateY(-4px)' : ''}"><svg width="44" height="44" viewBox="0 0 36 36">${d.art}</svg></div>
+        ${label(TX(d.name))}
+      </div>`;
+    };
+    const lockTile = d => `<div class="press" onclick="EQ.decorPick('${d.id}')" style="flex:none;width:74px">
+        <div style="width:64px;height:64px;margin:0 auto;border-radius:20px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;position:relative"><svg width="40" height="40" viewBox="0 0 36 36" style="opacity:0.2">${d.art}</svg><div style="position:absolute;bottom:5px;right:6px">${EQC.lock('#A896E0', 14)}</div></div>
+        ${label(TX({ az: 'Hələ gizlidir', en: 'Still hidden', ru: 'Ещё скрыто' }))}
+      </div>`;
+    const back = pick && pick.from ? `<div class="press" id="tile-box" onclick="EQ.decorBox()" style="flex:none;width:74px">
+        <div style="width:64px;height:64px;margin:0 auto;border-radius:20px;border:2.5px dashed #FFD98A;background:rgba(255,217,138,0.12);display:flex;align-items:center;justify-content:center"><svg width="34" height="34" viewBox="0 0 36 36"><path d="M5 14 h26 v16 a2 2 0 0 1 -2 2 H7 a2 2 0 0 1 -2 -2 Z" fill="#C9762F"></path><path d="M3 9 h30 v6 H3 Z" fill="#E0A365"></path><path d="M14 20 h8" stroke="#FFF7EA" stroke-width="2.4" stroke-linecap="round"></path></svg></div>
+        ${label(TX({ az: 'Qutuya qoy', en: 'Put in the box', ru: 'Убрать в коробку' }))}
+      </div>` : '';
+    const empty = !inBox.length && !back ? `<div style="flex:none;width:118px;height:64px;border-radius:20px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;padding:0 10px;font:700 10.5px Nunito;color:#BFF0D3;text-align:center;line-height:1.3">${TX({ az: 'Qutu boşdur — hamısı otaqdadır!', en: 'The box is empty — it is all in the room!', ru: 'Коробка пуста — всё в комнате!' })}</div>` : '';
+    drawer = `<div id="decor-box" style="position:absolute;left:12px;right:12px;bottom:26px;height:156px;border-radius:30px;background:rgba(30,21,54,0.96);box-shadow:0 -2px 0 rgba(255,255,255,0.10) inset, 0 14px 30px -8px rgba(12,6,28,0.7);z-index:40">
+      <div style="display:flex;align-items:baseline;gap:8px;padding:13px 18px 0">
+        <div style="font:800 11px Nunito;color:#FFD98A;letter-spacing:1.4px">${TX({ az: `QUTUDA ${inBox.length}`, en: `IN THE BOX · ${inBox.length}`, ru: `В КОРОБКЕ · ${inBox.length}` })}</div>
+        <div style="font:700 10.5px Nunito;color:#A896E0">${TX({ az: `${locked.length} hələ qazanılmayıb`, en: `${locked.length} still to earn`, ru: `ещё не получено: ${locked.length}` })}</div>
+      </div>
+      <div class="vscroll" style="display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:12px 12px 10px">${back}${empty}${inBox.map(tile).join('')}${locked.map(lockTile).join('')}</div>
+    </div>`;
+  }
+
+  const sub = edit
+    ? (pickD
+      ? TX({ az: `${TX(pickD.name)} — hara qoyaq? Yaşıl yerə toxun`, en: `${TX(pickD.name)} — where to? Tap a green place`, ru: `${TX(pickD.name)} — куда? Нажми на зелёное место` })
+      : TX({ az: 'Bir bəzəyə toxun, sonra onun yerinə', en: 'Tap a decoration, then where it goes', ru: 'Нажми на украшение, потом — куда его поставить' }))
+    : TX({ az: `Otaqda ${placed} bəzək · ${earned}/${earnable.length} qazanılıb`, en: `${placed} in the room · ${earned} of ${earnable.length} earned`, ru: `В комнате: ${placed} · получено ${earned} из ${earnable.length}` });
+  const btn = edit
+    ? `<div class="press" onclick="EQ.decorDone()" style="height:44px;padding:0 16px;border-radius:16px;background:#3DBE6E;box-shadow:0 4px 0 #2A9455;display:flex;align-items:center;gap:7px;font:800 13px 'Baloo 2';color:#fff;flex:none">${EQC.check('#fff', 15, 3.4)}${TX({ az: 'Hazır', en: 'Done', ru: 'Готово' })}</div>`
+    : `<div class="press" onclick="EQ.decorEdit()" style="position:relative;height:44px;padding:0 14px;border-radius:16px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;gap:7px;font:800 13px 'Baloo 2';color:#fff;flex:none">
+        ${waiting.length ? `<div style="position:absolute;right:-6px;top:-7px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 11.5px 'Baloo 2', system-ui;color:#fff">${waiting.length}</div>` : ''}
+        <svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 20 h4 L20 8 l-4-4 -12 12 Z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"></path></svg>${TX({ az: 'Bəzə', en: 'Decorate', ru: 'Украсить' })}</div>`;
+  const still = edit ? ';pointer-events:none' : '';
+
   return `<div class="scr" style="background:#FBE9CC">
     <div style="position:absolute;inset:0">
       <div style="position:absolute;top:0;left:0;right:0;height:600px;background:#F6E0C0"></div>
       <div style="position:absolute;top:0;left:0;right:0;height:190px;background:#EFD3AC"></div>
       <div style="position:absolute;top:600px;left:0;right:0;bottom:0;background:#C99C63"></div>
       <div style="position:absolute;top:600px;left:0;right:0;height:12px;background:#B0834B"></div>
-      <div style="position:absolute;top:250px;left:24px;width:126px;height:112px;border-radius:14px;background:#8FD8F5;box-shadow:0 0 0 8px #E0A365"></div>
-      <div style="position:absolute;top:262px;left:36px;width:44px;height:36px;border-radius:22px;background:#FFF7EA;opacity:0.7"></div>
-      <div style="position:absolute;top:330px;left:34px;width:106px;height:34px;background:#7FCFA0;border-radius:0 0 12px 12px"></div>
-    </div>
-    <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
-      <div class="press" onclick="EQ.go('map')" style="width:44px;height:44px;border-radius:16px;background:rgba(42,31,69,0.14);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 19)}</div>
-      <div style="flex:1"><div style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${TX({ az: 'Evim', en: 'My home', ru: 'Мой дом' })}</div><div style="font:700 11px Nunito;color:#8B7A55">${TX({ az: `18 bəzəkdən ${s.trophyPlaced ? 7 : 6}-i yerləşdirilib`, en: `${s.trophyPlaced ? 7 : 6} of 18 decorations placed`, ru: `Расставлено украшений: ${s.trophyPlaced ? 7 : 6} из 18` })}</div></div>
-      <div class="press" onclick="EQ.toast(TX({az:'Bəzəmə rejimi növbəti sandıqla açılır! 🛋️',en:'Decorating mode opens with the next chest! 🛋️',ru:'Режим украшения откроется со следующим сундуком! 🛋️'}))" style="height:44px;padding:0 14px;border-radius:16px;background:#7B5CFF;box-shadow:0 4px 0 #5B3FD6;display:flex;align-items:center;gap:7px;font:800 13px 'Baloo 2';color:#fff"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M4 20 h4 L20 8 l-4-4 -12 12 Z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"></path></svg>${TX({ az: 'Bəzə', en: 'Decorate', ru: 'Украсить' })}</div>
+      <div style="position:absolute;top:206px;left:24px;width:126px;height:112px;border-radius:14px;background:#8FD8F5;box-shadow:0 0 0 8px #E0A365"></div>
+      <div style="position:absolute;top:218px;left:36px;width:44px;height:36px;border-radius:22px;background:#FFF7EA;opacity:0.7"></div>
+      <div style="position:absolute;top:286px;left:34px;width:106px;height:32px;background:#7FCFA0;border-radius:0 0 12px 12px"></div>
+      ${[372, 452].map(y => `<div style="position:absolute;left:186px;top:${y}px;width:202px;height:9px;border-radius:4px;background:#C9762F;box-shadow:0 3px 0 #A8622A"></div><div style="position:absolute;left:204px;top:${y + 9}px;width:8px;height:13px;border-radius:0 0 4px 4px;background:#B0834B"></div><div style="position:absolute;left:362px;top:${y + 9}px;width:8px;height:13px;border-radius:0 0 4px 4px;background:#B0834B"></div>`).join('')}
     </div>
 
-    <div style="position:absolute;top:432px;left:186px;width:190px;height:172px">
-      <div style="position:absolute;bottom:0;left:0;right:0;height:150px;background:#C9762F;border-radius:8px"></div>
-      <div style="position:absolute;bottom:0;left:6px;right:6px;height:142px;background:#E0A365;border-radius:6px"></div>
-      <div style="position:absolute;bottom:100px;left:14px;right:14px;height:8px;background:#C9762F"></div>
-      <div style="position:absolute;bottom:48px;left:14px;right:14px;height:8px;background:#C9762F"></div>
-      <div style="position:absolute;bottom:108px;left:22px;display:flex;gap:4px;align-items:flex-end">
-        <div style="width:12px;height:30px;background:#FF5D73;border-radius:2px"></div><div style="width:10px;height:34px;background:#45C6F0;border-radius:2px"></div><div style="width:12px;height:28px;background:#3DBE6E;border-radius:2px"></div><div style="width:9px;height:32px;background:#7B5CFF;border-radius:2px"></div>
-      </div>
-      <div style="position:absolute;bottom:108px;right:20px">${EQC.trophy('#FFC24B', 40)}</div>
-      <div style="position:absolute;bottom:56px;left:20px;right:20px;display:flex;gap:8px;align-items:flex-end"><div style="flex:1;height:34px;border-radius:6px;background:#FFF7EA;display:flex;align-items:center;justify-content:center;font:800 9px Nunito;color:#8B7A55;text-align:center;line-height:1.1">${TX({ az: 'RİYAZİYYAT<br>USTASI', en: 'MATH<br>MASTER', ru: 'МАСТЕР<br>МАТЕМАТИКИ' })}</div><div style="flex:1;height:30px;border-radius:6px;background:#EFE7FF"></div><div style="flex:1;height:38px;border-radius:6px;background:#E8FBF1"></div></div>
-      ${shelfTrophy}
-    </div>
-
+    ${kinds('hang')}${kinds('wall')}${kinds('shelf')}
     ${wallStickers}
-
-    <div style="position:absolute;top:392px;left:24px;width:130px;height:96px;border-radius:12px;background:#FFF7EA;box-shadow:0 5px 0 #D8BC92;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px">
-      <svg width="34" height="34" viewBox="0 0 36 36"><path d="M6 8 q9-4 12 2 q3-6 12-2 v20 q-9-4 -12 2 q-3-6 -12-2 Z" fill="#45C6F0"></path></svg>
-      <div style="font:800 10px Nunito;color:#2A1F45;text-align:center;letter-spacing:0.4px">${TX({ az: 'OXU ÇEMPİONU', en: 'READING CHAMPION', ru: 'ЧЕМПИОН ЧТЕНИЯ' })}</div>
-    </div>
 
     <div style="position:absolute;top:520px;left:20px;width:150px;height:90px">
       <div style="position:absolute;bottom:0;left:0;right:0;height:56px;border-radius:10px;background:#7B5CFF"></div>
@@ -258,19 +339,24 @@ EQS.screens.home = function (s) {
       <div style="position:absolute;bottom:56px;left:16px;width:36px;height:24px;border-radius:6px;background:#EFD3AC"></div>
     </div>
 
-    <div style="position:absolute;top:590px;right:26px;width:70px;height:96px">
-      <div style="position:absolute;bottom:0;left:14px;width:42px;height:38px;border-radius:8px 8px 14px 14px;background:#C9762F"></div>
-      <svg width="70" height="70" viewBox="0 0 70 70" style="position:absolute;top:0;left:0"><path d="M35 56 q-22-6 -24-26 q14 4 24 14 Z" fill="#3DBE6E"></path><path d="M35 56 q22-6 24-26 q-14 4 -24 14 Z" fill="#54D083"></path><path d="M35 56 V26" stroke="#2A9455" stroke-width="3"></path></svg>
-    </div>
+    ${kinds('rug')}${kinds('floor')}
 
-    ${EQC.hero(s.hero, 'position:absolute;bottom:230px;left:150px;width:110px')}
-    <div class="press" onclick="EQ.go('care')" style="position:absolute;bottom:224px;left:248px;width:74px">
-      ${EQ.careLeft() ? `<div style="position:absolute;right:-6px;top:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff;z-index:2">${EQ.careLeft()}</div>` : ''}
+    ${EQC.hero(s.hero, 'position:absolute;bottom:230px;left:150px;width:110px' + still)}
+    <div class="press" onclick="EQ.go('care')" style="position:absolute;bottom:224px;left:248px;width:74px${still}">
+      ${EQ.careLeft() && !edit ? `<div style="position:absolute;right:-6px;top:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff;z-index:2">${EQ.careLeft()}</div>` : ''}
       ${EQC.questy(EQ.careMood(), 'width:74px', s.questyFur, s.questyFurDark)}
     </div>
 
-    ${trophyCard}
-    ${EQC.nav('hero')}
+    ${edit ? `<div style="position:absolute;inset:0;z-index:30">${EQD.HOME_SPOTS.map(target).join('')}</div>` : ''}
+
+    <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px;z-index:35">
+      <div class="press" onclick="EQ.go('map')" style="width:44px;height:44px;border-radius:16px;background:rgba(42,31,69,0.14);display:flex;align-items:center;justify-content:center;flex:none">${EQC.chevL('#2A1F45', 19)}</div>
+      <div style="flex:1;min-width:0"><div style="font:800 20px 'Baloo 2', system-ui;color:#2A1F45">${TX({ az: 'Evim', en: 'My home', ru: 'Мой дом' })}</div><div id="home-sub" style="font:700 11px Nunito;color:#8B7A55;line-height:1.3">${sub}</div></div>
+      ${btn}
+    </div>
+
+    ${card}
+    ${edit ? drawer : EQC.nav('hero')}
   </div>`;
 };
 
@@ -285,7 +371,10 @@ EQS.screens.awards = function (s) {
     else inner = `<div style="width:32px;height:32px;border-radius:12px;background:rgba(255,255,255,0.08)"></div>`;
     return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">${inner}<span style="font:700 9.5px Nunito;color:${labelColor}">${label}</span></div>`;
   };
-  const mathPct = Math.min(100, Math.round(s.mathSolved / 100 * 100));
+  /* the six trophies and how far along each one is — the same table the shelf at home
+     reads (EQ.TROPHY_RULES), so a trophy is on both or on neither */
+  const trophies = EQD.TROPHIES.map(t => ({ t, p: EQ.TROPHY_RULES[t.id](s, EQ) }));
+  const won = trophies.filter(x => x.p.have >= x.p.need).length;
   const played = s.playedDays || [];
   const firstPlayed = played[0] || EQ.dayKey();
   const names = TX({
@@ -305,12 +394,11 @@ EQS.screens.awards = function (s) {
     week.push(dayCell(state, i === 0 ? todayLbl : names[d.getDay()], i === 0 ? '#FFD98A' : (state === 'off' ? '#7E6DB8' : '#A896E0')));
   }
   const best = Math.max(s.bestStreak || 1, s.streak);
-  const firstQuestDone = s.challengesDone > 0 || s.bossBeaten || s.mathSolved > 0;
   return `<div class="scr" style="background:#FFF7EA">
     <div style="position:absolute;top:0;left:0;right:0;height:284px;background:#2C1F52;border-radius:0 0 36px 36px;overflow:hidden">
       <div style="position:absolute;inset:0;background:radial-gradient(240px 200px at 76% 30%, rgba(255,138,76,0.35), rgba(44,31,82,0) 72%)"></div>
       <div style="position:absolute;top:62px;left:16px;right:16px;display:flex;align-items:center;gap:10px">
-        <div style="flex:1"><div style="font:800 21px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Kubokların', en: 'Your trophies', ru: 'Твои кубки' })}</div><div style="font:700 11px Nunito;color:#A896E0">${TX({ az: `40-dan ${s.trophiesEarned}-i qazanılıb`, en: `${s.trophiesEarned} of 40 earned`, ru: `Получено ${s.trophiesEarned} из 40` })}</div></div>
+        <div style="flex:1"><div style="font:800 21px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Kubokların', en: 'Your trophies', ru: 'Твои кубки' })}</div><div style="font:700 11px Nunito;color:#A896E0">${TX({ az: `${won}/${trophies.length} kubok qazanılıb`, en: `${won} of ${trophies.length} earned`, ru: `Получено ${won} из ${trophies.length}` })}</div></div>
         <div style="height:40px;padding:0 12px 0 8px;border-radius:20px;background:rgba(255,138,76,0.22);display:flex;align-items:center;gap:6px">${EQC.flame(20)}<span style="font:800 15px 'Baloo 2';color:#fff">${s.streak}</span></div>
       </div>
       <div style="position:absolute;bottom:22px;left:16px;right:16px;background:rgba(255,255,255,0.08);border-radius:24px;padding:16px">
@@ -323,49 +411,25 @@ EQS.screens.awards = function (s) {
     </div>
 
     <div style="position:absolute;top:306px;left:16px;right:16px;bottom:110px;display:flex;flex-direction:column;gap:11px" class="vscroll">
-      ${firstQuestDone ? `
-      <div style="border-radius:24px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:#FFF3D6;display:flex;align-items:center;justify-content:center;flex:none">${EQC.trophy('#FFC24B', 30)}</div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX({ az: 'İlk Tapşırıq', en: 'First Quest', ru: 'Первый Квест' })}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX({ az: 'İlk missiyanı tamamla', en: 'Complete your first mission', ru: 'Выполни свою первую миссию' })}</div></div>
-        <div style="width:30px;height:30px;border-radius:15px;background:#3DBE6E;display:flex;align-items:center;justify-content:center;flex:none">${EQC.check('#fff', 15, 3.6)}</div>
-      </div>` : `
-      <div style="border-radius:24px;background:rgba(42,31,69,0.06);padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:rgba(42,31,69,0.08);display:flex;align-items:center;justify-content:center;flex:none">${EQC.trophy('#A197BC', 30)}</div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#8878A8">${TX({ az: 'İlk Tapşırıq', en: 'First Quest', ru: 'Первый Квест' })}</div><div style="font:700 12px Nunito;color:#A197BC">${TX({ az: 'İlk missiyanı tamamla', en: 'Complete your first mission', ru: 'Выполни свою первую миссию' })}</div></div>
-      </div>`}
-      ${s.bossBeaten ? `
-      <div class="rise" style="border-radius:24px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:#FFF3D6;display:flex;align-items:center;justify-content:center;flex:none">${EQC.trophy('#E39B1C', 30)}</div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX({ az: 'Körpü Keşikçisi', en: 'Bridge Keeper', ru: 'Хранитель Моста' })}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX({ az: 'Bilik Meşəsində ilk boss məğlub edildi', en: 'First boss cleared in Knowledge Forest', ru: 'Первый босс Леса Знаний побеждён' })}</div></div>
-        <div style="width:30px;height:30px;border-radius:15px;background:#3DBE6E;display:flex;align-items:center;justify-content:center;flex:none">${EQC.check('#fff', 15, 3.6)}</div>
-      </div>` : ''}
-      <div style="border-radius:24px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:#E8FBF1;display:flex;align-items:center;justify-content:center;flex:none"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 3 a9 9 0 1 0 0.01 0 Z" fill="#3DBE6E"></path><path d="M12 7 v5 l3.4 2" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"></path></svg></div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX({ az: '7 Günlük Kaşif', en: '7 Day Explorer', ru: 'Исследователь 7 Дней' })}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX({ az: 'Dalbadal 7 gün oyna', en: 'Play 7 days in a row', ru: 'Играй 7 дней подряд' })}</div><div style="height:9px;border-radius:5px;background:#EAD9BC;margin-top:7px;overflow:hidden"><div style="width:${Math.round(s.streak / 7 * 100)}%;height:100%;background:#3DBE6E;border-radius:5px"></div></div></div>
-        <div style="font:800 13px 'Baloo 2';color:#2A9455;flex:none">${s.streak}/7</div>
-      </div>
-      <div style="border-radius:24px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:13px">
-        <div style="width:54px;height:54px;border-radius:20px;background:#EFE7FF;display:flex;align-items:center;justify-content:center;flex:none"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 4 a6 6 0 0 1 6 6 c0 3-2 4-2 6 h-8 c0-2-2-3-2-6 a6 6 0 0 1 6-6 Z" fill="#7B5CFF"></path><path d="M9.4 19 h5.2" stroke="#7B5CFF" stroke-width="2.4" stroke-linecap="round"></path></svg></div>
-        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX({ az: 'Riyaziyyat Ustası', en: 'Math Master', ru: 'Мастер Математики' })}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX({ az: '100 riyaziyyat sınağı həll et', en: 'Solve 100 math challenges', ru: 'Реши 100 математических испытаний' })}</div><div style="height:9px;border-radius:5px;background:#EAD9BC;margin-top:7px;overflow:hidden"><div style="width:${mathPct}%;height:100%;background:#7B5CFF;border-radius:5px"></div></div></div>
-        <div style="font:800 13px 'Baloo 2';color:#5B3FD6;flex:none">${s.mathSolved}/100</div>
-      </div>
-      ${EQS.goalCard(
-        { az: 'Kitab Kaşifi', en: 'Book Explorer', ru: 'Книжный Исследователь' },
-        EQ.regionOpen('valley')
-          ? { az: 'Söz Vadisində 20 oxu sualı həll et', en: 'Solve 20 reading questions in Word Valley', ru: 'Реши 20 вопросов чтения в Долине Слов' }
-          : { az: '20 oxu sualı həll et · Söz Vadisi ilk bossdan sonra açılır', en: 'Solve 20 reading questions · Word Valley opens after your first boss', ru: 'Реши 20 вопросов чтения · Долина Слов откроется после первого босса' },
-        (s.regions && s.regions.valley && s.regions.valley.total) || 0, 20, EQ.regionOpen('valley'),
-        '#E4F6FF', '#2196C9', '#45C6F0',
-        `<svg width="30" height="30" viewBox="0 0 36 36"><path d="M5 9 q7-3 13 2 v20 q-6-5 -13-2 Z" fill="#45C6F0"></path><path d="M31 9 q-7-3 -13 2 v20 q6-5 13-2 Z" fill="#7B5CFF"></path></svg>`)}
-      ${EQS.goalCard(
-        { az: 'Dünya Kaşifi', en: 'World Explorer', ru: 'Исследователь Миров' },
-        { az: 'Meşədən kənarda 3 dünya aç', en: 'Open 3 worlds beyond the forest', ru: 'Открой 3 мира за пределами леса' },
-        EQ.regionsOpen().length, 3, EQ.regionsOpen().length > 0,
-        '#EFE7FF', '#5B3FD6', '#7B5CFF',
-        `<svg width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="#7B5CFF" stroke-width="2.2"></circle><path d="M3.4 12 h17.2 M12 3.4 q4 8.6 0 17.2 q-4-8.6 0-17.2" stroke="#7B5CFF" stroke-width="2.2" fill="none"></path></svg>`)}
+      ${trophies.map(x => EQS.trophyCard(x.t, x.p)).join('')}
     </div>
     ${EQC.nav('awards')}
   </div>`;
+};
+
+/* one trophy on the Awards screen: a one-step trophy is greyed until it is won, then
+   ticked; a counted one is a goal card (EQS.goalCard) */
+EQS.trophyCard = function (t, p) {
+  if (p.need > 1) return EQS.goalCard(t.title, p.live || !t.shut ? t.how : t.shut, p.have, p.need, p.live, t.bg, t.ink, t.bar, t.icon);
+  if (p.have >= p.need) return `<div style="border-radius:24px;background:#fff;box-shadow:0 5px 0 #E0C79A;padding:14px;display:flex;align-items:center;gap:13px">
+        <div style="width:54px;height:54px;border-radius:20px;background:${t.bg};display:flex;align-items:center;justify-content:center;flex:none">${t.icon}</div>
+        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#2A1F45">${TX(t.title)}</div><div style="font:700 12px Nunito;color:#8B7A55">${TX(t.how)}</div></div>
+        <div style="width:30px;height:30px;border-radius:15px;background:#3DBE6E;display:flex;align-items:center;justify-content:center;flex:none">${EQC.check('#fff', 15, 3.6)}</div>
+      </div>`;
+  return `<div style="border-radius:24px;background:rgba(42,31,69,0.06);padding:14px;display:flex;align-items:center;gap:13px">
+        <div style="width:54px;height:54px;border-radius:20px;background:rgba(42,31,69,0.08);display:flex;align-items:center;justify-content:center;flex:none">${EQC.trophy('#A197BC', 30)}</div>
+        <div style="flex:1"><div style="font:800 16px 'Baloo 2';color:#8878A8">${TX(t.title)}</div><div style="font:700 12px Nunito;color:#A197BC">${TX(t.how)}</div></div>
+      </div>`;
 };
 
 /* a trophy with a counter: greyed with a lock until it can be worked on at all, then a

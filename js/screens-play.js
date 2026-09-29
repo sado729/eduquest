@@ -481,6 +481,11 @@ EQS.screens.chest = function (s) {
      EQD.nextChestSticker that EQ.openChest pays out from. Once the chest's own stickers are
      all in the album there is no sticker slot at all, rather than a slot for nothing. */
   const nextSticker = EQD.nextChestSticker(s.stickerIds);
+  /* the middle place is the Wizard Hat only in the chest that gives it; from the next
+     chest on it holds the next chest decoration for the home (EQD.nextChestDecor, which
+     EQ.openChest pays out from) — and once those are home, nothing */
+  const hatHere = !s.wizardHatOwned;
+  const nextDecor = EQD.nextChestDecor(s);
   return `<div class="scr" style="background:#241A3F">
     <div style="position:absolute;inset:0;background:radial-gradient(300px 280px at 50% 34%, rgba(255,194,75,0.30), rgba(36,26,63,0) 70%)"></div>
     <div class="press" onclick="EQ.go('map')" style="position:absolute;top:62px;left:16px;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;z-index:5">${EQC.xIcon('#fff', 17)}</div>
@@ -509,11 +514,15 @@ EQS.screens.chest = function (s) {
           <div style="font:800 17px 'Baloo 2';color:#fff;margin-top:6px;min-height:38px;display:flex;align-items:center;justify-content:center">100</div>
           <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'MACƏRA SİKKƏSİ', en: 'QUEST COINS', ru: 'МОНЕТ КВЕСТА' })}</div>
         </div>
-        <div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
+        ${hatHere ? `<div id="chest-hat" style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
           <svg width="40" height="40" viewBox="0 0 36 36"><ellipse cx="18" cy="26" rx="15" ry="4" fill="#8A6BE0"></ellipse><path d="M18 4 L30 22 H6 Z" fill="#7B5CFF"></path><path d="M18 12 l2.6 5.4 5.4 2.6 -5.4 2 -2.6 5 -2.6-5 -5.4-2 5.4-2.6 Z" fill="#FFE9A8"></path></svg>
           <div style="font:800 15px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${TX({ az: 'Sehrbaz Papağı', en: 'Wizard Hat', ru: 'Шляпа Волшебника' })}</div>
           <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'QARDEROB', en: 'WARDROBE', ru: 'ГАРДЕРОБ' })}</div>
-        </div>
+        </div>` : nextDecor ? `<div id="chest-decor" style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
+          <svg width="40" height="40" viewBox="0 0 36 36">${nextDecor.art}</svg>
+          <div style="font:800 ${TX(nextDecor.name).length > 14 ? '12' : '15'}px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${TX(nextDecor.name)}</div>
+          <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'EVİN ÜÇÜN', en: 'FOR YOUR HOME', ru: 'ДЛЯ ТВОЕГО ДОМА' })}</div>
+        </div>` : ''}
         ${nextSticker ? `<div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
           <svg width="40" height="40" viewBox="0 0 36 36">${nextSticker.art}</svg>
           <div style="font:800 ${TX(nextSticker.name).length > 14 ? '12' : (TX(nextSticker.name).length > 10 ? '14' : '17')}px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${TX(nextSticker.name)}</div>

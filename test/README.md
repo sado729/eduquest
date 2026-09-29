@@ -4,7 +4,7 @@ Plain `node` scripts — no dependencies, no build step. The game itself stays a
 PWA; these only load `js/*.js` and assert against the real functions.
 
 ```sh
-npm test              # all eighteen suites
+npm test              # all nineteen suites
 npm run test:rest     # just one
 npm run test:i18n
 npm run test:chapters
@@ -23,6 +23,7 @@ npm run test:tutor
 npm run test:helmets
 npm run test:levelup
 npm run test:bag
+npm run test:home
 ```
 
 ## rest.js — daily limit and bedtime pause
@@ -542,3 +543,49 @@ and new and a hostile one; the bag clean in every chapter × stage × language. 
 against seven seeded regressions (no `earnSpark`, no `earnRelic`, no once-per-question
 guard, the typed-in shard badge back, the relic group dropped from the code, unpack
 ignoring it, the legacy credit dropped).
+
+## home.js — the room and the trophies it shares with Awards
+
+The room came from the design as a picture that looked like state: a card announcing
+"Math Master trophy earned — tap to place it" to every child, a brand-new one included
+(it looked only at `s.trophyPlaced`; the trophy needs 100 math questions), a typed-in
+"6 of 18 decorations placed" (`trophyPlaced ? 7 : 6`) over a hand-drawn gold cup, a "Math
+Master" plaque and a "Reading Champion" sign, and a "Decorate" button that only toasted
+that decorating "opens with the next chest". The Awards screen beside it said "N of 40"
+(no 40 exists; N was the bosses beaten), and its Bridge Keeper read `bossBeaten`, which
+the next stage resets — earned one day, gone the next.
+
+Now the room holds **19 decorations** (`EQD.DECOR` in js/data.js): 3 starters every room
+has and labels as such, and 16 earned — the six trophies of the Awards screen, the three
+chapter finales (a chapter's third-stage boss, bit 4 of `s.relics`), the first full round
+in each region (`s.feats`, the helmets' moment) and three that come out of chests from the
+second chest on (the first holds the Wizard Hat; the chest shows which before it opens).
+They stand in **12 places** (`EQD.HOME_SPOTS`), one kind each — shelf, wall, floor, rug,
+ceiling — so decorating is choosing, and what is not in the room waits in the box. The
+Awards screen and the shelf read one table (`EQD.TROPHIES` + `EQ.TROPHY_RULES`), so a
+trophy is on both or on neither. The home card appears only for a decoration earned and
+never yet placed, one at a time ("2 more waiting"); a full shelf opens decorating with the
+trophy in hand. Decorating is tap one, tap where it goes (the put-in-order panel's rule):
+a swap puts the other one where the moved one was, and "Put in the box" keeps it owned.
+
+Covers: the typed-in count, the fixed cup/plaques, the chest-promise toast and the "of 40"
+gone from the source; the catalogue (sources, rules, three languages, places on the phone
+that never overlap); a new child's room — no card, exactly the starters drawn, the header
+counting what is there; every decoration at its own edge through the real game (the first
+answer, the boss, the seventh day, the hundredth math question, the twentieth reading
+question, Level 15's third world, a guardian vs a finale in all three chapters and the
+fourth, four answers vs a round and a round split across days, chest 1 → hat, chests 2–4
+→ the next decoration shown before it is paid, chest 5 → none); the Awards screen and the
+shelf agreeing across six states; the card, several at once (with Russian plurals), a
+full shelf, a trophy put away never called back; every decorating move, a locked tile,
+600 seeded random taps that never change the owned set or put one decoration in two
+places, and moves saved without "Done"; the migration (the old card tapped at 37 vs 100,
+a region played before rounds were kept, no chest credit, a damaged save) and being told
+once; the code's thirteenth group, two twelve-group codes from the previous build, files
+old, new and hostile; every room state × language rendering clean and drawing exactly
+what the save places; and every emoji the room shows within Unicode 11. Verified red
+against fourteen seeded regressions (the card for everyone, a typed-in count, Math Master
+at 99, Bridge Keeper on `bossBeaten`, a swap that drops the other one, putting away that
+removes ownership, `trophyPlaced` granting Math Master, regions on lifetime answers, a
+chest decoration with the hat, the room dropped from the code, a legacy file handed a
+default room, the loader not checking kinds, a late emoji, "of 40" back).

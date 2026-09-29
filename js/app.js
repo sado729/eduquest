@@ -37,7 +37,11 @@ const EQ_DEFAULTS = {
   careDay: null, careGiven: [], careTotal: 0,
   /* the regions beyond the forest: today's round in each, plus a lifetime count (see EQ.region) */
   regions: {},
-  trophyPlaced: false, pendingLevelUp: false,
+  /* my home: every decoration the child owns (starters included — only ever added to),
+     which place in the room holds which (EQD.HOME_SPOTS), and the ones earned but never
+     yet put anywhere, which the home card offers to place (EQ.placeNew) */
+  decorIds: ['books', 'portrait', 'plant'], decorAt: { s1: 'books', d1: 'portrait', f2: 'plant' }, decorNew: [],
+  pendingLevelUp: false,
   lastVisit: null,
   lastDay: null, questDay: 0, playedDays: [], bestStreak: 1,
   settings: { readAloud: true, bigText: false, calm: false, music: true, sfx: true, bedtime: true, bedMin: 1200, limit: 45, bonusDay: null, bonusMins: 0, lang: 'az' }
@@ -49,7 +53,7 @@ const EQ = {
   s: null,
   current: null,
   frozen: false, /* set while an import is being written: nothing may save over it */
-  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, helmNews: [], helmCard: null, answering: false, bossBeam: false, attempted: false, hinted: false, sparked: false, recSkips: [], range: 'week' },
+  session: { createCat: 'skin', wardrobeCat: 'hats', albumSet: 'forest', newSticker: null, justAdded: null, gateInput: '', streakRow: 0, q: null, qIdx: -1, qKey: null, ctx: 'daily', mission: null, region: null, unlockRegion: null, tutorWhy: false, missionAdded: false, helmNews: [], helmCard: null, decor: null, decorPop: null, decorNews: [], answering: false, bossBeam: false, attempted: false, hinted: false, sparked: false, recSkips: [], range: 'week' },
 
   rankOf(level) { return EQD.RANKS[level] || (level >= 13 ? EQD.RANK_LEGEND : EQD.RANK_DEFAULT); },
   rank(level) { return TX(this.rankOf(level)); },
@@ -97,6 +101,7 @@ const EQ = {
     this.s.playedDays = (this.s.playedDays || []).concat([today]).slice(-14);
     this.s.lastDay = today;
     this.checkStickers();
+    this.checkDecor(); /* a seventh day played is a trophy */
   },
   seedWeek() {
     // first ever boot: today is the first played day — a clean start
@@ -178,6 +183,7 @@ const EQ = {
     this.loadStickerFeats(s);
     /* a child who already did what a sticker asks gets it now, and sees it on the way in */
     this.checkStickers();
+    this.loadDecor(s);
   },
   save() {
     if (this.frozen) return; /* an import has just replaced storage; the page is reloading */
@@ -277,6 +283,9 @@ const EQ = {
       EQT.hint(this.session.q);
     }
     if (this.current === 'tutor' && name !== 'tutor') this.session.tutorWhy = false;
+    /* decorating belongs to the one visit: leaving the room puts the tools away (every
+       move was already saved as it was made) */
+    if (this.current === 'home' && name !== 'home') { this.session.decor = null; this.session.decorPop = null; }
     this.current = name;
     this.render();
     this.helmNotice(name);
@@ -601,11 +610,26 @@ const EQ = {
     const worn = EQD.HELM_BY[this.s.hero.hat];
     if (worn && !this.s[worn.flag]) this.s.hero.hat = 'none';
   },
+  /* A new helmet or decoration is told on the next calm screen — never over a question
+     or a reward beat — in one toast, so one piece of news cannot hide another. */
   helmNotice(name) {
-    const news = this.session.helmNews;
-    if (!news || !news.length || EQ_HELM_TOLD.indexOf(name) < 0) return;
-    this.session.helmNews = [];
-    this.toast(news.map(k => TX(EQD.HELM_BY[k].got)).join(' '));
+    if (EQ_HELM_TOLD.indexOf(name) < 0) return;
+    const line = this.newsLine();
+    if (line) this.toast(line);
+  },
+  /* the waiting news as one line, taken off the queue (empty string when there is none) */
+  newsLine() {
+    const helms = this.session.helmNews || [], deco = this.session.decorNews || [];
+    this.session.helmNews = []; this.session.decorNews = [];
+    const parts = helms.map(k => TX(EQD.HELM_BY[k].got));
+    if (deco.length === 1) {
+      const nm = TX(EQD.DECOR_BY_ID[deco[0]].name);
+      parts.push(TX({ az: `Yeni bəzək: ${nm} — evində yerləşdir! 🏠`, en: `New decoration: ${nm} — place it at home! 🏠`, ru: `Новое украшение: ${nm} — поставь его дома! 🏠` }));
+    } else if (deco.length > 1) {
+      const n = deco.length;
+      parts.push(TX({ az: `Evində ${n} yeni bəzək səni gözləyir! 🏠`, en: `${n} new decorations are waiting at home! 🏠`, ru: `Дома тебя ждут новые украшения: ${n}! 🏠` }));
+    }
+    return parts.join(' ');
   },
   /* a locked helmet card says how to earn it — with the level first while the region is shut */
   helmHow(key) {
@@ -712,6 +736,7 @@ const EQ = {
     /* the next stage is a new set, so it is planned from the set just finished */
     EQT.replan(this.s.questDay);
     this.checkStickers(); /* a new chapter opening is a sticker (Yol Fənəri) */
+    this.checkDecor();
     this.save();
     this.go('quest');
     /* crossing a chapter boundary is a bigger moment than the next stage of the same one */
@@ -835,7 +860,9 @@ const EQ = {
           this.save();
           this.go('success');
         }
-        if (this.checkStickers()) this.save(); /* revealed on the way out of success / victory (EQ.go) */
+        /* stickers are revealed on the way out of success / victory (EQ.go); a decoration
+           is told on the next calm screen and waits at home to be placed */
+        if (this.checkStickers() + this.checkDecor()) this.save();
       }, 900);
     } else {
       SFX.wrong();
@@ -857,6 +884,7 @@ const EQ = {
     this.s.xp = Math.max(0, this.s.xp - EQD.XP_PER_LEVEL);
     this.s.pendingLevelUp = false;
     this.checkStickers();
+    this.checkDecor(); /* a level can open a third world (Dünya Kaşifi) */
     this.save();
     const target = this.session.afterLevel || 'map';
     this.session.afterLevel = null;
@@ -864,20 +892,38 @@ const EQ = {
   },
   openChest() {
     this.s.coins += 100; this.s.coinsToday += 100;
+    /* exactly what the chest screen showed: the hat only the first time, then the next
+       chest decoration in its place (EQD.nextChestDecor), and the sticker from
+       EQD.nextChestSticker — asked before the hat is handed over, as the screen asked */
+    const hatNew = !this.s.wizardHatOwned;
+    const deco = EQD.nextChestDecor(this.s);
     this.s.wizardHatOwned = true;
-    /* exactly the sticker the chest screen showed: both ask EQD.nextChestSticker */
+    if (deco) this.awardDecor(deco.id, true); /* the chest's own line tells it */
     const st = EQD.nextChestSticker(this.s.stickerIds);
     if (st) this.awardSticker(st.id);
     this.checkStickers(); /* the chest's sticker can be the one that finishes the album */
     this.s.chestOpened = true; this.s.chestReady = false;
-    this.session.chestNote = true;
+    this.session.chestNote = this.chestLine(hatNew, deco);
     this.save();
     SFX.fanfare();
     if (this.s.pendingLevelUp) { this.session.afterLevel = 'map'; this.go('levelup'); }
     else if (this.s.stickerNew.length) { this.session.stickerNext = 'map'; this.go('sticker'); }
-    else { this.session.chestNote = false; this.go('map'); this.toast(this.chestLine()); }
+    else {
+      /* one toast for everything: news taken first, so the map cannot show it and then
+         have the chest's line replace it a moment later */
+      const line = [this.session.chestNote, this.newsLine()].filter(Boolean).join(' ');
+      this.session.chestNote = false;
+      this.go('map');
+      this.toast(line);
+    }
   },
-  chestLine() { return TX({ az: '+100 sikkə · Sehrbaz Papağı qarderobuna əlavə olundu!', en: '+100 coins · Wizard Hat added to your wardrobe!', ru: '+100 монет · Шляпа Волшебника добавлена в гардероб!' }); },
+  /* what this chest really held — the hat is named only by the chest that gave it */
+  chestLine(hatNew, deco) {
+    const parts = [TX({ az: '+100 sikkə', en: '+100 coins', ru: '+100 монет' })];
+    if (hatNew) parts.push(TX({ az: 'Sehrbaz Papağı qarderobuna əlavə olundu!', en: 'Wizard Hat added to your wardrobe!', ru: 'Шляпа Волшебника добавлена в гардероб!' }));
+    if (deco) parts.push(TX({ az: `${TX(deco.name)} evində səni gözləyir! 🏠`, en: `${TX(deco.name)} is waiting at home! 🏠`, ru: `${TX(deco.name)} ждёт тебя дома! 🏠` }));
+    return parts.join(' · ');
+  },
 
   /* ── sticker album ──
      The album remembers *which* stickers a child owns; `s.stickers` is only ever the
@@ -988,8 +1034,9 @@ const EQ = {
     this.session.stickerNext = null;
     this.session.chestNote = false;
     this.save();
+    const line = chest ? [chest, EQ_HELM_TOLD.indexOf(next) >= 0 ? this.newsLine() : ''].filter(Boolean).join(' ') : '';
     this.go(next);
-    if (chest) this.toast(this.chestLine());
+    if (line) this.toast(line);
   },
 
   /* ── tutor ── */
@@ -1095,8 +1142,192 @@ const EQ = {
     this.toast(TX(item.done));
   },
 
-  /* ── home ── */
-  placeTrophy() { SFX.correct(); this.s.trophyPlaced = true; this.save(); this.render(); },
+  /* ── my home (EQD.DECOR, EQD.HOME_SPOTS) ──
+     The room used to be a picture: a gold cup, a "Math Master" plaque and a "Reading
+     Champion" sign every child had from the first second, a "6 of 18 placed" typed in,
+     and a card announcing the Math Master trophy to children who had solved nothing.
+     Now every decoration in it is owned (a starter, or earned by the one thing its line
+     says), every one stands in a real place the child chose, and what is not in the
+     room waits in the box. Nothing is ever taken away: `decorIds` is only added to, and
+     a move or a "put away" only changes which place holds what. */
+  hasDecor(id) { return (this.s.decorIds || []).indexOf(id) >= 0; },
+  /* the place a decoration stands in, or null when it is in the box */
+  decorSpotOf(id) {
+    const at = this.s.decorAt || {};
+    return EQD.HOME_SPOTS.map(sp => sp.id).filter(k => at[k] === id)[0] || null;
+  },
+  /* the first empty place of that kind, or null */
+  freeSpot(kind) {
+    const at = this.s.decorAt || {};
+    return EQD.HOME_SPOTS.filter(sp => sp.kind === kind && !at[sp.id])[0] || null;
+  },
+  /* the ones earned and never put anywhere yet, in catalogue order (trophies first) */
+  decorWaiting() {
+    const fresh = this.s.decorNew || [];
+    return EQD.DECOR.filter(d => fresh.indexOf(d.id) >= 0);
+  },
+  /* give one decoration: it arrives in the box and on the home card; `quiet` when the
+     moment that gave it already says so (the chest's own line) */
+  awardDecor(id, quiet) {
+    const d = EQD.DECOR_BY_ID[id];
+    if (!d || this.hasDecor(id)) return null;
+    this.s.decorIds.push(id);
+    if (!d.start) this.s.decorNew.push(id);
+    if (!quiet) this.session.decorNews.push(id);
+    return d;
+  },
+  /* Every earned decoration that is not a chest's is a rule over the save, like the
+     stickers: the same check gives it the moment it is earned and hands it to a child
+     whose save predates the room (EQ.loadDecor). */
+  checkDecor() {
+    let got = 0;
+    EQD.DECOR.forEach(d => {
+      const rule = EQ.DECOR_RULES[d.id];
+      if (rule && !this.hasDecor(d.id) && rule(this.s, this) && this.awardDecor(d.id)) got++;
+    });
+    return got;
+  },
+  /* A room as a save, a code or a file has it, rebuilt piece by piece: only known
+     decorations, the starters always owned, every place holding one owned decoration of
+     its own kind and no decoration in two places. `raw` with no decorIds at all is a
+     room from before it was real — it starts as a new room does. */
+  cleanDecor(raw) {
+    const r = raw && typeof raw === 'object' ? raw : {};
+    const real = Array.isArray(r.decorIds);
+    const ids = [];
+    const add = id => { if (typeof id === 'string' && EQD.DECOR_BY_ID.hasOwnProperty(id) && ids.indexOf(id) < 0) ids.push(id); };
+    EQD.DECOR.filter(d => d.start).forEach(d => add(d.id));
+    if (real) r.decorIds.forEach(add);
+    const src = real ? (r.decorAt && typeof r.decorAt === 'object' ? r.decorAt : {}) : EQD.HOME_START;
+    const at = {}, used = [];
+    EQD.HOME_SPOTS.forEach(sp => {
+      const id = Object.prototype.hasOwnProperty.call(src, sp.id) ? src[sp.id] : null;
+      const d = typeof id === 'string' && EQD.DECOR_BY_ID.hasOwnProperty(id) ? EQD.DECOR_BY_ID[id] : null;
+      if (d && d.kind === sp.kind && ids.indexOf(id) >= 0 && used.indexOf(id) < 0) { at[sp.id] = id; used.push(id); }
+    });
+    const q = real && Array.isArray(r.decorNew) ? r.decorNew : [];
+    const fresh = q.filter((id, i) => ids.indexOf(id) >= 0 && used.indexOf(id) < 0 && q.indexOf(id) === i && !EQD.DECOR_BY_ID[id].start);
+    return { ids, at, fresh };
+  },
+  /* The room on load. A save from before the room was real (no decorIds) starts as a new
+     room, then gets what it has earned — as cards to place, and told once:
+       · a region round is read from its lifetime count, as the helmets are (EQ.loadHelms);
+       · the old card's `trophyPlaced` counts only if the Math Master trophy is really
+         earned: then it is already on the shelf. Otherwise that tap was on a card every
+         child saw from the first day, and it gives nothing;
+       · no chest decoration: the chests already opened showed what was inside, and it
+         was not this. */
+  loadDecor(raw) {
+    this.session.decor = null;
+    this.session.decorPop = null;
+    this.session.decorNews = [];
+    const legacy = !(raw && Array.isArray(raw.decorIds));
+    const d = this.cleanDecor(legacy ? null : raw);
+    this.s.decorIds = d.ids; this.s.decorAt = d.at; this.s.decorNew = d.fresh;
+    if (legacy) {
+      EQD.DECOR.filter(x => x.region).forEach(x => {
+        const e = this.s.regions && this.s.regions[x.region];
+        if (e && e.total >= EQD.REGION_LEN) this.awardDecor(x.id);
+      });
+      if (raw && raw.trophyPlaced && EQ.DECOR_RULES.t_math(this.s, this) && this.awardDecor('t_math', true)) {
+        const sp = this.freeSpot('shelf');
+        if (sp) this.putDecor('t_math', sp.id);
+      }
+    }
+    delete this.s.trophyPlaced;
+    this.checkDecor();
+  },
+  /* The one move there is: put a decoration in a place of its kind. Whatever stood there
+     takes the moved one's old place (same kind, so it always fits) — or, if the moved one
+     came out of the box, goes into the box. Nothing leaves decorIds. */
+  putDecor(id, spotId) {
+    const d = EQD.DECOR_BY_ID[id], sp = EQD.SPOT_BY_ID[spotId];
+    if (!d || !sp || d.kind !== sp.kind || !this.hasDecor(id)) return false;
+    const at = this.s.decorAt;
+    const from = this.decorSpotOf(id);
+    if (from !== spotId) {
+      const was = at[spotId];
+      at[spotId] = id;
+      if (from) { delete at[from]; if (was) at[from] = was; }
+    }
+    this.s.decorNew = this.s.decorNew.filter(x => x !== id);
+    return true;
+  },
+  /* the home card: a decoration earned and never placed goes to the first empty place of
+     its kind; with none left, decorating opens with it already in hand */
+  placeNew(id) {
+    const d = EQD.DECOR_BY_ID[id];
+    if (!d || !this.hasDecor(id) || this.decorSpotOf(id)) return;
+    const sp = this.freeSpot(d.kind);
+    if (sp) {
+      this.putDecor(id, sp.id);
+      this.session.decorPop = sp.id;
+      SFX.correct();
+      this.save();
+      this.render();
+      return;
+    }
+    SFX.tap();
+    this.session.decor = { pick: { id, from: null } };
+    this.render();
+    this.toast(TX(EQ.DECOR_FULL[d.kind]));
+  },
+  /* ── decorating: tap one, then tap where it goes (the put-in-order panel's rule) ── */
+  decorEdit() { SFX.tap(); this.session.decor = { pick: null }; this.session.decorPop = null; this.render(); },
+  decorDone() { SFX.correct(); this.session.decor = null; this.session.decorPop = null; this.save(); this.render(); },
+  /* a tile in the box: pick it up, or put it back down; a locked one says what it takes */
+  decorPick(id) {
+    const d = EQD.DECOR_BY_ID[id];
+    if (!d) return;
+    if (!this.hasDecor(id)) { this.decorPeek(id); return; }
+    const ed = this.session.decor || (this.session.decor = { pick: null });
+    SFX.tap();
+    this.session.decorPop = null;
+    ed.pick = ed.pick && ed.pick.id === id ? null : { id, from: this.decorSpotOf(id) };
+    this.render();
+  },
+  /* a place in the room, while decorating */
+  decorSpot(spotId) {
+    const ed = this.session.decor, sp = EQD.SPOT_BY_ID[spotId];
+    if (!ed || !sp) return;
+    const here = this.s.decorAt[spotId] || null;
+    const pick = ed.pick;
+    this.session.decorPop = null;
+    if (!pick || pick.from === spotId || EQD.DECOR_BY_ID[pick.id].kind !== sp.kind) {
+      /* nothing in hand, the same one again, or a place it does not fit: the tap picks up
+         what stands here (or lets go), and an empty place just says what to do */
+      if (pick && pick.from === spotId) { SFX.tap(); ed.pick = null; this.render(); return; }
+      if (here) { SFX.tap(); ed.pick = { id: here, from: spotId }; this.render(); return; }
+      this.toast(TX(pick
+        ? { az: 'Bu bura sığmır — yaşıl yerlərdən birinə toxun', en: 'That does not fit here — tap one of the green places', ru: 'Сюда не подходит — нажми на одно из зелёных мест' }
+        : { az: 'Əvvəlcə qutudan bir bəzək seç', en: 'Pick a decoration from the box first', ru: 'Сначала выбери украшение из коробки' }));
+      return;
+    }
+    this.putDecor(pick.id, spotId);
+    ed.pick = null;
+    this.session.decorPop = spotId;
+    SFX.correct();
+    this.save();
+    this.render();
+  },
+  /* the box tile: the one in hand leaves the room for the box — kept, not lost */
+  decorBox() {
+    const ed = this.session.decor;
+    if (!ed || !ed.pick || !ed.pick.from) return;
+    SFX.tap();
+    delete this.s.decorAt[ed.pick.from];
+    ed.pick = null;
+    this.save();
+    this.render();
+  },
+  /* tapping a decoration outside decorating, or a locked tile: its name and what it took */
+  decorPeek(id) {
+    const d = EQD.DECOR_BY_ID[id];
+    if (!d) return;
+    SFX.tap();
+    if (!this.hasDecor(id)) this.toast(TX({ az: 'Hələ bağlıdır — ', en: 'Still locked — ', ru: 'Пока закрыто — ' }) + TX(d.how));
+    else this.toast(TX(d.name) + ' · ' + (d.start ? TX(d.how) : '✓ ' + TX(d.how)));
+  },
 
   /* ── parent gate ── */
   gateKey(n) {
@@ -1477,6 +1708,41 @@ EQ.STICKER_RULES = {
   book: s => !!s.feats.valley,
   lantern: s => EQD.chapterAt(s.questDay || 0).chapterNo >= 2,
   questy: s => EQD.STICKERS.every(st => st.id === 'questy' || (s.stickerIds || []).indexOf(st.id) >= 0)
+};
+
+/* ── what each trophy's line promises, as progress read off the save ──
+   { have, need, live }: the Awards screen draws the bar from it, and have ≥ need is the
+   trophy — on that screen and on the shelf at home alike (EQ.DECOR_RULES). `live` is
+   whether it can be worked on yet (Söz Vadisi opens after the first boss). */
+EQ.TROPHY_RULES = {
+  /* any question solved on the challenge screen — the daily set, a mission or a region */
+  first: (s, e) => ({ have: s.mathSolved > 0 || s.challengesDone > 0 || s.trophiesEarned >= 1 || e.trackSum('done') >= 1 ? 1 : 0, need: 1, live: true }),
+  /* trophiesEarned counts bosses beaten and is never reset (bossBeaten is, every stage) */
+  bridge: s => ({ have: Math.min(1, s.trophiesEarned || 0), need: 1, live: true }),
+  /* s.streak is the game's count of days played (it is never reset), as for the fox sticker */
+  week: s => ({ have: Math.max(s.streak || 0, s.bestStreak || 0), need: 7, live: true }),
+  math: s => ({ have: s.mathSolved || 0, need: 100, live: true }),
+  book: (s, e) => ({ have: (s.regions && s.regions.valley && s.regions.valley.total) || 0, need: 20, live: e.regionOpen('valley') }),
+  world: (s, e) => ({ have: e.regionsOpen().length, need: 3, live: e.regionsOpen().length > 0 })
+};
+EQ.trophyHas = id => { const p = EQ.TROPHY_RULES[id](EQ.s, EQ); return p.have >= p.need; };
+
+/* ── what each earned decoration's line promises (chest ones come from EQD.nextChestDecor) ── */
+EQ.DECOR_RULES = {};
+EQD.DECOR.forEach(d => {
+  if (d.trophy) EQ.DECOR_RULES[d.id] = (s, e) => { const p = EQ.TROPHY_RULES[d.trophy](s, e); return p.have >= p.need; };
+  /* the chapter's third-stage boss: bit 4 of that chapter's relic record (EQ.earnRelic) */
+  else if (d.finale) EQ.DECOR_RULES[d.id] = s => Object.keys(s.relics || {}).some(k => EQD.CHAPTERS[(k - 1) % EQD.CHAPTERS.length].id === d.finale && (s.relics[k] & 4));
+  /* a full round there — the moment the region's helmet is earned (EQ.regionAdvance) */
+  else if (d.region) EQ.DECOR_RULES[d.id] = s => !!(s.feats && s.feats[d.region]);
+});
+/* what the card says when every place of that kind is taken */
+EQ.DECOR_FULL = {
+  shelf: { az: 'Rəfdə yer qalmayıb — hansının yerinə qoyaq? Birinə toxun.', en: 'The shelves are full — which one should it replace? Tap one.', ru: 'На полках нет места — вместо какого поставить? Нажми на него.' },
+  wall: { az: 'Divarda yer qalmayıb — hansı şəklin yerinə? Birinə toxun.', en: 'The wall is full — which picture should it replace? Tap one.', ru: 'На стене нет места — вместо какой картины? Нажми на неё.' },
+  floor: { az: 'Döşəmədə yer qalmayıb — hansının yerinə qoyaq? Birinə toxun.', en: 'The floor corners are full — which one should it replace? Tap one.', ru: 'Углы заняты — вместо чего поставить? Нажми на него.' },
+  rug: { az: 'Xalça yeri doludur — köhnəsinin üstünə toxun.', en: 'There is a rug already — tap it to swap.', ru: 'Коврик уже лежит — нажми на него, чтобы поменять.' },
+  hang: { az: 'Tavanda yer qalmayıb — asılanın üstünə toxun.', en: 'The ceiling hook is taken — tap what hangs there to swap.', ru: 'Крючок занят — нажми на то, что висит, чтобы поменять.' }
 };
 
 window.addEventListener('DOMContentLoaded', () => EQ.boot());

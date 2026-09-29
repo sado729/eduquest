@@ -292,7 +292,8 @@ group('a transfer carries sparks and relics, and old codes and files still read'
   Object.assign(st, { onboarded: true, heroName: 'Aysel', level: 4, questDay: 7, hintSparks: 41, relics: { 1: 7, 2: 5, 3: 2 } });
   st.track = { start: EQ.dayKey(), days: {} }; st.lastDay = EQ.dayKey();
   const packed = EQX.pack(st, 0);
-  ok('the relics ride in a twelfth group at the end', packed.split('_').length === 12);
+  /* the room came after them as a thirteenth group (test/home.js); the relics keep the twelfth */
+  ok('the relics ride in the twelfth group', packed.split('_').length >= 12 && packed.split('_')[11] === '1.7-2.5-3.2');
   const back = EQX.clean(EQX.unpack(packed));
   ok('code round trip: sparks', back.hintSparks === 41);
   ok('code round trip: relics', JSON.stringify(back.relics) === JSON.stringify({ 1: 7, 2: 5, 3: 2 }), JSON.stringify(back.relics));

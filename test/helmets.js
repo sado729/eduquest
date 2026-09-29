@@ -169,7 +169,7 @@ group('four answers are not enough');
 fresh(16);
 play('island', 4);
 ok('after four of five island questions the Diver Helm is still locked', EQ.s.diverHelmOwned === false);
-ok('…nothing was announced', EQ.session.helmNews.length === 0 && !EQ._toasts.some(t => t === DIVER.got.az));
+ok('…nothing was announced', EQ.session.helmNews.length === 0 && !EQ._toasts.some(t => t.indexOf(DIVER.got.az) >= 0));
 ok('a wrong answer earns nothing either', (() => { EQ.go('challenge'); answer(false); return EQ.s.diverHelmOwned === false; })());
 
 /* ── 4 · the fifth one earns it, and the child is told ── */
@@ -180,10 +180,10 @@ EQ.go('challenge');
 answer(true);
 ok('the fifth island answer puts the Diver Helm in the wardrobe', EQ.s.diverHelmOwned === true);
 ok('…and only that one', EQ.s.spaceHelmOwned === false);
-ok('the reward is not shouted over the success beat', EQ.current === 'success' && !EQ._toasts.some(t => t === DIVER.got.az));
+ok('the reward is not shouted over the success beat', EQ.current === 'success' && !EQ._toasts.some(t => t.indexOf(DIVER.got.az) >= 0));
 EQ.continueAfterSuccess();
 ok('the round\'s end screen is next', EQ.current === 'region');
-ok('…and a toast there says it was added to the wardrobe', EQ._toasts.indexOf(DIVER.got.az) >= 0, EQ._toasts.join(' | '));
+ok('…and a toast there says it was added to the wardrobe', EQ._toasts.some(t => t.indexOf(DIVER.got.az) === 0), EQ._toasts.join(' | '));
 ok('the toast is not repeated on the next screen', (() => { const n = EQ._toasts.length; EQ.go('map'); EQ.go('wardrobe'); return EQ._toasts.length === n; })());
 EQ.openRegion('island');
 EQ.session.helmCard = 'diver'; /* as the round left it — openRegion re-enters the same finished round */
@@ -211,13 +211,13 @@ const toastsBefore = EQ._toasts.length;
 EQ.openRegion('island');
 EQ.regionAgain();
 for (let i = 0; i < 5; i++) { EQ.go('challenge'); answer(true); EQ.continueAfterSuccess(); }
-ok('a second round does not announce it again', EQ._toasts.slice(toastsBefore).indexOf(DIVER.got.az) < 0 && EQ.session.helmCard === null);
+ok('a second round does not announce it again', !EQ._toasts.slice(toastsBefore).some(t => t.indexOf(DIVER.got.az) >= 0) && EQ.session.helmCard === null);
 
 group('Kosmik Stansiya gives the Space Helm the same way');
 fresh(16);
 play('station', 5);
 ok('a full station round earns the Space Helm', EQ.s.spaceHelmOwned === true && EQ.s.diverHelmOwned === false);
-ok('…and says so', EQ._toasts.indexOf(SPACE.got.az) >= 0);
+ok('…and says so', EQ._toasts.some(t => t.indexOf(SPACE.got.az) === 0));
 EQ.wearHat('space');
 ok('it can be worn', EQ.s.hero.hat === 'space');
 fresh(20);

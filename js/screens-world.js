@@ -64,6 +64,7 @@ EQS.screens.map = function (s) {
 
     <div class="press" onclick="EQ.go('home')" style="position:absolute;left:52px;top:572px;width:96px;display:flex;flex-direction:column;align-items:center;gap:5px">
       <div style="position:relative;width:76px;height:76px;border-radius:26px;background:#FFF7EA;box-shadow:0 6px 0 #E0C79A, 0 12px 20px -8px rgba(20,10,40,0.4);display:flex;align-items:center;justify-content:center">
+        ${(s.decorNew || []).length ? `<div id="home-badge" style="position:absolute;right:-6px;top:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:#FF5D73;box-shadow:0 3px 0 #D63A52;display:flex;align-items:center;justify-content:center;font:800 12px 'Baloo 2', system-ui;color:#fff;z-index:2">${s.decorNew.length}</div>` : ''}
         <svg width="34" height="34" viewBox="0 0 36 36"><path d="M18 6 L33 18 h-4 v12 a2 2 0 0 1 -2 2 H9 a2 2 0 0 1 -2-2 V18 H3 Z" fill="#FF8A4C"></path><path d="M18 8.6 L30 18.4 V30 H6 V18.4 Z" fill="#FFF7EA"></path><rect x="14" y="21" width="8" height="9" rx="1.5" fill="#7B5CFF"></rect><path d="M9 13 h4 v4 Z" fill="#E06327"></path></svg>
       </div>
       <div style="padding:4px 10px;border-radius:10px;background:rgba(36,26,63,0.86);font:800 10px Nunito;color:#fff;white-space:nowrap">${TX({ az: 'Mənim Evim', en: 'My Home', ru: 'Мой Дом' })}</div>
