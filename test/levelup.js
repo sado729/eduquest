@@ -13,8 +13,8 @@
 
    What really comes with a level is derived from the code, never written down twice:
    `EQ.levelGifts(level)` (a region whose opening condition becomes true, or a new rank
-   name — no sticker: those come from chests in album order; no hat: the helmets are
-   earned by a round inside their region) and `EQ.nextRegion(level)` (the nearest region
+   name — no hat: the helmets are earned by a round inside their region; a level's
+   sticker is shown by the reveal screen that follows, see test/album.js) and `EQ.nextRegion(level)` (the nearest region
    still shut and its real condition — the first boss for Söz Vadisi, a level for the
    rest). The level size is `EQD.XP_PER_LEVEL`, used everywhere 1500 used to be typed.
 

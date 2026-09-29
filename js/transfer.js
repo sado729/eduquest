@@ -262,6 +262,9 @@ const EQX = {
     /* the same cleaner the loader uses: unknown ids dropped, a bare count expanded */
     out.stickerIds = EQ.cleanStickers(r.stickerIds, out.stickers);
     out.stickers = out.stickerIds.length;
+    /* the sticker firsts are not in a code: leaving them out (rather than the defaults)
+       lets the loader derive what it can, and count a stage under way as slipped */
+    delete out.feats; delete out.stageSlip; delete out.stickerNew;
     out.trophiesEarned = int(r.trophiesEarned, 0, 9e6, 0);
     /* care: only known ids, no duplicates, and only if they belong to a real day.
        A careDay that is not a date makes today's care simply unspent — never a crash,

@@ -11,7 +11,7 @@ EQS.langChips = function (style) {
 EQS.meta.splash = { light: true };
 EQS.screens.splash = function (s) {
   setTimeout(() => { if (EQ.current === 'splash') EQ.go(s.onboarded ? 'map' : 'welcome'); }, 1600);
-  return `<div class="scr" onclick="EQ.go(EQ.s.onboarded ? 'map' : 'welcome')" style="background:#241A3F;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
+  return `<div class="scr" onclick="EQ.s.onboarded ? EQ.goReveal('map') : EQ.go('welcome')" style="background:#241A3F;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
     <div style="position:absolute;width:520px;height:520px;border-radius:50%;background:rgba(123,92,255,0.30);top:170px;left:-60px;opacity:0.9"></div>
     <div class="spark" style="width:8px;height:8px;border-radius:50%;background:#FFF7EA;top:120px;left:70px"></div>
     <div class="spark" style="width:5px;height:5px;border-radius:50%;background:#5CE39B;top:200px;left:320px;animation-delay:.4s"></div>
@@ -209,7 +209,7 @@ EQS.screens.welcomeback = function (s) {
         <div style="font:700 10px Nunito;color:#8B7A55">${TX({ az: 'Bax gör', en: 'Peek at it', ru: 'Взгляни' })}</div>
       </div>
     </div>
-    <div class="press" onclick="EQ.go('map')" style="position:absolute;bottom:52px;left:16px;right:16px;height:72px;border-radius:24px;background:#3DBE6E;box-shadow:0 6px 0 #2A9455, 0 16px 26px -12px rgba(42,148,85,0.5);display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Macəraya davam et', en: 'Continue my adventure', ru: 'Продолжить приключение' })}</div>
+    <div class="press" onclick="EQ.goReveal('map')" style="position:absolute;bottom:52px;left:16px;right:16px;height:72px;border-radius:24px;background:#3DBE6E;box-shadow:0 6px 0 #2A9455, 0 16px 26px -12px rgba(42,148,85,0.5);display:flex;align-items:center;justify-content:center;font:800 22px 'Baloo 2', system-ui;color:#fff">${TX({ az: 'Macəraya davam et', en: 'Continue my adventure', ru: 'Продолжить приключение' })}</div>
   </div>`;
 };
 

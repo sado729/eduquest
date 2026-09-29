@@ -9,6 +9,7 @@
     "test:chapters": "node test/chapters.js",
     "test:profiles": "node test/profiles.js",
     "test:ranges": "node test/ranges.js && node test/album.js",
+    "test:album": "node test/album.js",
     "test:missions": "node test/missions.js",
     "test:adaptive": "node test/adaptive.js",
     "test:care": "node test/care.js",

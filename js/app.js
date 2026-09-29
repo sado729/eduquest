@@ -27,6 +27,10 @@ const EQ_DEFAULTS = {
   /* the region helmets — the first full round in Elm Adası / Kosmik Stansiya (EQD.HELMS) */
   diverHelmOwned: false, spaceHelmOwned: false,
   mathSolved: 0, hintSparks: 0, stickers: 0, stickerIds: [], trophiesEarned: 0,
+  /* stickers earned but not yet shown on the reveal screen, and the few firsts a sticker
+     rule needs that nothing else remembers (EQ.STICKER_RULES); stageSlip = a wrong answer
+     somewhere in the stage being played, for the Gold Medal */
+  stickerNew: [], feats: {}, stageSlip: false,
   /* the chapter relics: { chapterNo: bitmask of the stages whose boss was beaten } (EQ.earnRelic) */
   relics: {},
   /* Questy'nin qulluğu: bugünkü verilmiş qulluqlar və ümumi say (bax: EQ.careGive) */
@@ -79,7 +83,7 @@ const EQ = {
     return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
   },
   resetDaily() {
-    this.s.challengesDone = 0; this.s.bossHits = 0; this.s.bossBeaten = false;
+    this.s.challengesDone = 0; this.s.bossHits = 0; this.s.bossBeaten = false; this.s.stageSlip = false;
     this.s.chestReady = false; this.s.chestOpened = false;
     this.s.xpToday = 0; this.s.coinsToday = 0;
   },
@@ -92,6 +96,7 @@ const EQ = {
     this.s.bestStreak = Math.max(this.s.bestStreak || 0, this.s.streak);
     this.s.playedDays = (this.s.playedDays || []).concat([today]).slice(-14);
     this.s.lastDay = today;
+    this.checkStickers();
   },
   seedWeek() {
     // first ever boot: today is the first played day — a clean start
@@ -170,6 +175,9 @@ const EQ = {
     this.loadHelms(s);
     this.s.relics = this.cleanRelics(s && s.relics, this.s);
     EQT.init(this.s);
+    this.loadStickerFeats(s);
+    /* a child who already did what a sticker asks gets it now, and sees it on the way in */
+    this.checkStickers();
   },
   save() {
     if (this.frozen) return; /* an import has just replaced storage; the page is reloading */
@@ -429,7 +437,7 @@ const EQ = {
     const m = this.missionEntry();
     const next = m ? 'challenge' : 'mission';
     if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
-    else this.go(next);
+    else this.goReveal(next);
   },
   /* leaving a finished mission (or one the child put down) goes back to the quest list */
   leaveMission() {
@@ -453,8 +461,9 @@ const EQ = {
   },
   /* What reaching `level` really hands over — nothing is invented here. A level opens a
      region (Elm Adası 10, Kosmik Stansiya 15, Sirli Qala 20) and sometimes a new rank
-     name. It gives no sticker (those come from chests, in album order) and no hat (the
-     helmets are earned by a round inside their region). */
+     name. It gives no hat (the helmets are earned by a round inside their region). The
+     level stickers (Göy Qurşağı 2, Böyük Ağac 3, Kiçik Raket 5) are not a card here:
+     EQ.checkStickers awards them and the reveal screen right after says so. */
   levelGifts(level) {
     const regions = EQD.REGION_ORDER.filter(r => this.regionOpenAt(r, level) && !this.regionOpenAt(r, level - 1));
     const rank = this.rankOf(level).en !== this.rankOf(level - 1).en;
@@ -534,6 +543,7 @@ const EQ = {
       this.s.coins += EQD.REGION_BONUS; this.s.coinsToday += EQD.REGION_BONUS;
     }
     if (e.n >= EQD.REGION_LEN) {
+      (this.s.feats || (this.s.feats = {}))[r] = true; /* a full round here (Söz Kitabı reads valley) */
       const got = this.earnHelm(r);
       if (got) this.session.helmCard = got.key; /* the round's end screen shows it on the hero */
     }
@@ -543,7 +553,7 @@ const EQ = {
     const r = this.regionCur();
     const next = r && this.region(r).n < EQD.REGION_LEN ? 'challenge' : 'region';
     if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
-    else this.go(next);
+    else this.goReveal(next);
   },
   /* another round the same day: new five questions, planned from what just happened */
   regionAgain() {
@@ -696,11 +706,12 @@ const EQ = {
     if (!this.s.bossBeaten || (this.s.chestReady && !this.s.chestOpened)) return;
     SFX.fanfare();
     this.s.questDay = (this.s.questDay || 0) + 1;
-    this.s.challengesDone = 0; this.s.bossHits = 0; this.s.bossBeaten = false;
+    this.s.challengesDone = 0; this.s.bossHits = 0; this.s.bossBeaten = false; this.s.stageSlip = false;
     this.s.chestReady = false; this.s.chestOpened = false;
     this.session.q = null; this.session.qIdx = -1;
     /* the next stage is a new set, so it is planned from the set just finished */
     EQT.replan(this.s.questDay);
+    this.checkStickers(); /* a new chapter opening is a sticker (Yol Fənəri) */
     this.save();
     this.go('quest');
     /* crossing a chapter boundary is a bigger moment than the next stage of the same one */
@@ -769,6 +780,14 @@ const EQ = {
       EQT.attempt(q, correct);
       EQT.review(q, correct, this.session.hinted);
     }
+    const feats = this.s.feats || (this.s.feats = {});
+    /* answering in a boss fight at all — right or wrong — is facing it */
+    if (this.session.ctx === 'boss') feats.faced = true;
+    /* a wrong answer in the daily set or its boss spoils the stage for the Gold Medal;
+       a mission or a region is practice beside the stage, not part of it */
+    if (!correct && (this.session.ctx === 'daily' || this.session.ctx === 'boss')) this.s.stageSlip = true;
+    /* the gentler question from the tutor, solved: that is what Fikir İksiri is for */
+    if (correct && q && this.session.stepQ === q) feats.easier = true;
     this.session.answering = true;
     if (paint) paint();
     if (correct) {
@@ -786,6 +805,7 @@ const EQ = {
             this.s.chestReady = true;
             this.s.trophiesEarned++;
             this.earnRelic();
+            if (!this.s.stageSlip) feats.flawless = true;
             /* a chapter finale is the longer fight, so it pays the larger purse */
             const fin = this.chapter().final;
             this.grant(fin ? 400 : 250, fin ? 160 : 100);
@@ -815,10 +835,13 @@ const EQ = {
           this.save();
           this.go('success');
         }
+        if (this.checkStickers()) this.save(); /* revealed on the way out of success / victory (EQ.go) */
       }, 900);
     } else {
       SFX.wrong();
       this.session.streakRow = 0;
+      this.checkStickers(); /* Cəsarət Qalxanı: a boss faced with a miss is still faced */
+      this.save(); /* the slip has to survive a reload, or the Gold Medal could be had anyway */
       setTimeout(() => { this.session.answering = false; this.go('hint'); }, 950);
     }
   },
@@ -827,28 +850,34 @@ const EQ = {
     if (this.session.ctx === 'region') return this.continueRegion();
     const next = this.s.challengesDone >= 5 ? 'boss' : 'challenge';
     if (this.s.pendingLevelUp) { this.session.afterLevel = next; this.go('levelup'); }
-    else this.go(next);
+    else this.goReveal(next);
   },
   applyLevelUp() {
     this.s.level++;
     this.s.xp = Math.max(0, this.s.xp - EQD.XP_PER_LEVEL);
     this.s.pendingLevelUp = false;
+    this.checkStickers();
     this.save();
     const target = this.session.afterLevel || 'map';
     this.session.afterLevel = null;
-    this.go(target);
+    this.goReveal(target);
   },
   openChest() {
     this.s.coins += 100; this.s.coinsToday += 100;
     this.s.wizardHatOwned = true;
-    const got = this.awardSticker();
+    /* exactly the sticker the chest screen showed: both ask EQD.nextChestSticker */
+    const st = EQD.nextChestSticker(this.s.stickerIds);
+    if (st) this.awardSticker(st.id);
+    this.checkStickers(); /* the chest's sticker can be the one that finishes the album */
     this.s.chestOpened = true; this.s.chestReady = false;
+    this.session.chestNote = true;
     this.save();
     SFX.fanfare();
     if (this.s.pendingLevelUp) { this.session.afterLevel = 'map'; this.go('levelup'); }
-    else if (got) { this.session.newSticker = got.id; this.go('sticker'); }
-    else { this.go('map'); this.toast(TX({ az: '+100 sikkə · Sehrbaz Papağı qarderobuna əlavə olundu!', en: '+100 coins · Wizard Hat added to your wardrobe!', ru: '+100 монет · Шляпа Волшебника добавлена в гардероб!' })); }
+    else if (this.s.stickerNew.length) { this.session.stickerNext = 'map'; this.go('sticker'); }
+    else { this.session.chestNote = false; this.go('map'); this.toast(this.chestLine()); }
   },
+  chestLine() { return TX({ az: '+100 sikkə · Sehrbaz Papağı qarderobuna əlavə olundu!', en: '+100 coins · Wizard Hat added to your wardrobe!', ru: '+100 монет · Шляпа Волшебника добавлена в гардероб!' }); },
 
   /* ── sticker album ──
      The album remembers *which* stickers a child owns; `s.stickers` is only ever the
@@ -867,22 +896,61 @@ const EQ = {
     return out;
   },
   hasSticker(id) { return (this.s.stickerIds || []).indexOf(id) >= 0; },
-  /* give the next sticker in album order; returns it, or null when the album is full */
+  /* put one named sticker in the album and queue it for the reveal screen; returns it,
+     or null if it is unknown or already there (no sticker is ever given twice) */
   awardSticker(id) {
-    const st = id ? EQD.STICKER_BY_ID[id] : EQD.nextSticker(this.s.stickerIds);
+    const st = EQD.STICKER_BY_ID[id];
     if (!st || this.hasSticker(st.id)) return null;
     this.s.stickerIds.push(st.id);
     this.s.stickers = this.s.stickerIds.length;
+    (this.s.stickerNew || (this.s.stickerNew = [])).push(st.id);
     return st;
   },
+  /* Every sticker that is not a chest sticker is earned by exactly what its `how` says.
+     Each rule reads the save as it stands, so the same check awards a sticker the moment
+     it is earned *and* hands it to a child whose save predates the rule (EQ.load). The
+     few things a save does not otherwise remember are kept in `s.feats`. */
+  checkStickers() {
+    let got = 0;
+    EQD.STICKERS.forEach(st => {
+      const rule = EQ.STICKER_RULES[st.id];
+      if (!st.chest && rule && !this.hasSticker(st.id) && rule(this.s, this) && this.awardSticker(st.id)) got++;
+    });
+    return got; /* album order puts Questy! last, so it sees everything this pass gave */
+  },
+  trackSum(field) {
+    const days = (this.s.track && this.s.track.days) || {};
+    return Object.keys(days).reduce((n, k) => n + ((days[k] && Number(days[k][field])) || 0), 0);
+  },
+  /* stageSlip and feats as the save has them; a save from before them gets the honest
+     default — a stage already under way counts as slipped (no one knows), and a Word
+     Valley round is read from the region's lifetime count, as the helmets do */
+  loadStickerFeats(raw) {
+    const f = raw && raw.feats && typeof raw.feats === 'object' ? raw.feats : null;
+    const out = {};
+    ['faced', 'easier', 'flawless'].concat(EQD.REGION_ORDER).forEach(k => { if (f && f[k] === true) out[k] = true; });
+    if (!f) {
+      const v = this.s.regions.valley;
+      if (v && v.total >= EQD.REGION_LEN) out.valley = true;
+    }
+    this.s.feats = out;
+    this.s.stageSlip = raw && typeof raw.stageSlip === 'boolean' ? raw.stageSlip
+      : !!(this.s.challengesDone > 0 || this.s.bossHits > 0);
+    const q = Array.isArray(raw && raw.stickerNew) ? raw.stickerNew : [];
+    this.s.stickerNew = q.filter((id, i) => this.hasSticker(id) && q.indexOf(id) === i);
+  },
   /* open the album on the page a sticker lives on (the reveal screen links here).
-     The sticker just earned is flagged so the album opens with it badged — otherwise
-     arriving from the reveal screen looks no different from opening the album cold. */
+     Stickers not yet looked at are flagged so the album opens with them badged —
+     otherwise arriving from the reveal screen looks no different from opening it cold. */
   openAlbum(setId) {
     SFX.tap();
     if (setId) this.session.albumSet = setId;
-    this.session.justAdded = this.session.newSticker || null;
-    this.session.newSticker = null;
+    const fresh = (this.s.stickerNew || []).slice();
+    this.session.justAdded = fresh.length ? fresh : null;
+    this.s.stickerNew = [];
+    this.session.stickerNext = null;
+    this.session.chestNote = false;
+    this.save();
     this.go('album');
   },
   albumSet(setId) {
@@ -891,8 +959,8 @@ const EQ = {
     this.session.albumSet = setId;
     this.render();
   },
-  /* the "NEW" badge belongs to the trip in from the chest, so it does not survive
-     leaving the album — the next visit is an ordinary one */
+  /* the "NEW" badge belongs to the visit that first shows a sticker, so it does not
+     survive leaving the album — the next visit is an ordinary one */
   leaveAlbum() { this.session.justAdded = null; },
   /* a locked slot says what to do instead of nothing at all */
   stickerPeek(id) {
@@ -902,12 +970,26 @@ const EQ = {
     if (this.hasSticker(id)) this.toast(TX(st.name) + ' · ' + TX({ az: 'sənindir!', en: 'yours!', ru: 'твоя!' }));
     else this.toast(TX({ az: 'Hələ bağlıdır — ', en: 'Still locked — ', ru: 'Пока закрыта — ' }) + TX(st.how));
   },
+  /* The step out of a reward screen (success, victory, level-up, welcome back): stickers
+     earned since the last reveal are shown first, then the child carries on to `next`.
+     Only these calm steps reveal — never the middle of a fight or a question. */
+  goReveal(next) {
+    if (this.s.stickerNew && this.s.stickerNew.length) {
+      this.session.stickerNext = next;
+      this.go('sticker');
+    } else this.go(next);
+  },
   /* from the reveal screen back into the adventure */
   afterSticker() {
     SFX.tap();
-    this.session.newSticker = null;
-    this.go('map');
-    this.toast(TX({ az: '+100 sikkə · Sehrbaz Papağı qarderobuna əlavə olundu!', en: '+100 coins · Wizard Hat added to your wardrobe!', ru: '+100 монет · Шляпа Волшебника добавлена в гардероб!' }));
+    this.s.stickerNew = [];
+    const next = this.session.stickerNext || 'map';
+    const chest = this.session.chestNote;
+    this.session.stickerNext = null;
+    this.session.chestNote = false;
+    this.save();
+    this.go(next);
+    if (chest) this.toast(this.chestLine());
   },
 
   /* ── tutor ── */
@@ -915,6 +997,7 @@ const EQ = {
     const q = this.session.q;
     if (q && q.easier) {
       this.session.q = q.easier;
+      this.session.stepQ = q.easier;
       this.session.attempted = false; this.session.hinted = false; this.session.sparked = false;
       /* the gentler question is a question in its own right: if the one being stepped
          away from was a hands-on panel that had already been judged, that verdict must
@@ -1364,6 +1447,36 @@ const EQ = {
     };
     this.autoTimer = setInterval(step, 1400);
   }
+};
+
+/* ── what each sticker's `how` promises, as a check on the save ──
+   (chest stickers have no rule: leaf, moon, cloud, comet come from EQD.nextChestSticker) */
+EQ.STICKER_RULES = {
+  /* any question solved on the challenge screen — the daily set, a mission or a region */
+  acorn: (s, e) => s.challengesDone >= 1 || s.trophiesEarned >= 1 || e.trackSum('done') >= 1,
+  mushroom: s => s.challengesDone >= 5 || s.trophiesEarned >= 1,
+  /* s.streak is the game's count of days played (it is never reset), hence "2 gün oyna" */
+  fox: s => Math.max(s.streak || 0, s.bestStreak || 0) >= 2,
+  /* hg = solved after the hint was open (tapped or shown after a miss) */
+  owl: (s, e) => e.trackSum('done') - e.trackSum('hg') >= 5,
+  tree: s => s.level >= 3,
+  shield: (s, e) => !!s.feats.faced || s.trophiesEarned >= 1 || s.bossHits >= 1 || e.trackSum('boss') >= 1,
+  /* the Math Dragon guards stages 1–2 of every Knowledge Forest chapter */
+  dragon: s => Object.keys(s.relics || {}).some(k => EQD.CHAPTERS[(k - 1) % EQD.CHAPTERS.length].id === 'forest' && (s.relics[k] & 3)),
+  crystal: s => Object.keys(s.relics || {}).some(k => s.relics[k] & 4),
+  sword: s => s.trophiesEarned >= 3,
+  flame: s => Math.max(s.streak || 0, s.bestStreak || 0) >= 3,
+  medal: s => !!s.feats.flawless,
+  star: s => (s.level - 1) * EQD.XP_PER_LEVEL + s.xp >= 500,
+  rainbow: s => s.level >= 2,
+  rocket: s => s.level >= 5,
+  wand: s => s.hintSparks >= 1,
+  potion: s => !!s.feats.easier,
+  /* the Ancient Gate is the day-0 quest: chapter 1, stage 1 */
+  key: s => !!((s.relics || {})[1] & 1),
+  book: s => !!s.feats.valley,
+  lantern: s => EQD.chapterAt(s.questDay || 0).chapterNo >= 2,
+  questy: s => EQD.STICKERS.every(st => st.id === 'questy' || (s.stickerIds || []).indexOf(st.id) >= 0)
 };
 
 window.addEventListener('DOMContentLoaded', () => EQ.boot());

@@ -386,7 +386,7 @@ EQS.screens.victory = function (s) {
       </div>
     </div>
     <div class="press" onclick="EQ.go('chest')" style="position:absolute;bottom:110px;left:20px;right:20px;height:66px;border-radius:22px;background:#FFC24B;box-shadow:0 6px 0 #E39B1C, 0 16px 26px -12px rgba(227,155,28,0.55);display:flex;align-items:center;justify-content:center;font:800 21px 'Baloo 2', system-ui;color:#4A3208">${TX({ az: 'Sandığı aç', en: 'Open the chest', ru: 'Открыть сундук' })}</div>
-    <div class="press" onclick="EQ.go('map')" style="position:absolute;bottom:56px;left:20px;right:20px;height:52px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#C9BCEF">${TX({ az: 'Xəritəyə qayıt', en: 'Back to the map', ru: 'Назад к карте' })}</div>
+    <div class="press" onclick="EQ.goReveal('map')" style="position:absolute;bottom:56px;left:20px;right:20px;height:52px;border-radius:20px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#C9BCEF">${TX({ az: 'Xəritəyə qayıt', en: 'Back to the map', ru: 'Назад к карте' })}</div>
   </div>`;
 };
 
@@ -477,8 +477,10 @@ EQS.screens.levelup = function (s) {
 EQS.meta.chest = { light: true };
 EQS.screens.chest = function (s) {
   /* the screen's own promise is "you always see what's inside before you open it", so the
-     sticker slot shows the sticker this chest will really hand over, by name */
-  const nextSticker = EQD.nextSticker(s.stickerIds);
+     sticker slot shows the sticker this chest will really hand over, by name — the same
+     EQD.nextChestSticker that EQ.openChest pays out from. Once the chest's own stickers are
+     all in the album there is no sticker slot at all, rather than a slot for nothing. */
+  const nextSticker = EQD.nextChestSticker(s.stickerIds);
   return `<div class="scr" style="background:#241A3F">
     <div style="position:absolute;inset:0;background:radial-gradient(300px 280px at 50% 34%, rgba(255,194,75,0.30), rgba(36,26,63,0) 70%)"></div>
     <div class="press" onclick="EQ.go('map')" style="position:absolute;top:62px;left:16px;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;z-index:5">${EQC.xIcon('#fff', 17)}</div>
@@ -512,11 +514,11 @@ EQS.screens.chest = function (s) {
           <div style="font:800 15px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${TX({ az: 'Sehrbaz Papağı', en: 'Wizard Hat', ru: 'Шляпа Волшебника' })}</div>
           <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'QARDEROB', en: 'WARDROBE', ru: 'ГАРДЕРОБ' })}</div>
         </div>
-        <div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
-          <svg width="40" height="40" viewBox="0 0 36 36">${nextSticker ? nextSticker.art : '<rect x="5" y="7" width="26" height="22" rx="6" fill="#5CE39B"></rect><path d="M11 20 q7-9 14 0" stroke="#0B3D25" stroke-width="2.6" fill="none" stroke-linecap="round"></path><circle cx="13" cy="14" r="2" fill="#0B3D25"></circle><circle cx="23" cy="14" r="2" fill="#0B3D25"></circle>'}</svg>
-          <div style="font:800 ${nextSticker && TX(nextSticker.name).length > 14 ? '12' : (nextSticker && TX(nextSticker.name).length > 10 ? '14' : '17')}px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${nextSticker ? TX(nextSticker.name) : TX({ az: 'Stiker', en: 'Sticker', ru: 'Наклейка' })}</div>
+        ${nextSticker ? `<div style="flex:1;border-radius:24px;background:rgba(255,255,255,0.08);padding:18px 12px;text-align:center;box-shadow:0 0 0 1.5px rgba(255,255,255,0.10) inset">
+          <svg width="40" height="40" viewBox="0 0 36 36">${nextSticker.art}</svg>
+          <div style="font:800 ${TX(nextSticker.name).length > 14 ? '12' : (TX(nextSticker.name).length > 10 ? '14' : '17')}px 'Baloo 2';color:#fff;margin-top:6px;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center">${TX(nextSticker.name)}</div>
           <div style="font:700 10px Nunito;color:#A896E0;letter-spacing:0.8px">${TX({ az: 'ALBOMUN ÜÇÜN', en: 'FOR YOUR ALBUM', ru: 'ДЛЯ ТВОЕГО АЛЬБОМА' })}</div>
-        </div>
+        </div>` : ''}
       </div>
     </div>
     <div style="position:absolute;bottom:186px;left:20px;right:20px;display:flex;align-items:center;gap:12px;background:rgba(92,227,155,0.14);border-radius:22px;padding:14px 16px">

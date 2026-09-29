@@ -72,6 +72,8 @@ const fresh = level => {
   EQ.s = JSON.parse(JSON.stringify(EQ_DEFAULTS));
   EQ.s.onboarded = true;
   EQ.s.settings.music = false;
+  /* a full album: the sticker reveal is album.js's business, not a beat in this flow */
+  EQ.s.stickerIds = EQD.STICKERS.map(st => st.id); EQ.s.stickers = EQ.s.stickerIds.length;
   EQ.s.level = level == null ? 16 : level;
   EQ.save = () => {};
   EQ.render = () => {};

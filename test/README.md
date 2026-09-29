@@ -157,7 +157,7 @@ child owned was recorded nowhere. The screen rendered perfectly while being, to 
 seven-year-old, a lie. There is now a real album of 24 named stickers with its own screen,
 and `s.stickerIds` underneath it.
 
-Three things break silently here:
+Four things break silently here:
 
 1. **The identity.** `s.stickers` must never be anything other than `s.stickerIds.length`.
    Let the two drift and the bag header counts one thing while the album shows another —
@@ -172,21 +172,41 @@ Three things break silently here:
    base-36 bitmask, so a full album costs a QR code a handful of characters rather than a
    list of names — asserted here, because a QR that stops scanning is a support call.
 
-Also covered: the shape of the album data (24 unique ids, every one in a real set, every
-one with a drawing, a trilingual name, and the line that tells a child what to do to earn
-it — a locked slot that says nothing is exactly what this feature replaces); a chest
-handing over a *named* sticker and never the same one twice; the chest screen keeping its
-own promise ("you always see what's inside before you open it") by naming and drawing the
-sticker it is about to give; the album filling to 24 and refusing a 25th; all four pages
-and all four screens rendering in az/en/ru at every stage of filling; the bag, the room
-and the reveal screen all opening the album; the "NEW" badge appearing on the trip in from
-the chest and not surviving the way out; and the rest screen still governing it — the
-album can be paused into, a sticker already earned never interrupted.
+4. **The promise.** Every locked slot says how to earn it — "Reach level 5", "Earn a hint
+   spark". For a while every sticker really came from the chest in album order and
+   nothing ever read those lines: a child reached Level 5 and no rocket came. Now 20
+   stickers are earned by exactly what their line says (`EQ.STICKER_RULES`, checked by
+   `EQ.checkStickers` after each answer, level, day and stage), and the four chest
+   stickers — Leaf, Moon, Cloud, Comet — say "Comes in a chest". The suite plays every
+   promise through the real game (right/wrong answers, hints, the tutor's gentler
+   question, bosses, a Word Valley round, level-ups, new days) and checks the sticker
+   arrives at that moment and not one step before; that a question solved after a hint
+   is not the Owl, a guardian is not a finale, another chapter's guardian is not the
+   Math Dragon, a region miss does not spoil the Gold Medal; and that a week of play
+   gives no sticker twice.
 
-The album screen is design-shaped but the store beneath it is hand-written, so a re-sync
-can bring back the visuals and drop the awarding. If this suite goes red after a re-sync,
-that is what happened — see `EQ.awardSticker` / `EQ.cleanStickers` in [js/app.js](../js/app.js)
-and `EQD.STICKERS` in [js/data.js](../js/data.js).
+Also covered: the shape of the album data (24 unique ids in the order every saved
+transfer mask was written in, every one in a real set, with a drawing, a trilingual name
+and its line); the chest showing — by name and drawing — exactly the sticker it then
+gives, through all four chest stickers, then showing no sticker slot and giving none;
+a child with old chest-order stickers getting the next *chest* sticker; the chest
+sticker that finishes the album bringing Questy! with it; **the migration** — a save from
+before the rules gets on load everything it shows the child did (levels, days, sparks,
+bosses, relics, a Valley round, a new chapter, questions solved unaided), nothing it
+cannot show (Medal, Potion), no chest sticker, and loses nothing it already had, even a
+sticker today's rules would not give; a stage already under way counting as slipped; the
+reveal screen after success / level-up / the chest, with several stickers shown
+together, "what earned it" on it, and the child carried on to where they were going; the
+"NEW" badge on every sticker not yet looked at, whether the album is opened from the
+reveal or from the bag, and not surviving the way out; all pages and screens rendering in
+az/en/ru; and the rest screen still governing it.
+
+The album screen is design-shaped but the store and the rules beneath it are
+hand-written, so a re-sync can bring back the visuals (and "every chest brings one") and
+drop the awarding. If this suite goes red after a re-sync, that is what happened — see
+`EQ.awardSticker` / `EQ.checkStickers` / `EQ.STICKER_RULES` / `EQ.cleanStickers` in
+[js/app.js](../js/app.js) and `EQD.STICKERS` / `EQD.nextChestSticker` in
+[js/data.js](../js/data.js).
 
 ## missions.js — parent-approved missions
 

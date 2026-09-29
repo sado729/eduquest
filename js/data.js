@@ -1370,7 +1370,9 @@ EQD.missionSet = function (topic, day) {
    length of that list, so everything already reading the count keeps working.
 
    `set` groups a page of the album; `how` is the one line a child reads on a still
-   locked slot, and it has to name something they can actually go and do today. */
+   locked slot, and it has to name something they can actually go and do today — and it
+   has to be *true*: the sticker arrives when that thing happens (EQ.STICKER_RULES in
+   js/app.js). A sticker marked `chest` comes from a chest instead, and says so. */
 EQD.STICKER_SETS = [
   { id: 'forest', name: { az: 'Meşə Dostları', en: 'Forest Friends', ru: 'Лесные Друзья' }, bg: '#E8FBF1', ink: '#2A9455' },
   { id: 'brave', name: { az: 'Cəsarət Nişanları', en: 'Badges of Courage', ru: 'Знаки Отваги' }, bg: '#FFE1E6', ink: '#D63A52' },
@@ -1381,17 +1383,17 @@ EQD.STICKER_SETS = [
 /* svg bodies are drawn inside a 0 0 36 36 box so one helper can size them all */
 EQD.STICKERS = [
   /* — Meşə Dostları — */
-  { id: 'leaf', set: 'forest', name: { az: 'Xoşbəxt Yarpaq', en: 'Happy Leaf', ru: 'Счастливый Листок' },
+  { id: 'leaf', set: 'forest', chest: true, name: { az: 'Xoşbəxt Yarpaq', en: 'Happy Leaf', ru: 'Счастливый Листок' },
     how: { az: 'İlk sandığını aç', en: 'Open your first chest', ru: 'Открой свой первый сундук' },
     art: '<path d="M18 4 q12 8 12 16 a12 12 0 0 1 -24 0 q0-8 12-16 Z" fill="#3DBE6E"></path><path d="M18 8 V30" stroke="#2A9455" stroke-width="2.2"></path><circle cx="14" cy="18" r="1.8" fill="#0B3D25"></circle><circle cx="22" cy="18" r="1.8" fill="#0B3D25"></circle><path d="M14 23 q4 3 8 0" stroke="#0B3D25" stroke-width="2" fill="none" stroke-linecap="round"></path>' },
   { id: 'acorn', set: 'forest', name: { az: 'Palıd Qozası', en: 'Little Acorn', ru: 'Жёлудь' },
     how: { az: 'Bir sınaq həll et', en: 'Solve one challenge', ru: 'Реши одно испытание' },
     art: '<path d="M10 16 q8 18 16 0 Z" fill="#C9762F"></path><rect x="8" y="9" width="20" height="8" rx="4" fill="#8A5A0A"></rect><path d="M18 5 v4" stroke="#8A5A0A" stroke-width="2.4" stroke-linecap="round"></path>' },
   { id: 'mushroom', set: 'forest', name: { az: 'Nöqtəli Göbələk', en: 'Spotty Mushroom', ru: 'Гриб в Крапинку' },
-    how: { az: 'Bir mərhələni bitir', en: 'Finish one stage', ru: 'Заверши один этап' },
+    how: { az: 'Bir mərhələnin 5 sınağını bitir', en: 'Finish all 5 challenges of a stage', ru: 'Пройди все 5 испытаний этапа' },
     art: '<rect x="14" y="19" width="8" height="12" rx="4" fill="#FBE9CC"></rect><path d="M5 20 q1-13 13-13 q12 0 13 13 Z" fill="#FF5D73"></path><circle cx="12" cy="15" r="2.4" fill="#FFF7EA"></circle><circle cx="23" cy="13" r="2" fill="#FFF7EA"></circle>' },
   { id: 'fox', set: 'forest', name: { az: 'Tülkü Balası', en: 'Fox Cub', ru: 'Лисёнок' },
-    how: { az: 'Dalbadal 2 gün oyna', en: 'Play 2 days in a row', ru: 'Играй 2 дня подряд' },
+    how: { az: '2 gün oyna', en: 'Play on 2 days', ru: 'Играй 2 дня' },
     art: '<path d="M7 12 L10 22 L7 22 Z M29 12 L26 22 L29 22 Z" fill="#E06327"></path><path d="M18 9 q11 2 11 11 q0 10 -11 10 q-11 0 -11-10 q0-9 11-11 Z" fill="#FF8A4C"></path><path d="M18 22 q-7 0 -8-5 q4 3 8 3 q4 0 8-3 q-1 5 -8 5 Z" fill="#FFF7EA"></path><circle cx="13" cy="19" r="1.9" fill="#3B2410"></circle><circle cx="23" cy="19" r="1.9" fill="#3B2410"></circle><circle cx="18" cy="24" r="2.1" fill="#3B2410"></circle>' },
   { id: 'owl', set: 'forest', name: { az: 'Müdrik Bayquş', en: 'Wise Owl', ru: 'Мудрая Сова' },
     how: { az: 'İpucu olmadan 5 sual həll et', en: 'Solve 5 questions with no hint', ru: 'Реши 5 вопросов без подсказки' },
@@ -1411,10 +1413,10 @@ EQD.STICKERS = [
     how: { az: 'Fəslin finalını bitir', en: 'Clear a chapter finale', ru: 'Пройди финал главы' },
     art: '<path d="M18 3 L28 14 L22 33 H14 L8 14 Z" fill="#7FE0AE"></path><path d="M18 3 L28 14 L18 18 Z" fill="#C8FFE4"></path><path d="M18 18 L22 33 H14 Z" fill="#5CE39B"></path>' },
   { id: 'sword', set: 'brave', name: { az: 'Bilik Qılıncı', en: 'Sword of Knowing', ru: 'Меч Знания' },
-    how: { az: 'Bir bossu məğlub et', en: 'Defeat one boss', ru: 'Победи одного босса' },
+    how: { az: '3 bossu məğlub et', en: 'Defeat 3 bosses', ru: 'Победи 3 боссов' },
     art: '<path d="M17 3 h2 l2 18 h-6 Z" fill="#C9BCA6"></path><rect x="9" y="21" width="18" height="4" rx="2" fill="#8A5A0A"></rect><rect x="15" y="25" width="6" height="9" rx="3" fill="#C9762F"></rect>' },
   { id: 'flame', set: 'brave', name: { az: 'Seriya Alovu', en: 'Streak Flame', ru: 'Огонь Серии' },
-    how: { az: 'Dalbadal 3 gün oyna', en: 'Play 3 days in a row', ru: 'Играй 3 дня подряд' },
+    how: { az: '3 gün oyna', en: 'Play on 3 days', ru: 'Играй 3 дня' },
     art: '<path d="M18 3 q10 10 10 18 a10 10 0 0 1 -20 0 q0-8 10-18 Z" fill="#FF8A4C"></path><path d="M18 15 q5 6 5 10 a5 5 0 0 1 -10 0 q0-4 5-10 Z" fill="#FFC24B"></path>' },
   { id: 'medal', set: 'brave', name: { az: 'Qızıl Medal', en: 'Gold Medal', ru: 'Золотая Медаль' },
     how: { az: 'Bir mərhələni səhvsiz bitir', en: 'Finish a stage with no mistakes', ru: 'Пройди этап без ошибок' },
@@ -1424,20 +1426,20 @@ EQD.STICKERS = [
   { id: 'star', set: 'sky', name: { az: 'Parlaq Ulduz', en: 'Bright Star', ru: 'Яркая Звезда' },
     how: { az: '500 XP topla', en: 'Collect 500 XP', ru: 'Собери 500 XP' },
     art: '<path d="M18 3 l4 11 11.5 0.6 -9 7.4 3 11.4 -9.5-6.4 -9.5 6.4 3-11.4 -9-7.4 11.5-0.6 Z" fill="#FFC24B"></path>' },
-  { id: 'moon', set: 'sky', name: { az: 'Yuxulu Ay', en: 'Sleepy Moon', ru: 'Сонная Луна' },
-    how: { az: 'Questy dincəlməyi deyəndə fasilə ver', en: 'Take a break when Questy asks', ru: 'Сделай перерыв, когда Квести попросит' },
+  { id: 'moon', set: 'sky', chest: true, name: { az: 'Yuxulu Ay', en: 'Sleepy Moon', ru: 'Сонная Луна' },
+    how: { az: 'Sandıqda gəlir', en: 'Comes in a chest', ru: 'Приходит в сундуке' },
     art: '<path d="M25 4 a14 14 0 1 0 7 22 a12 12 0 0 1 -7-22 Z" fill="#FFE9A8"></path><circle cx="20" cy="14" r="1.8" fill="#E39B1C"></circle><circle cx="16" cy="22" r="1.4" fill="#E39B1C"></circle>' },
   { id: 'rainbow', set: 'sky', name: { az: 'Göy Qurşağı', en: 'Rainbow', ru: 'Радуга' },
     how: { az: 'Bir səviyyə qaldır', en: 'Gain one level', ru: 'Поднимись на один уровень' },
     art: '<path d="M4 28 a14 14 0 0 1 28 0" fill="none" stroke="#FF5D73" stroke-width="4"></path><path d="M8 28 a10 10 0 0 1 20 0" fill="none" stroke="#FFC24B" stroke-width="4"></path><path d="M12 28 a6 6 0 0 1 12 0" fill="none" stroke="#45C6F0" stroke-width="4"></path>' },
-  { id: 'cloud', set: 'sky', name: { az: 'Yumşaq Bulud', en: 'Soft Cloud', ru: 'Мягкое Облако' },
-    how: { az: 'Bir tapşırıq gününü tamamla', en: 'Complete one quest day', ru: 'Заверши один день квеста' },
+  { id: 'cloud', set: 'sky', chest: true, name: { az: 'Yumşaq Bulud', en: 'Soft Cloud', ru: 'Мягкое Облако' },
+    how: { az: 'Sandıqda gəlir', en: 'Comes in a chest', ru: 'Приходит в сундуке' },
     art: '<path d="M10 25 a6 6 0 0 1 0.6-12 a8 8 0 0 1 15 -1 a6 6 0 0 1 1.4 13 Z" fill="#E4F6FF" stroke="#8FD8F5" stroke-width="2"></path>' },
   { id: 'rocket', set: 'sky', name: { az: 'Kiçik Raket', en: 'Little Rocket', ru: 'Маленькая Ракета' },
     how: { az: '5-ci səviyyəyə çat', en: 'Reach level 5', ru: 'Достигни 5 уровня' },
     art: '<path d="M18 3 q7 8 7 17 h-14 q0-9 7-17 Z" fill="#FFF7EA" stroke="#C9BCA6" stroke-width="1.6"></path><circle cx="18" cy="13" r="3.4" fill="#45C6F0"></circle><path d="M11 20 L6 27 h5 Z M25 20 L30 27 h-5 Z" fill="#FF5D73"></path><path d="M15 21 q3 8 3 12 q0-4 3-12 Z" fill="#FF8A4C"></path>' },
-  { id: 'comet', set: 'sky', name: { az: 'Quyruqlu Ulduz', en: 'Comet', ru: 'Комета' },
-    how: { az: 'Bir gündə 3 sınaq həll et', en: 'Solve 3 challenges in one day', ru: 'Реши 3 испытания за один день' },
+  { id: 'comet', set: 'sky', chest: true, name: { az: 'Quyruqlu Ulduz', en: 'Comet', ru: 'Комета' },
+    how: { az: 'Sandıqda gəlir', en: 'Comes in a chest', ru: 'Приходит в сундуке' },
     art: '<path d="M4 30 L20 14 l4 4 Z" fill="#8FD8F5"></path><circle cx="25" cy="11" r="7" fill="#FFE9A8"></circle><circle cx="25" cy="11" r="3.4" fill="#FFC24B"></circle>' },
 
   /* — Sehrli Şeylər — */
@@ -1451,7 +1453,7 @@ EQD.STICKERS = [
     how: { az: 'Qədim Qapını aç', en: 'Open the Ancient Gate', ru: 'Открой Древние Врата' },
     art: '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#FFC24B" stroke-width="4"></circle><path d="M17 17 L30 30 M25 26 l3-3 M21 22 l3-3" stroke="#FFC24B" stroke-width="4" stroke-linecap="round"></path>' },
   { id: 'book', set: 'magic', name: { az: 'Söz Kitabı', en: 'Book of Words', ru: 'Книга Слов' },
-    how: { az: 'Bir hekayəni sona qədər oxu', en: 'Read one story to the end', ru: 'Прочитай одну историю до конца' },
+    how: { az: 'Söz Vadisində bir dövrə bitir', en: 'Finish a round in Word Valley', ru: 'Пройди раунд в Долине Слов' },
     art: '<path d="M5 7 q9-4 13 2 q4-6 13-2 v21 q-9-4 -13 2 q-4-6 -13-2 Z" fill="#FBE9CC" stroke="#C9762F" stroke-width="1.8"></path><path d="M18 9 V30" stroke="#C9762F" stroke-width="1.8"></path>' },
   { id: 'lantern', set: 'magic', name: { az: 'Yol Fənəri', en: 'Path Lantern', ru: 'Фонарь Пути' },
     how: { az: 'Yeni bir fəsil aç', en: 'Open a new chapter', ru: 'Открой новую главу' },
@@ -1464,11 +1466,15 @@ EQD.STICKERS = [
 EQD.STICKER_BY_ID = {};
 EQD.STICKERS.forEach((st, i) => { st.no = i + 1; EQD.STICKER_BY_ID[st.id] = st; });
 
-/* the next sticker a child has not got yet, in album order — what a chest hands over */
-EQD.nextSticker = function (owned) {
+/* the chest's own stickers, in album order: the next one a child has not got yet is what
+   the chest shows and what it hands over (one function, so the two cannot disagree).
+   Every other sticker is earned by the thing its `how` names (EQ.STICKER_RULES) — never
+   by a chest. Once these four are in the album a chest holds coins and the hat only. */
+EQD.CHEST_STICKERS = EQD.STICKERS.filter(st => st.chest);
+EQD.nextChestSticker = function (owned) {
   const have = owned || [];
-  for (let i = 0; i < EQD.STICKERS.length; i++) {
-    if (have.indexOf(EQD.STICKERS[i].id) < 0) return EQD.STICKERS[i];
+  for (let i = 0; i < EQD.CHEST_STICKERS.length; i++) {
+    if (have.indexOf(EQD.CHEST_STICKERS[i].id) < 0) return EQD.CHEST_STICKERS[i];
   }
   return null;
 };
