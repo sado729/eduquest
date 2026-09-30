@@ -1685,7 +1685,7 @@ const EQ = {
 EQ.STICKER_RULES = {
   /* any question solved on the challenge screen — the daily set, a mission or a region */
   acorn: (s, e) => s.challengesDone >= 1 || s.trophiesEarned >= 1 || e.trackSum('done') >= 1,
-  mushroom: s => s.challengesDone >= 5 || s.trophiesEarned >= 1,
+  mushroom: s => s.challengesDone >= 5,
   /* s.streak is the game's count of days played (it is never reset), hence "2 gün oyna" */
   fox: s => Math.max(s.streak || 0, s.bestStreak || 0) >= 2,
   /* hg = solved after the hint was open (tapped or shown after a miss) */
@@ -1703,8 +1703,10 @@ EQ.STICKER_RULES = {
   rocket: s => s.level >= 5,
   wand: s => s.hintSparks >= 1,
   potion: s => !!s.feats.easier,
-  /* the Ancient Gate is the day-0 quest: chapter 1, stage 1 */
-  key: s => !!((s.relics || {})[1] & 1),
+  /* the first gate a child opens: the day-0 Ancient Gate for most, but any first boss
+     counts — the day-0 quest never comes back once its day has passed, and a Key tied to
+     it alone would lock the Key, and with it the whole album, for good */
+  key: s => !!((s.relics || {})[1] & 1) || s.trophiesEarned >= 1,
   book: s => !!s.feats.valley,
   lantern: s => EQD.chapterAt(s.questDay || 0).chapterNo >= 2,
   questy: s => EQD.STICKERS.every(st => st.id === 'questy' || (s.stickerIds || []).indexOf(st.id) >= 0)

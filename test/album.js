@@ -458,7 +458,17 @@ EQ.nextStage();
 ok('"Open a new chapter": chapter 2 opening gives the Lantern', EQ.chapter().chapterNo === 2 && has('lantern'));
 ok('the Math Dragon is only the forest\'s guardian — another chapter\'s is not it', (() => {
   live(); EQ.s.questDay = 3; playStage(false);
-  return EQ.s.trophiesEarned === 1 && !has('dragon') && !has('key');
+  return EQ.s.trophiesEarned === 1 && !has('dragon');
+})());
+ok('a child who missed the day-0 gate still gets the Key from their first boss', (() => {
+  live(); EQ.s.questDay = 3; playStage(false);
+  return has('key');
+})());
+ok('so the album can still be finished: Questy is not locked out by a missed day 0', (() => {
+  live(); EQ.s.questDay = 3; playStage(false);
+  EQD.STICKERS.forEach(st => { if (st.id !== 'questy' && st.id !== 'key' && !has(st.id)) EQ.awardSticker(st.id); });
+  EQ.checkStickers();
+  return has('key') && has('questy');
 })());
 
 group('Söz Kitabı — a whole round in Word Valley');

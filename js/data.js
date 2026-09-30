@@ -1450,7 +1450,7 @@ EQD.STICKERS = [
     how: { az: 'Bir çətin sualı asanı ilə həll et', en: 'Use an easier one to get unstuck', ru: 'Пройди трудный вопрос через лёгкий' },
     art: '<rect x="14" y="3" width="8" height="7" rx="2" fill="#C9BCA6"></rect><path d="M14 9 h8 l5 11 a9 9 0 0 1 -18 0 Z" fill="#E4F6FF" stroke="#8FD8F5" stroke-width="1.6"></path><path d="M11 19 h14 a9 9 0 0 1 -14 0 Z" fill="#7B5CFF"></path>' },
   { id: 'key', set: 'magic', name: { az: 'Qədim Açar', en: 'Ancient Key', ru: 'Древний Ключ' },
-    how: { az: 'Qədim Qapını aç', en: 'Open the Ancient Gate', ru: 'Открой Древние Врата' },
+    how: { az: 'İlk qapını aç — ilk bossu məğlub et', en: 'Open your first gate — beat your first boss', ru: 'Открой первые врата — победи первого босса' },
     art: '<circle cx="12" cy="12" r="7.5" fill="none" stroke="#FFC24B" stroke-width="4"></circle><path d="M17 17 L30 30 M25 26 l3-3 M21 22 l3-3" stroke="#FFC24B" stroke-width="4" stroke-linecap="round"></path>' },
   { id: 'book', set: 'magic', name: { az: 'Söz Kitabı', en: 'Book of Words', ru: 'Книга Слов' },
     how: { az: 'Söz Vadisində bir dövrə bitir', en: 'Finish a round in Word Valley', ru: 'Пройди раунд в Долине Слов' },

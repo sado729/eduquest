@@ -26,7 +26,7 @@ EQS.screens.wardrobe = function (s) {
     const hats = [
       { key: 'none', name: TX({ az: 'Papaqsız', en: 'No hat', ru: 'Без шляпы' }), owned: true },
       { key: 'explorer', name: TX({ az: 'Kəşfiyyatçı Papağı', en: 'Scout Hat', ru: 'Шляпа Скаута' }), owned: true },
-      { key: 'wizard', name: TX({ az: 'Sehrbaz Papağı', en: 'Wizard Hat', ru: 'Шляпа Волшебника' }), owned: s.wizardHatOwned, lockNote: TX({ az: 'Qədim Qapı sandığı', en: 'Ancient Gate chest', ru: 'Сундук Древних Врат' }) },
+      { key: 'wizard', name: TX({ az: 'Sehrbaz Papağı', en: 'Wizard Hat', ru: 'Шляпа Волшебника' }), owned: s.wizardHatOwned, lockNote: TX({ az: 'İlk sandıq', en: 'Your first chest', ru: 'Первый сундук' }) },
       { key: 'crown', name: TX({ az: 'Ulduz Tacı', en: 'Star Crown', ru: 'Звёздная Корона' }), owned: s.crownOwned, price: 250 }
     ];
     grid = hats.map(hh => {
