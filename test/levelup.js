@@ -215,6 +215,29 @@ EQ.applyLevelUp();
 ok('the island was shut before, the card named it, and it is open after', !before && card && EQ.regionOpen('island') && EQ.s.level === 10);
 ok('the wardrobe gained nothing from the level', EQ.ownedHats().join() === 'none,explorer', EQ.ownedHats().join());
 
+group('more than a level waiting: one screen per level, and the chest line after them');
+at(10, 1, 3400);
+ok('the carried XP is formatted like the rest of the line', screen('en').indexOf(EQC.fmt(1900) + ' XP carries over') >= 0 && screen('en').indexOf(' 1900 XP') < 0);
+EQ.session.afterLevel = 'map';
+EQ.applyLevelUp();
+ok('the first level is applied and the next one is still waiting', EQ.s.level === 10 && EQ.s.xp === 1900 && EQ.s.pendingLevelUp === true);
+ok('…so the level-up screen comes again instead of the bar sitting full', EQ.current === 'levelup');
+EQ.applyLevelUp();
+ok('the second level lands, the rest carries, and the child goes where they were going', EQ.s.level === 11 && EQ.s.xp === 400 && !EQ.s.pendingLevelUp
+  && (EQ.current === 'map' || (EQ.current === 'sticker' && EQ.session.stickerNext === 'map')), JSON.stringify([EQ.s.level, EQ.s.xp, EQ.s.pendingLevelUp, EQ.current]));
+
+at(10, 1, NEED);
+const toasts = [];
+EQ.toast = t => toasts.push(t);
+EQ.checkStickers = () => 0; /* no sticker to reveal: the path where the chest line was lost */
+EQ.s.chestReady = true; EQ.s.chestOpened = false;
+EQ.openChest();
+EQ.s.stickerNew = [];
+ok('a chest opened with a level waiting shows the level first', EQ.current === 'levelup' && toasts.length === 0);
+EQ.applyLevelUp();
+ok('…and says what the chest held on the way out', EQ.current === 'map' && toasts.some(t => t.indexOf('+100') >= 0), JSON.stringify(toasts));
+ok('…once: nothing is left to be toasted later by some other screen', EQ.session.chestNote === false);
+
 /* ── 6 · the cache ── */
 group('installed phones fetch the new code');
 (() => {

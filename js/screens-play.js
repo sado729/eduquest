@@ -415,7 +415,7 @@ EQS.screens.levelup = function (s) {
   const gifts = EQ.levelGifts(newLevel);
   const next = EQ.nextRegion(newLevel);
   const xpLine = `${EQC.fmt(s.xp)} / ${EQC.fmt(need)} XP` + (carry > 0
-    ? TX({ az: ` · ${carry} XP növbətiyə keçir`, en: ` · ${carry} XP carries over`, ru: ` · ${carry} XP идут дальше` })
+    ? TX({ az: ` · ${EQC.fmt(carry)} XP növbətiyə keçir`, en: ` · ${EQC.fmt(carry)} XP carries over`, ru: ` · ${EQC.fmt(carry)} XP идут дальше` })
     : '');
   const cream = { bg: '#FFF7EA', shadow: '0 6px 0 #C9BCA6', iconBg: '#FBE9CC', kickerInk: '#A08A5E', nameInk: '#2A1F45', noteInk: '#8B7A55' };
   let reward = '';

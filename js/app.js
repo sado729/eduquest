@@ -882,10 +882,14 @@ const EQ = {
   applyLevelUp() {
     this.s.level++;
     this.s.xp = Math.max(0, this.s.xp - EQD.XP_PER_LEVEL);
-    this.s.pendingLevelUp = false;
+    /* more than a level's worth can be waiting (a level-up screen left by its back
+       button while XP kept coming): each level gets its own screen, one after another,
+       instead of the bar sitting full with nothing left to earn */
+    this.s.pendingLevelUp = this.s.xp >= EQD.XP_PER_LEVEL;
     this.checkStickers();
     this.checkDecor(); /* a level can open a third world (Dünya Kaşifi) */
     this.save();
+    if (this.s.pendingLevelUp) { this.go('levelup'); return; }
     const target = this.session.afterLevel || 'map';
     this.session.afterLevel = null;
     this.goReveal(target);
@@ -1023,7 +1027,17 @@ const EQ = {
     if (this.s.stickerNew && this.s.stickerNew.length) {
       this.session.stickerNext = next;
       this.go('sticker');
-    } else this.go(next);
+      return;
+    }
+    /* a chest opened with a level-up waiting went to the level-up screen first; its line
+       ("+100 coins · … is waiting at home") is said here, on the way out — otherwise it
+       would sit in the session and be toasted days later by some unrelated sticker */
+    const chest = this.session.chestNote;
+    if (!chest) { this.go(next); return; }
+    this.session.chestNote = false;
+    const line = [chest, EQ_HELM_TOLD.indexOf(next) >= 0 ? this.newsLine() : ''].filter(Boolean).join(' ');
+    this.go(next);
+    this.toast(line);
   },
   /* from the reveal screen back into the adventure */
   afterSticker() {
