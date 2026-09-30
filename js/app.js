@@ -902,6 +902,9 @@ const EQ = {
     this.goReveal(target);
   },
   openChest() {
+    /* one chest per beaten boss: the victory screen's button is drawn unconditionally,
+       and a way back to it after opening must not pay out a second, unpreviewed chest */
+    if (!this.s.chestReady || this.s.chestOpened) { this.go('map'); return; }
     this.s.coins += 100; this.s.coinsToday += 100;
     /* exactly what the chest screen showed: the hat only the first time, then the next
        chest decoration in its place (EQD.nextChestDecor), and the sticker from

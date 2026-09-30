@@ -1489,7 +1489,7 @@ EQD.TROPHIES = [
     icon: '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M7.4 4 h9.2 v5.4 a4.6 4.6 0 0 1 -9.2 0 Z" fill="#FFC24B"></path><path d="M12 14.4 V17 M8.4 20 h7.2" stroke="#FFC24B" stroke-width="2.4" stroke-linecap="round"></path></svg>',
     bg: '#FFF3D6', ink: '#8A5A0A', bar: '#FFC24B' },
   { id: 'bridge', title: { az: 'Körpü Keşikçisi', en: 'Bridge Keeper', ru: 'Хранитель Моста' },
-    how: { az: 'Bilik Meşəsində ilk bossu məğlub et', en: 'Beat your first boss in Knowledge Forest', ru: 'Победи первого босса в Лесу Знаний' },
+    how: { az: 'İlk bossunu məğlub et', en: 'Beat your first boss', ru: 'Победи своего первого босса' },
     icon: '<svg width="30" height="30" viewBox="0 0 24 24"><path d="M7.4 4 h9.2 v5.4 a4.6 4.6 0 0 1 -9.2 0 Z" fill="#E39B1C"></path><path d="M12 14.4 V17 M8.4 20 h7.2" stroke="#E39B1C" stroke-width="2.4" stroke-linecap="round"></path></svg>',
     bg: '#FFF3D6', ink: '#8A5A0A', bar: '#E39B1C' },
   /* s.streak counts the days played and is never reset, so this is "on 7 days", not "in a row" */

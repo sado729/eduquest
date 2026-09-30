@@ -237,6 +237,9 @@ ok('a chest opened with a level waiting shows the level first', EQ.current === '
 EQ.applyLevelUp();
 ok('…and says what the chest held on the way out', EQ.current === 'map' && toasts.some(t => t.indexOf('+100') >= 0), JSON.stringify(toasts));
 ok('…once: nothing is left to be toasted later by some other screen', EQ.session.chestNote === false);
+const coins = EQ.s.coins, decor = EQ.s.decorIds.length;
+EQ.openChest();
+ok('a second tap on "Open the chest" pays nothing: one chest per beaten boss', EQ.s.coins === coins && EQ.s.decorIds.length === decor && EQ.current === 'map');
 
 /* ── 6 · the cache ── */
 group('installed phones fetch the new code');
