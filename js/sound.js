@@ -113,17 +113,25 @@ const EQM = {
   },
   bpm() { return this.s().calm ? this.BPM_CALM : this.BPM; },
 
-  /* wired once at boot: the first touch anywhere unlocks sound */
+  /* wired once at boot: a touch anywhere unlocks sound.
+     Only the events a browser counts as a user gesture can do it — pointerup, touchend,
+     click, keydown. A touch's pointerdown is NOT one: unlocking on it used to create the
+     context without a gesture, the resume was refused, and on iOS (or with the effect
+     cues off, so no cue ever resumed it) the melody could stay silent all session.
+     The listener stays for good, because a context can be suspended again later (iOS
+     interrupts it, a restart from a hidden tab is not a gesture): while the melody should
+     be playing and the context is not running, every gesture asks for it back. */
   init() {
     if (typeof document === 'undefined' || !document.addEventListener) return;
     const go = () => {
-      if (this.unlocked) return;
+      const first = !this.unlocked;
       this.unlocked = true;
-      const c = SFX.ac();
-      if (c && c.state === 'suspended' && c.resume) { try { c.resume(); } catch (e) { /* still locked */ } }
-      this.update();
+      if (first) { this.update(); return; }
+      if (!this.playing) return;
+      const c = SFX.ctx;
+      if (c && c.state !== 'running' && c.resume) { try { c.resume(); } catch (e) { /* still locked */ } }
     };
-    ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, go, { passive: true }));
+    ['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, go, { passive: true }));
   },
 
   /* bring the sound in line with the switches, the screen and the tab — called after
@@ -153,6 +161,16 @@ const EQM = {
   queue(gen) {
     if (gen !== this.gen || !this.playing) return;
     const c = SFX.ac(); if (!c || !this.bus) return;
+    /* a suspended clock does not move: phrases queued against it would only pile up
+       oscillators until it runs again. Wait for it, and start from wherever it resumes. */
+    if (c.state && c.state !== 'running') {
+      /* Chrome allows a resume at any time once the page has had a gesture; where a
+         browser refuses, the next touch does it (init) */
+      if (c.resume) { try { c.resume(); } catch (e) { /* still locked */ } }
+      this.next = c.currentTime + 0.1;
+      this.timer = setTimeout(() => this.queue(gen), 1000);
+      return;
+    }
     const beat = 60 / this.bpm();
     const p = this.TUNE[this.phrase % this.TUNE.length];
     let t = 0;

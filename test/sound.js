@@ -105,7 +105,9 @@ const { EQ, EQS, EQT, EQP, EQX, EQV, EQM, SFX, EQ_DEFAULTS, EQI } = sandbox;
 const store = sandbox.localStorage;
 
 const fire = ev => (docListeners[ev] || []).forEach(f => f());
-const touch = () => { gesture = true; fire('pointerdown'); };
+/* a real tap: the pointerdown comes first and is not a gesture (the browser refuses
+   sound on it); the touchend and click that follow are */
+const touch = () => { fire('pointerdown'); gesture = true; fire('touchend'); fire('pointerup'); fire('click'); };
 const ctx = () => SFX.ctx;
 const dest = () => ctx().destination;
 /* an oscillator's own gain node decides where it goes: straight out = a cue, into the bus = music */
@@ -209,6 +211,28 @@ group('the melody never starts before a touch (autoplay rule)');
   ok('…fading in from silence, not starting on a jolt', bus.gain.log[0][0] === 'set' && bus.gain.log[0][1] <= 0.001);
   touch();
   ok('a second touch does not start a second copy', EQM.bus === bus);
+})();
+
+group('a touch\'s pointerdown is not a gesture — the unlock waits for one that is');
+(() => {
+  device({ music: true, sfx: false });
+  EQ.go('map');
+  fire('pointerdown'); /* the browser would refuse sound here */
+  ok('pointerdown alone does not unlock the sound', !EQM.unlocked && !EQM.playing);
+  ok('…and makes no audio context without a gesture', ctxs.length === 0);
+  gesture = true; fire('touchend');
+  ok('the touchend of the same tap starts the melody — with the effect cues off too', EQM.playing && ctx().state === 'running');
+
+  /* iOS interrupts the context (a call, the lock screen) and refuses a resume that is not a gesture */
+  gesture = false; ctx().state = 'suspended';
+  const made = tune().length;
+  flush(); flush(); flush();
+  ok('while the clock is stopped, no phrases pile up against it', tune().length === made);
+  ok('…the melody still counts as playing, waiting to come back', EQM.playing);
+  gesture = true; fire('pointerup');
+  ok('the next gesture brings the context back', ctx().state === 'running');
+  flush();
+  ok('…and the melody carries on from there', tune().length > made);
 })();
 
 /* ── 4 · the rest screen and a hidden tab are silent ── */
