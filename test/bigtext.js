@@ -128,6 +128,10 @@ group('switching child applies that child\'s own setting');
 (() => {
   wipe();
   EQ.s = JSON.parse(JSON.stringify(EQ_DEFAULTS));
+  /* EQ.load() always gives a state its play record; without one, EQT.tick() inside the
+     profile swap crashes — but only when a millisecond has passed since the last tick,
+     which made this group fail now and then */
+  EQ.s.track = { start: EQ.dayKey(), days: {} };
   quiet();
   EQ.s.onboarded = true; EQ.s.heroName = 'Aysel'; EQ.s.settings.music = false;
   EQ.s.settings.bigText = false; EQ.save(); EQ.applyBig();
