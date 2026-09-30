@@ -602,8 +602,15 @@ const EQ = {
   loadHelms(raw) {
     this.session.helmNews = [];
     this.session.helmCard = null;
+    /* helmets an imported backup derived (transfer.js clean) — told once, never saved */
+    const tell = raw && Array.isArray(raw.helmTell) ? raw.helmTell : [];
+    delete this.s.helmTell;
     EQD.HELMS.forEach(h => {
-      if (raw && typeof raw[h.flag] === 'boolean') { this.s[h.flag] = raw[h.flag]; return; }
+      if (raw && typeof raw[h.flag] === 'boolean') {
+        this.s[h.flag] = raw[h.flag];
+        if (raw[h.flag] && tell.indexOf(h.key) >= 0) this.session.helmNews.push(h.key);
+        return;
+      }
       this.s[h.flag] = this.helmFromHistory(this.s.regions, h);
       if (this.s[h.flag]) this.session.helmNews.push(h.key);
     });

@@ -336,7 +336,16 @@ const EQX = {
        derived exactly as the loader derives it; a hat the child does not own comes off */
     /* after questDay and bossBeaten: a code or file with no relic record derives one from them */
     out.relics = EQ.cleanRelics(r.relics, out);
-    EQD.HELMS.forEach(h => { out[h.flag] = typeof r[h.flag] === 'boolean' ? r[h.flag] : EQ.helmFromHistory(out.regions, h); });
+    /* a helmet derived here is new to the child, so it is told once after the reload
+       (helmTell, read and dropped by EQ.loadHelms) — the loader would otherwise see a
+       stored flag and stay quiet, and the helmet would arrive in silence */
+    out.helmTell = [];
+    EQD.HELMS.forEach(h => {
+      if (typeof r[h.flag] === 'boolean') { out[h.flag] = r[h.flag]; return; }
+      out[h.flag] = EQ.helmFromHistory(out.regions, h);
+      if (out[h.flag]) out.helmTell.push(h.key);
+    });
+    if (!out.helmTell.length) delete out.helmTell;
     const worn = EQD.HELM_BY[out.hero.hat];
     if (worn && !out[worn.flag]) out.hero.hat = 'none';
 

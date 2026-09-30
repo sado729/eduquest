@@ -295,6 +295,15 @@ const packState = (diver, space, hat) => {
   delete legacy.diverHelmOwned; delete legacy.spaceHelmOwned;
   const b2 = EQX.readBundle(JSON.stringify({ app: 'eduquest', made: '2026-09-21', profiles: [{ state: legacy }] }));
   ok('a file from before the helmets derives them from its regions, as the loader does', b2 && b2.states[0].diverHelmOwned === true && b2.states[0].spaceHelmOwned === false);
+  /* the import writes the cleaned state and reloads: the loader then sees a stored flag */
+  store._m = {}; EQP.ids = ['p1']; EQP.active = 'p1';
+  store.setItem(EQP.key(), JSON.stringify(b2.states[0]));
+  EQ.load();
+  ok('…and after the reload the child is told about the helmet the file gave them', EQ.s.diverHelmOwned === true && EQ.session.helmNews.join() === 'diver', EQ.session.helmNews.join());
+  ok('…once: the note is not kept in the save', !('helmTell' in EQ.s));
+  store.setItem(EQP.key(), JSON.stringify(EQ.s)); EQ.load();
+  ok('…so the next load says nothing again', EQ.session.helmNews.length === 0);
+  ok('a file that carries its own flags adds no note', b1 && !('helmTell' in b1.states[0]));
 })();
 
 /* ── 7 · the drawing ── */
