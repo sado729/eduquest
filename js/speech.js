@@ -39,6 +39,7 @@ const EQV = {
   ready: false, /* the voice list has had its chance to load (Chrome fills it async) */
   seq: 0,       /* bumped by every stop, so a delayed start from an old screen dies */
   speaking: false,
+  utter: null,  /* the utterance being spoken — held so Chrome cannot collect it mid-sentence */
   lastKey: null,
 
   api() {
@@ -60,18 +61,30 @@ const EQV = {
     };
     load();
     const changed = () => {
+      const could = this.can();
       load();
       this.ready = true;
+      if (typeof EQ === 'undefined' || !EQ.s) return;
       /* the settings subtitle and the button-only screens (hint, tutor) depend on the
          list: redraw them once the voices arrive */
-      if (typeof EQ !== 'undefined' && ['parent_settings', 'hint', 'tutor'].indexOf(EQ.current) >= 0) EQ.render();
+      if (['parent_settings', 'hint', 'tutor'].indexOf(EQ.current) >= 0) { EQ.render(); return; }
+      /* On Android the list often arrives late — after the question screen opened while
+         there was no voice yet, so it was neither read nor given a speaker. Read it now.
+         The speaker needs a redraw, which is safe on a tap-to-answer card; a hands-on
+         panel would be rebuilt by one (and lose what the child has moved), so it gets
+         its speaker on the next screen instead. */
+      if (!could && this.can() && this.AUTO.indexOf(EQ.current) >= 0 && !this.speaking) {
+        const q = EQ.session.q;
+        if (!(q && q.kind) && !EQ.session.answering) EQ.render();
+        this.read(EQ.current);
+      }
     };
     try {
       if (a.addEventListener) a.addEventListener('voiceschanged', changed);
       else a.onvoiceschanged = changed;
     } catch (e) { /* an engine without the event: the timeout below decides */ }
     /* some engines never fire voiceschanged; after a moment an empty list is the answer */
-    setTimeout(() => { if (!this.ready) { load(); this.ready = true; } }, 2000);
+    setTimeout(() => { if (!this.ready) changed(); }, 2000); /* …and the subtitle is redrawn to say so */
   },
 
   norm(tag) { return String(tag || '').replace(/_/g, '-').toLowerCase(); },
@@ -142,7 +155,9 @@ const EQV = {
     if (screen === 'challenge' || screen === 'boss') out.push(TX(q.title));
     else if (screen === 'hint' && q.hint) out.push(TX(q.hint.heading), TX(q.hint.sub), TX(q.hint.note));
     else if (screen === 'tutor') {
-      const ex = q.explain || { title: { az: 'Gəl bunu birlikdə həll edək.', en: 'Let’s figure this out together.', ru: 'Давай разберёмся вместе.' }, text: q.hint && q.hint.sub };
+      /* the same fallback card the tutor screen draws (js/screens-play.js), "why" included */
+      const ex = q.explain || { title: { az: 'Gəl bunu birlikdə həll edək.', en: 'Let’s figure this out together.', ru: 'Давай разберёмся вместе.' }, text: q.hint && q.hint.sub,
+        why: { az: 'Anlamaq əzbərləməkdən üstündür — həmişə.', en: 'Understanding beats memorising — always.', ru: 'Понимать лучше, чем зубрить, — всегда.' } };
       out.push(TX(ex.title));
       /* every reading explanation spells out the answer ("the gap needs the letter L") */
       if (!this.reading(q)) out.push(TX(ex.text));
@@ -156,7 +171,9 @@ const EQV = {
   stop() {
     this.seq++;
     this.speaking = false;
+    this.utter = null;
     this.duck();
+    this.paintBtn(); /* a stop from outside (a hidden tab) must not leave "Stop" drawn */
     const a = this.api();
     if (a) { try { a.cancel(); } catch (e) { /* nothing to stop */ } }
   },
@@ -180,13 +197,18 @@ const EQV = {
         u.rate = calm ? 0.78 : 0.92;
         u.pitch = calm ? 1.0 : 1.1;
         u.volume = calm ? 0.75 : 1;
-        u.onend = u.onerror = () => { if (my === this.seq) { this.speaking = false; this.duck(); this.paintBtn(); } };
-        if (a.paused) a.resume();
-        a.speak(u);
+        u.onend = u.onerror = () => { if (my === this.seq) { this.speaking = false; this.utter = null; this.duck(); this.paintBtn(); } };
+        /* Chrome garbage-collects an utterance nothing points to, and then its onend never
+           fires: "Stop" would stay drawn and the music stay ducked. Hold on to it. */
+        this.utter = u;
+        /* set before speak(): an engine that refuses it throws or fires onerror inside
+           the call, and that must be what decides the state, not the line after it */
         this.speaking = true;
         this.duck();
         this.paintBtn();
-      } catch (e) { this.speaking = false; }
+        if (a.paused) a.resume();
+        a.speak(u);
+      } catch (e) { this.speaking = false; this.utter = null; this.duck(); this.paintBtn(); }
     }, 60);
     return true;
   },

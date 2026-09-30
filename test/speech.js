@@ -440,6 +440,107 @@ group('without speech support nothing breaks');
   engine.speak = function (u) { this.spoken.push(u); };
 })();
 
+/* ── 11 · the edges a real phone reaches ── */
+group('late voices, a stop from outside, and an engine that forgets');
+(() => {
+  /* the speaker's label and wave, as the page holds them */
+  const lbl = { textContent: '' }, wave = { op: null, setAttribute(k, v) { this.op = v; } };
+  sandbox.document.querySelectorAll = sel => (sel === '.eqv-lbl' ? [lbl] : sel === '.eqv-wave' ? [wave] : []);
+
+  fresh();
+  EQ.go('challenge'); flush();
+  EQ.go('hint'); EQ.go('tutor');
+  EQV.tap(); flush();
+  ok('tapping the tutor bar reads it and draws "Stop"', EQV.speaking && lbl.textContent === EQV.label() && wave.op === '1');
+  EQV.stop(); /* what a hidden tab or pagehide does */
+  ok('a stop from outside redraws the bar: it no longer says "Stop" over silence', !EQV.speaking && lbl.textContent === TX({ az: 'Questy oxusun', en: 'Let Questy read it', ru: 'Пусть Квести прочитает' }) && wave.op === '0.55', lbl.textContent);
+
+  fresh();
+  EQ.go('challenge'); flush();
+  const u = engine.spoken[0];
+  ok('the utterance being spoken is held, so Chrome cannot collect it and lose its onend', EQV.utter === u);
+  u.onend();
+  ok('…and let go once it has ended', EQV.utter === null && !EQV.speaking);
+
+  fresh();
+  const realSpeak = engine.speak;
+  engine.speak = function (x) { this.spoken.push(x); x.onerror(); }; /* refused inside the call */
+  EQ.go('challenge'); flush();
+  engine.speak = realSpeak;
+  ok('an engine that refuses inside speak() does not leave "speaking" stuck on', !EQV.speaking);
+
+  /* Android: the voice list arrives after the question screen has opened */
+  fresh([]);
+  let renders = 0;
+  const realRender = EQ.render;
+  EQ.render = function () { renders++; return realRender.call(this); };
+  EQ.go('challenge'); flush();
+  const q0 = EQ.session.q;
+  ok('no voice yet: the question is not read', engine.spoken.length === 0);
+  renders = 0;
+  engine.voices = ALL_VOICES.slice(); engine.fire('voiceschanged');
+  const late = said();
+  ok('the voices arrive: the open question is read after all', late.length === 1 && late[0] === EQV.clean(TX(q0.title)), JSON.stringify(late));
+  ok('…and a tap-to-answer card is redrawn so its speaker appears', q0.kind ? renders === 0 : renders === 1, 'renders ' + renders);
+  engine.fire('voiceschanged'); flush();
+  ok('a second voiceschanged does not read it again', engine.spoken.length === 1);
+
+  fresh([]);
+  const hands = EQD.genDay(3, EQT.plan(3)).questions.find(x => x.kind) ||
+    Object.values(EQD.TOPIC_GEN).map(g => g(EQD.mulberry ? (a => a) : null)).find(x => x && x.kind);
+  if (hands) {
+    EQ.go('challenge'); flush();
+    EQ.session.q = hands;
+    renders = 0;
+    engine.voices = ALL_VOICES.slice(); engine.fire('voiceschanged');
+    ok('a hands-on panel is read but not redrawn (a redraw would drop what the child moved)', said().length === 1 && renders === 0, 'renders ' + renders);
+  }
+  EQ.render = realRender;
+  delete sandbox.document.querySelectorAll;
+
+  /* the settings subtitle: an engine that never fires voiceschanged */
+  fresh([]);
+  EQ.go('parent_settings');
+  renders = 0;
+  EQ.render = function () { renders++; };
+  const safety = timers.length;
+  EQV.init(); /* its 2-second safety timer */
+  timers.slice(safety).forEach(f => f());
+  EQ.render = realRender;
+  ok('when the list never comes, the open settings screen is redrawn with the honest line', renders >= 1 && EQV.status() === 'novoice');
+})();
+
+group('spelling tasks may say the word, never the letter that is the answer');
+(() => {
+  fresh();
+  const rig = seed => { const rnd = EQD.mulberry(seed); return (a, b) => a + Math.floor(rnd() * (b - a + 1)); };
+  const bad = [];
+  let n = 0;
+  ['letter', 'missing'].forEach(t => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const q = EQD.TOPIC_GEN[t](rig(seed * 131), seed % 2 === 0);
+      LANGS.forEach(l => {
+        EQI.set(l);
+        const L = String(TX(EQD.qa(q).answers[EQD.qa(q).correct] != null ? EQD.qa(q).answers[EQD.qa(q).correct] : TX(q.correct)));
+        const ans = String(TX(q.correct)).length === 1 ? String(TX(q.correct)) : L;
+        EQ.session.tutorWhy = true;
+        ['challenge', 'hint', 'tutor'].forEach(sc => EQV.lines(sc, q).forEach(line => {
+          n++;
+          /* the letter on its own, as a word: "the gap needs the letter L" */
+          /* the answer letters are capitals, and a capital standing alone is a letter being
+             named — case kept, so "picture’s" is not "S" (English "A" and "I" are words) */
+          /* a sentence's first word is left out: Russian opens with "С какой буквы…" */
+          const tok = ' ' + line.split(/(?<=[.!?…])\s+/).map(x => x.replace(/[^\p{L}\p{N}’']+/gu, ' ').trim().split(' ').slice(1).join(' ')).join(' ') + ' ';
+          if (ans.length === 1 && !(l === 'en' && /^[AI]$/.test(ans)) && tok.indexOf(' ' + ans + ' ') >= 0) bad.push(`${t}/${sc}/${l}: "${line}" says ${ans}`);
+        }));
+        EQ.session.tutorWhy = false;
+      });
+    }
+  });
+  EQI.set('az');
+  ok(`${n} spoken lines of letter and missing-letter questions never name the answer letter`, n > 100 && bad.length === 0, bad.slice(0, 3).join(' | '));
+})();
+
 /* ── 10 · the other suites load app.js without speech.js ── */
 group('the game still runs if speech.js is missing');
 (() => {
